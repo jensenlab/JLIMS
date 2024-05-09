@@ -1,3 +1,4 @@
+__precompile__(true)
 module JensenLabUnits
 
 using Unitful 
@@ -16,8 +17,18 @@ using Unitful
 @refunit RFU "RFU" RelativeFluorescenceUnit 𝐅𝐥𝐮𝐨𝐫 false
 
 
-
+const localpromotion=copy(Unitful.promotion)
+function __init__()
 Unitful.register(JensenLabUnits)
+merge!(Unitful.promotion,localpromotion)
+end 
+
+
 
 
 end 
+
+
+# types 
+ AbstractConcentration = Union{Unitful.Density,Unitful.Molarity,Unitful.DimensionlessQuantity, JensenLabUnits.Absorbance} # dimensionless quantities represent percentages ex. %v/v or %w/w
+ AbstractAmount = Union{Unitful.Amount,Unitful.Mass,Unitful.Volume}  # solid ingredients can be specified by number (moles) or mass, while liquid ingredients are specified by volume 

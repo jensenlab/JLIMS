@@ -1,22 +1,32 @@
-struct Ingredient # predefined individual chemicals or molecules that can be present in a run. We break down any mixed reagents into individual ingredient components.
-    id::String 
+
+
+
+
+
+
+
+
+
+
+struct Ingredient # predefined individual chemicals  that can be present in a run. We break down any mixed reagents into individual ingredient components.
     name::String # full name 
-    molecular_weight::Union{Unitful.Quantity, Missing} # some ingredients have an indeterminate molar mass 
-    default_concentration_measure::Unitful.Units 
-    Ingredient(id,name,molecular_weight,default_concentration_measure) = typeof(molecular_weight)==Nothing && dimension(default_concentration_measure) == dimension(u"M") ? error("cannot define an indeterminate ingredeint with a default molar concentration, use mass instead ") : new(id,name,molecular_weight,default_concentration_measure)
-end 
-
-struct IngredientAmount
-    ingredient::Ingredient 
-    amount::Unitful.Quantity 
-    IngredientAmount(ingredient,amount) = dimension(amount) in map(x->dimension(x),[u"mol",u"g",u"percent"]) && ustrip(amount) >= 0  ? new(ingredient,amount) : error("amounts must have a valid dimension and be nonnegative")
+    molecular_weight::Union{Unitful.MolarMass, Missing} # some ingredients have an indeterminate molar mass 
+    class::Symbol
+    Ingredient(name,molecular_weight,class) = class ∈ [:solid,:liquid,:organism] ? new(name,molecular_weight,class) : error("declared class must be either :solid , :liquid ,or :organism ") 
 end 
 
 
+function convert(::Type{Unitful.Density},x::Unitful.Molarity,ingredient::Ingredient)
+    return uconvert(u"g/L",x *ingredient.molecular_weight)
+end 
+
+function convert(::Type{Unitful.Molarity},x::Unitful.Density,ingredient::Ingredient)
+    return uconvert(u"M",x / ingredient.molecular_weight)
+end 
 
 
 
-
+#=
 function uconvert_to_default(quantity::Union{Unitful.Quantity,Real},ingredient::Ingredient)
 
     mass_conc=dimension(1u"g/L")
@@ -24,7 +34,7 @@ function uconvert_to_default(quantity::Union{Unitful.Quantity,Real},ingredient::
     preferred=ingredient.default_concentration_measure
     new_quantity=deepcopy(quantity)
 
-    if typeof(quantity)==typeof(1.0) && preferred==u"percent"
+    if typeof(quantity)==Real && preferred==u"percent"
         new_quantity=uconvert(preferred,quantity)
     end 
 
@@ -44,7 +54,7 @@ function uconvert_to_default(quantity::Union{Unitful.Quantity,Real},ingredient::
     end 
     return new_quantity
 end 
-
+=#
 
 
 
@@ -56,40 +66,39 @@ ingredient=Dict{String,Ingredient}()
 
 ingredient["water"]=Ingredient(
     "water",
-    "Water",
-    18.01u"g/mol",
-    u"percent" # liquid reagent
+    18.01u"g/mol" ,
+    :liquid
 )
 
 ingredient["iron_nitrate"]=Ingredient(
     "iron_nitrate",
-    "Iron (III) Nitroate nonohydrate",
     404.0u"g/mol",
-    u"g/L"
+    :solid
 )
 
 ingredient["iron_sulfate"]=Ingredient(
     "iron_sulfate",
-    "Iron (II) Sulfate heptahydrate",
     278.01u"g/mol",
-    u"g/L"
+    :solid
 )
 
 ingredient["magnesium_sulfate"]=Ingredient(
     "magnesium_sulfate",
-    "Magnesium Sulfate Heptahydrate",
     246.47u"g/mol",
-    u"g/L"
+    :solid
 )
 
 ingredient["manganese_sulfate"]=Ingredient(
     "manganese_sulfate",
-    "Manganese Sulfate Monohydrate",
     169.02u"g/mol",
-    u"g/L"
+    :solid
 )
-=# 
 
-
+ingredient["SMU_UA159"]=Ingredient(
+    "SMU_UA159",
+    missing,
+    :organism
+)
+=#
 
 

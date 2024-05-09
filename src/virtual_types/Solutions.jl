@@ -1,7 +1,30 @@
-struct Solution 
-    id::String 
-    ingredients::Dict{Ingredient,Unitful.Quantity}
-    Solution(id,ingredients) = (all(map(x->ustrip(x)>=0,collect(values(ingredients)))) && all(map(x->dimension(x) in map(x->dimension(x),[u"percent",u"M",u"g/l"]),collect(values(ingredients)))))  ? new(id,ingredients) : error("solutions must use concentrations that are nonnegative")
+# Solutions are liquid combinations that can have solids dissolved in them. We specify the concentration of liquids as %v/v 
+
+struct Solution  <: Composition
+    name::String 
+    ingredients::Dict{Ingredient,AbstractConcentration}
+    function Solution(name,ingredients)  
+        # test for issues 
+        (all(map(x->ustrip(x)>=0,collect(values(ingredients))))) || error("solutions must use concentrations that are nonnegative")
+        length(filter(x->x.class==:liquid,collect(keys(ingredients)))) > 0 || error("solutions must contain at least one liquid solvent")
+        lqvals=map(x->ingredients[x],filter(x->x.class==:liquid,collect(keys(ingredients))))
+        all(isa.(lqvals,(Unitful.DimensionlessQuantity,))) || error("liquid ingredients must have a %v/v concentration in the solution")
+        sum(lqvals) ==100u"percent" || error("liquid ingredient concentrations must sum to 100 %v/v")
+        solids=filter(x->x.class==:solid,keys(ingredients))
+        for solid_ingredient in solids 
+            if isa(ingredients[solid_ingredient],Unitful.Density) 
+                continue 
+            elseif isa(ingredients[solid_ingredient],Unitful.Molarity)
+                ingredients[solid_ingredient]=convert(Unitful.Density,ingredients[solid_ingredient],solid_ingredient)
+            else 
+                error("$(solid_ingredient.name)'s concentration must be given either by a Density or Molarity")
+            end 
+        end 
+        organismvals=map(x->ingredients[x],filter(x->x.class==:organism,collect(keys(ingredients))))
+        all(isa.(organismvals,(JensenLabUnits.Absorbance))) || error("organsims must have a concentration based on a culture absorance value, such as OD")
+        return new(name,ingredients)
+
+    end 
 end 
 Solution(ingredients)= Solution(id(),ingredients)
 
@@ -9,19 +32,18 @@ Solution(ingredients)= Solution(id(),ingredients)
 
 
 
-struct SolutionVolume
-    solution::Solution 
-    volume::Unitful.Quantity 
-    SolutionVolume(solution,volume) = dimension(volume) ==dimension(u"L") && ustrip(volume) >= 0  ? new(solution,volume) : error("volumes must be valid and nonnegative")
+struct SolutionVolume <: CompositionQuantity
+    composition::Solution 
+    quantity::Unitful.Volume 
+    SolutionVolume(composition,quantity) =  ustrip(quantity) >= 0  ? new(composition,quantity) : error("volumes must be nonnegative")
 end 
-import Base: + , - , * 
 
 
-function *(sol::Solution,vol::Unitful.Quantity)
+function *(sol::Solution,vol::Unitful.Volume)
     return SolutionVolume(sol,vol)
 end 
 
-function *(vol::Unitful.Quantity,sol::Solution)
+function *(vol::Unitful.Volume,sol::Solution)
     return SolutionVolume(sol,vol)
 end 
 
@@ -31,46 +53,46 @@ function ingredients(solution::Solution)
 end 
 
 
-function +(s1::SolutionVolume,s2::Union{IngredientAmount,SolutionVolume}) 
-    newvolume=deepcopy(s1.volume)
-    new_ingredients=Dict{Ingredient,Unitful.Quantity}()
-    if typeof(s2)==IngredientAmount
-        new_ingredients=Dict{Ingredient,Unitful.Quantity}()
-        s1_ingredients=ingredients(s1.solution)
-        s2_ingredients=s2.ingredient
-        unique_ingredients=unique(vcat(s1_ingredients,s2_ingredients))
-        for ingredient in unique_ingredients 
-            defconc=ingredient.default_concentration_measure
-            defamt=defconc*unit(newvolume)
-            a1::Unitful.Quantity=0*defamt
-            a2::Unitful.Quantity=0*defamt
-            if ingredient in s1_ingredients
-                a1= uconvert_to_default(s1.solution.ingredients[ingredient],ingredient) *s1.volume 
-            end 
-            if ingredient == s2_ingredients
-                a2=s2.amount 
-            end 
-            new_ingredients[ingredient] = (a1+a2) / newvolume
+function +(s1::SolutionVolume,s2::SolutionVolume;prefconc=Dict(:liquid=>u"percent",:solid=>u"g/l",:organism=>u"OD")) 
+
+    new_ingredients=Dict{Ingredient,AbstractConcentration}()
+    newvolume=s1.quantity+s2.quantity
+    s1_ingredients=ingredients(s1.composition)
+    s2_ingredients=ingredients(s2.composition) 
+    unique_ingredients=unique(vcat(s1_ingredients,s2_ingredients))
+    for ingredient in unique_ingredients 
+        a1::Unitful.Quantity=0*prefconc[ingredient.class] *unit(newvolume)
+        a2::Unitful.Quantity=0*prefconc[ingredient.class] *unit(newvolume)
+        if ingredient in s1_ingredients
+            a1= s1.composition.ingredients[ingredient] *s1.quantity 
         end 
-    else 
-        newvolume=s1.volume+s2.volume
-        s1_ingredients=ingredients(s1.solution)
-        s2_ingredients=ingredients(s2.solution) 
-        unique_ingredients=unique(vcat(s1_ingredients,s2_ingredients))
-        for ingredient in unique_ingredients 
-            defconc=ingredient.default_concentration_measure
-            defamt=defconc*unit(new_volume)
-            a1::Unitful.Quantity=0*defamt
-            a2::Unitful.Quantity=0*defamt
-            if ingredient in s1_ingredients
-                a1= uconvert_to_default(s1.solution.ingredients[ingredient],ingredient) *s1.volume 
-            end 
-            if ingredient in s2_ingredients
-                a2=uconvert_to_default(s2.solution.ingredients[ingredient],ingredient) *s2.volume 
-            end 
-            new_ingredients[ingredient] = (a1+a2) / newvolume 
-        
+        if ingredient in s2_ingredients
+             a2=s2.composition.ingredients[ingredient] *s2.quantity 
         end 
+
+            new_ingredients[ingredient] = uconvert(prefconc[ingredient.class],((a1+a2) / newvolume ))
+
+    end 
+     
+    return *(Solution(new_ingredients),newvolume)
+end 
+
+function +(s1::SolutionVolume,m1::MixtureMass;prefconc=Dict(:liquid=>u"percent",:solid=>u"g/l",:organism=>u"OD"))
+    new_ingredients=Dict{Ingredient,AbstractConcentration}()
+    newvolume=deepcopy(s1.quantity)
+    s1_ingredients=ingredients(s1.composition)
+    m1_ingredients=ingredients(m1.composition)
+    unique_ingredients=unique(vcat(s1_ingredients,m1_ingredients))
+    for ingredient in unique_ingredients
+        a1::Unitful.Quantity=0*prefconc[ingredient.class] *unit(newvolume)
+        a2::Unitful.Quantity=0*prefconc[ingredient.class] *unit(newvolume)
+        if ingredient in s1_ingredients
+            a1=s1.composition.ingredients[ingredient]*s1.quantity
+        end 
+        if ingredient in m1_ingredients
+            a2=m1.composition.ingredients[ingredient]*m1.quantity
+        end 
+        new_ingredients[ingredient]=uconvert(prefconc[ingredient.class],((a1+a2)/newvolume))
     end 
     return *(Solution(new_ingredients),newvolume)
 end 
@@ -81,14 +103,61 @@ function +(s1::SolutionVolume)
 end 
 
 
-function +(s1::SolutionVolume,s2::Union{IngredientAmount,SolutionVolume},x...)
-        a=+(s1,s2)
-    return +(a,x...)
-end 
     
+function -(s1::SolutionVolume,s2::SolutionVolume;prefconc=Dict(:liquid=>u"percent",:solid=>u"g/l",:organism=>u"OD")) 
+
+    new_ingredients=Dict{Ingredient,AbstractConcentration}()
+    newvolume=s1.quantity-s2.quantity
+    s1_ingredients=ingredients(s1.composition)
+    s2_ingredients=ingredients(s2.composition) 
+    unique_ingredients=unique(vcat(s1_ingredients,s2_ingredients))
+    for ingredient in unique_ingredients 
+        a1::Unitful.Quantity=0*prefconc[ingredient.class] *unit(newvolume)
+        a2::Unitful.Quantity=0*prefconc[ingredient.class] *unit(newvolume)
+        if ingredient in s1_ingredients
+            a1= s1.composition.ingredients[ingredient] *s1.quantity 
+        end 
+        if ingredient in s2_ingredients
+             a2=s2.composition.ingredients[ingredient] *s2.quantity 
+        end 
+
+            new_ingredients[ingredient] = uconvert(prefconc[ingredient.class],((a1-a2) / newvolume ))
+
+    end 
+     
+    return *(Solution(new_ingredients),newvolume)
+end 
+
+function -(s1::SolutionVolume,m1::MixtureMass;prefconc=Dict(:liquid=>u"percent",:solid=>u"g/l",:organism=>u"OD"))
+    new_ingredients=Dict{Ingredient,AbstractConcentration}()
+    newvolume=deepcopy(s1.quantity)
+    s1_ingredients=ingredients(s1.composition)
+    m1_ingredients=ingredients(m1.composition)
+    unique_ingredients=unique(vcat(s1_ingredients,m1_ingredients))
+    for ingredient in unique_ingredients
+        a1::Unitful.Quantity=0*prefconc[ingredient.class] *unit(newvolume)
+        a2::Unitful.Quantity=0*prefconc[ingredient.class] *unit(newvolume)
+        if ingredient in s1_ingredients
+            a1=s1.composition.ingredients[ingredient]*s1.quantity
+        end 
+        if ingredient in m1_ingredients
+            a2=m1.composition.ingredients[ingredient]*m1.quantity
+        end 
+        new_ingredients[ingredient]=uconvert(prefconc[ingredient.class],((a1-a2)/newvolume))
+    end 
+    return *(Solution(new_ingredients),newvolume)
+end 
+
+function +(m1::MixtureMass,s1::SolutionVolume;kwargs...)
+    return +(s1,m1;kwargs...)
+end 
 
 
-#= 
+function -(s1::SolutionVolume)
+    return s1
+end 
+
+#=
 solution=Dict{String,Solution}()
 
 
@@ -114,8 +183,19 @@ solution["iron_sulfate_100x"]=Solution(
         ingredient["water"]=>100u"percent"
     )
 )
+
+
+
+test=Solution("test", 
+Dict(
+    ingredient["water"]=>100u"percent",
+    ingredient["iron_nitrate"]=>20u"mM",
+    ingredient["SMU_UA159"]=>0.4u"OD"
+))
+
+test2=Solution("test2",
+Dict(
+    ingredient["water"]=>100u"percent",
+    ingredient["manganese_sulfate"]=>0.2u"g/l"
+))
 =#
-
-
-
-
