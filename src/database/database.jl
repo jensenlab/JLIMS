@@ -56,7 +56,7 @@ function create_db(path)
             IngredientID TEXT,
             Concentration REAL,
             Unit TEXT,
-            PRIMARY KEY (SolutionID, IngredientID),
+            PRIMARY KEY (CompositionID, IngredientID),
             FOREIGN KEY(IngredientID) REFERENCES Ingredients(Name) ON UPDATE CASCADE ON DELETE RESTRICT 
         );
         """
@@ -115,7 +115,7 @@ function create_db(path)
     CREATE TABLE Movements(
         LabwareID TEXT,
         Location TEXT,
-        Time TEXT
+        Time TEXT,
         FOREIGN KEY(LabwareID) REFERENCES Labware(LabwareID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
@@ -180,7 +180,7 @@ end
 function upload_db(db,ingredient::Ingredient)
     name=ingredient.name
     class_val=string(ingredient.class)
-    if typeof(ingredient.molecular_weight)==missing
+    if typeof(ingredient.molecular_weight)==typeof(missing)
         SQLite.execute(db,"""
         INSERT OR IGNORE INTO Ingredients (Name, Molar_Mass, Class)
         Values(?, ?, ?)
