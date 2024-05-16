@@ -166,14 +166,14 @@ function upload_db(db,labware::Labware)
     SQLite.execute(db,"""
     INSERT OR IGNORE INTO Labware (LabwareID,ContainerID)
     Values(?,?)""",(id,container))
-    if labware.time ==missing
+    if typeof(labware.time) ==typeof(missing)
     SQLite.execute(db,"""
-    INSERT OR IGNORE INTO Movements(LabwareID,Location,Time)
-    Values(?,?,?)""",(id,container,labware.location,labware.time))
+    INSERT OR IGNORE INTO Movements(LabwareID,Location)
+    Values(?,?)""",(id,labware.location))
     else 
         SQLite.execute(db,"""
         INSERT OR IGNORE INTO Movements(LabwareID,Location,Time)
-        Values(?,?,?)""",(id,container,labware.location,string(labware.time)))
+        Values(?,?,?)""",(id,labware.location,string(labware.time)))
     end 
 end 
 
@@ -210,7 +210,7 @@ end
 
 function upload_db(db,stock::Stock)
     id=stock.id
-    comp_id=stock.composition.id
+    comp_id=stock.composition.name
     upload_db(db,stock.composition) # upload if needed
     upload_db(db,stock.labware) # upload if needed 
     quantity=stock.quantity
