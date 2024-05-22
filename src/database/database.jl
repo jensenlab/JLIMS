@@ -70,6 +70,7 @@ function create_db(path)
         LabwareID TEXT,
         Position Integer,
         IsPrimary Integer, 
+        IsActive Integer,
         FOREIGN KEY(CompositionID) REFERENCES Compositions(CompositionID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LabwareID) REFERENCES Labware(LabwareID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
@@ -208,7 +209,7 @@ function upload_db(db,composition::Composition)
     end 
 end 
 
-function upload_db(db,stock::Stock)
+function upload_db(db,stock::Stock;isactive=false)
     id=stock.id
     comp_id=stock.composition.name
     upload_db(db,stock.composition) # upload if needed
@@ -219,10 +220,11 @@ function upload_db(db,stock::Stock)
     labware=stock.labware.id
     position=stock.position
     isprimary=Int(stock.isprimary)
+    isactive=Int(isactive)
     SQLite.execute(db,"""
-    INSERT OR IGNORE INTO Stocks (StockID,CompositionID,Quantity,Unit,LabwareID,Position,IsPrimary)
-    Values(?,?,?,?,?,?,?)""",
-    (id,comp_id,quant_val,quant_unit,labware,position,isprimary))
+    INSERT OR IGNORE INTO Stocks (StockID,CompositionID,Quantity,Unit,LabwareID,Position,IsPrimary,IsActive)
+    Values(?,?,?,?,?,?,?,?)""",
+    (id,comp_id,quant_val,quant_unit,labware,position,isprimary,isactive))
 end 
 
 
