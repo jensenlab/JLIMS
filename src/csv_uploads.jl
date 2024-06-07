@@ -18,12 +18,13 @@ molecular weights are assumed to be in units of g/mol.
 """
 function parse_ingredient_csv(source)
     table=CSV.read(source,DataFrame)
-    table.Class.=Symbol.(table.Class)
-    table.Molecular_Weight.=table.Molecular_Weight * u"g/mol"
+    names=table.Name
+    classes=Symbol.(table.Class)
+    mws=table.Molecular_Weight * u"g/mol"
     n=nrow(table)
     ingreds=Ingredient[]
     for i in 1:n
-        push!(ingreds,Ingredient(Vector(table[i,:])...))
+        push!(ingreds,Ingredient(names[i],mws[i],classes[i]))
     end 
 
     return ingreds
