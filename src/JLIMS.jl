@@ -5,8 +5,7 @@ using
     UUIDs,
     Dates,
     CSV,
-    DataFrames,
-    SQLite
+    DataFrames
 
 
 include("./Units/JensenLabUnits.jl")
@@ -33,8 +32,8 @@ include("./virtual_types/Runs.jl")
 include("./virtual_types/Environments.jl")
 include("./virtual_types/Experiments.jl")
 
-include("./database/csv_uploads.jl")
-include("./database/database.jl")
+include("./csv_uploads.jl")
+
 
 function Composition(name,ingredients)
     if all(map(x->x.class==:solid,collect(keys(ingredients))))
@@ -60,7 +59,6 @@ export Experiment
 export Labware
 export Stock, LiquidStock,SolidStock,deposit,withdraw,transfer
 export parse_ingredient_csv,parse_composition_csv,parse_container_csv
-export create_db,upload_db
 
 
 
