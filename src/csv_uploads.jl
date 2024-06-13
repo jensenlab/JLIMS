@@ -73,7 +73,7 @@ parse CSVs that contain new container definitions. Returns a vector of container
 
 Example Table: 
 
-| Name | Volume | Unit | Rows | Cols | Vendor | Catalog |
+| Name | Capacity | Unit | Rows | Cols | Vendor | Catalog |
 | :------ | ----------- | -------| -------|-----| ------ | :------:| 
 | conical_50ml  | 50 | ml | 1 | 1 | Thermo | 339652 | 
 | plate_96 | 200 | µl | 8 | 12 | Thermo | 266120 |
@@ -85,14 +85,14 @@ function parse_container_csv(source)
     conts=Container[]
 
     for i in 1:n
-        name=table[i,:Name]
-        vol=table[i,:Volume]
+        name=String(table[i,:Name])
+        cap=table[i,:Capacity]
         un=uparse(table[i,:Unit];unit_context=[Unitful,JensenLabUnits])
-        volume=vol*un
+        capacity=cap*un
         shape=(table[i,:Rows],table[i,:Cols])
-        vendor=table[i,:Vendor]
-        catalog=table[i,:Catalog]
-        push!(conts,Container(name,volume,shape,vendor,catalog))
+        vendor=String(table[i,:Vendor])
+        catalog=String(table[i,:Catalog])
+        push!(conts,Container(name,capacity,shape,vendor,catalog))
     end 
 
     return conts

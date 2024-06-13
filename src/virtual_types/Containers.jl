@@ -1,11 +1,32 @@
-struct Container
+abstract type Container end 
+
+struct LiquidContainer <: Container
     name::String 
-    volume::Unitful.Volume
+    capacity::Unitful.Volume
     shape::Tuple{Int64,Int64}
     vendor::String 
     catalog::String 
 end 
 
+struct SolidContainer <:Container
+    name::String
+    capacity::Unitful.Mass
+    shape::Tuple{Int64,Int64}
+    vendor::String
+    catalog::String
+end 
+
+
+
+function Container(name::String,capacity::Union{Unitful.Volume,Unitful.Mass},shape::Tuple{Int64,Int64},vendor::String,catalog::String)
+
+    if isa(capacity,Unitful.Volume)
+        return LiquidContainer(name,capacity,shape,vendor,catalog)
+    else
+        return SolidContainer(name,capacity,shape,vendor,catalog)
+    end 
+
+end 
 
 
 

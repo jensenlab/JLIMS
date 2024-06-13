@@ -6,45 +6,43 @@ struct LiquidStock <: Stock
     composition::Solution
     quantity::Unitful.Volume
     labware::Labware
-    position::Integer
     isprimary::Bool # primary stocks are purchaesed and arrive straight from the manufacturer without alteration
-    function LiquidStock(id,composition,quantity,labware,position,isprimary)
-        labware.container.volume >= quantity >= 0u"l" || error("volume must be between 0 and $(labware.container.volume).")
-        position in 1:prod(labware.container.shape) || error("position must be a valid position between 1 and $(prod(labware.container.shape))")
-        return new(id,composition,quantity,labware,position,isprimary)
+    function LiquidStock(id,composition,quantity,labware,isprimary)
+        typeof(labware.container)==LiquidContainer || error("the selected container is incompatible with a liquid stock")
+        labware.container.capacity >= quantity >= 0u"l" || error("volume must be between 0 and $(labware.container.capacity).")
+        return new(id,composition,quantity,labware,isprimary)
     end 
 end 
 
-LiquidStock(solution,volume,labware,position) = LiquidStock(id(),solution,volume,labware,position,false) 
+LiquidStock(solution,volume,labware) = LiquidStock(id(),solution,volume,labware,false) 
 
 struct SolidStock <: Stock 
     id::String
     composition::Mixture
     quantity::Unitful.Mass
     labware::Labware
-    position::Integer
     isprimary::Bool # primary stocks are purchased and arrive straight from the manufacturer without alteration 
-    function SolidStock(id,composition,quantity,labware,position,isprimary) 
-        quantity >= 0u"g" || error(" mass must be greater than 0")
-        position in 1:prod(labware.container.shape) || error("position must be a valid position between 1 and $(prod(labware.container.shape))")
-        return new(id,composition,quantity,labware,position,isprimary)
+    function SolidStock(id,composition,quantity,labware,isprimary) 
+        labware.container.capacity >= quantity >= 0u"g" || error(" mass must be between 0 and $(labware.container.capacity)")
+        typeof(labware.container)==SolidContainer || error("the selected container is incompatible with a solid stock.")
+        return new(id,composition,quantity,labware,isprimary)
     end 
 end 
 
-SolidStock(solution,volume,labware,position) = SolidStock(id(),solution,volume,labware,position,false)
+SolidStock(solution,volume,labware) = SolidStock(id(),solution,volume,labware,false)
 
-function Stock(id::String, composition::Composition,quantity::Union{Unitful.Mass,Unitful.Volume},labware::Labware,position::Integer,isprimary::Bool)
+function Stock(id::String, composition::Composition,quantity::Union{Unitful.Mass,Unitful.Volume},labware::Labware,isprimary::Bool)
     if typeof(composition)==Solution && isa(quantity,Unitful.Volume)
-        return LiquidStock(id,composition,quantity,labware,position,isprimary)
+        return LiquidStock(id,composition,quantity,labware,isprimary)
     elseif typeof(composition)==Mixture && isa(quantity,Unitful.Mass)
-        return SolidStock(id,composition,quantity,labware,position,isprimary)
+        return SolidStock(id,composition,quantity,labware,isprimary)
     else 
         error("stock composition of type $(typeof(composition)) and quantity of type $(dimension(quantity)) are inconsistent")
     end 
 end 
 
-function Stock(composition,quantity,labware,position)
-    return Stock(id(),composition,quantity,labware,position,false)
+function Stock(composition,quantity,labware)
+    return Stock(id(),composition,quantity,labware,false)
 end 
 
 
@@ -69,11 +67,11 @@ Add a quantity of an untracked source solution or Ingredient to a recipient stoc
 function deposit(recipient::Stock,source::CompositionQuantity)
     !recipient.isprimary || error("you cannot deposit into primary stocks")
     if recipient.composition == source.composition 
-        return Stock(recipient.id,recipient.composition,recipient.quantity+source.quantity,recipient.labware,recipient.position,recipient.isprimary) # update the recipient, but check if the labware can hold the deposit
+        return Stock(recipient.id,recipient.composition,recipient.quantity+source.quantity,recipient.labware,recipient.isprimary) # update the recipient, but check if the labware can hold the deposit
     else
         a=*(recipient.composition,recipient.quantity)
         res=+(a,source)
-        return Stock(res.composition,res.quantity,recipient.labware,recipient.position) #generates a new stock id
+        return Stock(res.composition,res.quantity,recipient.labware) #generates a new stock id
     end 
 end 
 
@@ -90,11 +88,11 @@ Remove a quantity of an untracked destination composition from a donor stock. Ge
 """
 function withdraw(donor::Stock,destination::CompositionQuantity)
     if donor.composition ==destination.composition
-        return Stock(donor.id,donor.composition,donor.quantity-destination.quantity,donor.labware,donor.position,donor.isprimary) # update the donor, but check if there is enough to do the withdrawl
+        return Stock(donor.id,donor.composition,donor.quantity-destination.quantity,donor.labware,donor.isprimary) # update the donor, but check if there is enough to do the withdrawl
     else 
         a=*(donor.composition,donor.quantity) 
         res=-(a,destination) # compute a new composition and quantity 
-        return Stock(res.composition,res.quantity,donor.labware,donor.position) #generates a new stock with a new composition 
+        return Stock(res.composition,res.quantity,donor.labware) #generates a new stock with a new composition 
     end 
 end 
 
