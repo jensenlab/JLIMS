@@ -11,20 +11,25 @@
 struct Ingredient # predefined individual chemicals  that can be present in a run. We break down any mixed reagents into individual ingredient components.
     name::String # full name 
     molecular_weight::Union{Unitful.MolarMass, Missing} # some ingredients have an indeterminate molar mass 
+    density::Union{Unitful.Density,Missing}
     class::Symbol
-    Ingredient(name,molecular_weight,class) = class ∈ [:solid,:liquid,:organism] ? new(name,molecular_weight,class) : error("declared class must be either :solid , :liquid ,or :organism ") 
+    Ingredient(name,molecular_weight,density,class) = class ∈ [:solid,:liquid,:organism] ? new(name,molecular_weight,density,class) : error("declared class must be either :solid , :liquid ,or :organism ") 
 end 
 
 
-function convert(::Type{Unitful.Density},x::Unitful.Molarity,ingredient::Ingredient)
-    return uconvert(u"g/L",x *ingredient.molecular_weight)
+
+
+
+function convert(y::Unitful.DensityUnits,x::Unitful.Molarity,ingredient::Ingredient)
+    typeof(ingredient.molecular_weight)==Missing ? error(" $(ingredient.name)'s molecular weight is unknown") : return uconvert(y,x *ingredient.molecular_weight)
 end 
 
-function convert(::Type{Unitful.Molarity},x::Unitful.Density,ingredient::Ingredient)
-    return uconvert(u"M",x / ingredient.molecular_weight)
+function convert(y::Unitful.MolarityUnits,x::Unitful.Density,ingredient::Ingredient)
+    typeof(ingredient.molecular_weight)==Missing ? error(" $(ingredient.name)'s molecular weight is unknown") : return uconvert(y,x / ingredient.molecular_weight)
 end 
 
 
+        
 
 #=
 function uconvert_to_default(quantity::Union{Unitful.Quantity,Real},ingredient::Ingredient)

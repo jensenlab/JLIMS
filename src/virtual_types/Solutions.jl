@@ -1,9 +1,8 @@
 # Solutions are liquid combinations that can have solids dissolved in them. We specify the concentration of liquids as %v/v 
 
-struct Solution  <: Composition
-    name::String 
+struct Solution  <: Composition 
     ingredients::Dict{Ingredient,AbstractConcentration}
-    function Solution(name,ingredients)  
+    function Solution(ingredients)  
         # test for issues 
         (all(map(x->ustrip(x)>=0,collect(values(ingredients))))) || error("solutions must use concentrations that are nonnegative")
         length(filter(x->x.class==:liquid,collect(keys(ingredients)))) > 0 || error("solutions must contain at least one liquid solvent")
@@ -22,11 +21,11 @@ struct Solution  <: Composition
         end 
         organismvals=map(x->ingredients[x],filter(x->x.class==:organism,collect(keys(ingredients))))
         all(isa.(organismvals,(JensenLabUnits.Absorbance))) || error("organsims must have a concentration based on a culture absorance value, such as OD")
-        return new(name,ingredients)
+        return new(ingredients)
 
     end 
 end 
-Solution(ingredients)= Solution(id(),ingredients)
+
 
 
 

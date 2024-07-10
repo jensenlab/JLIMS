@@ -14,7 +14,7 @@ iron_nitrate=primary_solution_db[findfirst(x->x.name=="iron_nitrate",primary_sol
 cdm_aas=solution_db[findfirst(x->x.name=="cdm_amino_acids_50x",solution_db)]
 
 con50=container_db[findfirst(x->x.name=="conical_50ml",container_db)]
-iron_container=container_db[findfirst(x->x.name=="iron (III) nibrate nonohydrate",container_db)]
+iron_container=container_db[findfirst(x->x.name=="iron (III) nitrate nonohydrate",container_db)]
 # test new unit parsing 
 @testset "NewUnitParsing" begin
     @test uparse("OD",unit_context=[Unitful,JensenLabUnits])==u"OD"

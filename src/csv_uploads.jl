@@ -18,13 +18,17 @@ molecular weights are assumed to be in units of g/mol.
 """
 function parse_ingredient_csv(source)
     table=CSV.read(source,DataFrame)
-    names=table.Name
+    names=String.(table.Name)
+    cids=table.CID
     classes=Symbol.(table.Class)
-    mws=table.Molecular_Weight * u"g/mol"
     n=nrow(table)
     ingreds=Ingredient[]
     for i in 1:n
-        push!(ingreds,Ingredient(names[i],mws[i],classes[i]))
+        if typeof(cids[i])==Missing 
+            push!(ingreds,Ingredient(names[i],missing,missing,classes[i]))
+        else 
+            push!(ingreds,Ingredient(names[i],cids[i],classes[i]))
+        end
     end 
 
     return ingreds

@@ -1,11 +1,9 @@
 struct Mixture <: Composition
-    name::String 
     ingredients::Dict{Ingredient,Unitful.DimensionlessQuantity}
-    Mixture(name,ingredients) = (all(map(x->ustrip(x)>=0,collect(values(ingredients)))) && all(map(x->x.class==:solid,collect(keys(ingredients)))) && sum(collect(values(ingredients)))==100u"percent")  ? new(name,ingredients) : error("ingredients in a mixture must be solids that have positive %w/w concentrations that sum to 100%")
+    Mixture(ingredients) = (all(map(x->ustrip(x)>=0,collect(values(ingredients)))) && all(map(x->x.class==:solid,collect(keys(ingredients)))) && sum(collect(values(ingredients)))==100u"percent")  ? new(ingredients) : error("ingredients in a mixture must be solids that have positive %w/w concentrations that sum to 100%")
 end 
 
 
-Mixture(ingredients) = Mixture(id(),ingredients)
 
 
 struct MixtureMass <: CompositionQuantity 
@@ -73,6 +71,23 @@ function -(m1::MixtureMass,m2::MixtureMass)
    return MixtureMass(Mixture(new_ingredients),newmass)
 
 end 
+
+
+function mixture_density(m::Mixture)
+    ings=m.ingredients
+    total_density=0u"g/ml"
+    for ing in keys(ings)
+        total_density+=ing.density*ings[ing]
+    end
+    #=
+    if typeof(total_density)==Missing
+        @warn "One or more of the ingredients have an undefined density"  
+    end 
+    =#
+    return total_density
+end 
+
+    
 
 # test mixtures 
 #=

@@ -1,32 +1,14 @@
-abstract type Container end 
 
-struct LiquidContainer <: Container
+
+struct Container
     name::String 
-    capacity::Unitful.Volume
-    shape::Tuple{Int64,Int64}
-    vendor::String 
-    catalog::String 
-end 
-
-struct SolidContainer <:Container
-    name::String
-    capacity::Unitful.Mass
-    shape::Tuple{Int64,Int64}
-    vendor::String
-    catalog::String
+    capacity::Unitful.Volume # the volume of each well in the container
+    shape::Tuple{Int64,Int64} #defines the number and configuration of the wells in the container
 end 
 
 
 
-function Container(name::String,capacity::Union{Unitful.Volume,Unitful.Mass},shape::Tuple{Int64,Int64},vendor::String,catalog::String)
 
-    if isa(capacity,Unitful.Volume)
-        return LiquidContainer(name,capacity,shape,vendor,catalog)
-    else
-        return SolidContainer(name,capacity,shape,vendor,catalog)
-    end 
-
-end 
 
 
 
