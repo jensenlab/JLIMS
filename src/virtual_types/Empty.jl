@@ -33,3 +33,6 @@ function +(e1::EmptyQuantity,s1::SolutionVolume)
     return s1
 end
 
+function ingredients(empty::Empty)
+    return Ingredient[]
+end 

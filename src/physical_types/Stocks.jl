@@ -1,6 +1,8 @@
 abstract type Stock end 
 
 
+
+
 struct LiquidStock <: Stock
     composition::Solution
     quantity::Unitful.Volume
