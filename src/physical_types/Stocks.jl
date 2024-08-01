@@ -8,7 +8,7 @@ struct LiquidStock <: Stock
     quantity::Unitful.Volume
     well::Well
     function LiquidStock(composition,quantity,well)
-        well.container.capacity >= quantity >= 0u"l" || error("volume must be between 0 and $(well.container.capacity).")
+        well.container.capacity >= quantity >= 0u"l" || error("capacity error: (well $(well.id) -> $(quantity)) stock must be between 0 and $(well.container.capacity).")
         return new(composition,quantity,well)
     end 
 end 
@@ -22,7 +22,7 @@ struct SolidStock <: Stock
         density_estimate=mixture_density(composition)
         estimated_volume=0
         typeof(density_estimate)==Missing || density_estimate==0u"ml" ? estimated_volume=0u"ml" : estimated_volume=quantity/density_estimate
-        well.container.capacity >= estimated_volume >= 0u"ml" || error(" mass must be between 0 and $(well.container.capacity)")
+        well.container.capacity >= estimated_volume >= 0u"ml" || error("capacity error: (well $(well.id) -> $(estimated_volume)) stock must bebetween 0 and $(well.container.capacity)")
         return new(composition,quantity,well)
     end 
 end 
