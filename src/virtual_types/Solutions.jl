@@ -8,7 +8,7 @@ struct Solution  <: Composition
         length(filter(x->x.class==:liquid,collect(keys(ingredients)))) > 0 || error("solutions must contain at least one liquid solvent")
         lqvals=map(x->ingredients[x],filter(x->x.class==:liquid,collect(keys(ingredients))))
         all(isa.(lqvals,(Unitful.DimensionlessQuantity,))) || error("liquid ingredients must have a %v/v concentration in the solution")
-        sum(lqvals) ==100u"percent" || error("liquid ingredient concentrations must sum to 100 %v/v")
+        round(sum(lqvals),digits=8) ==100u"percent" || error("liquid ingredient concentrations must sum to 100 %v/v")
         solids=filter(x->x.class==:solid,keys(ingredients))
         for solid_ingredient in solids 
             if isa(ingredients[solid_ingredient],Unitful.Density) 
