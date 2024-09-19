@@ -14,7 +14,7 @@ struct Solution  <: Composition
             if isa(ingredients[solid_ingredient],Unitful.Density) 
                 continue 
             elseif isa(ingredients[solid_ingredient],Unitful.Molarity)
-                continue
+                ingredients[solid_ingredient]=convert(u"g/L",ingredients[solid_ingredient],solid_ingredient)
             else 
                 error("$(solid_ingredient.name)'s concentration must be given either by a Density or Molarity")
             end 
