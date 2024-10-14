@@ -7,6 +7,24 @@ struct Container
 end 
 
 
+function Base.show(io::IO,c::Container)
+    print(io, c.name," => ",c.capacity," ($(c.shape[1]) by $(c.shape[2]))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", c::Container)
+    println(io, c.name)
+    println(io,"Well Capacity: $(c.capacity)")
+    row="rows"
+    col="columns"
+    if c.shape[1]==1
+        row="row"
+    end 
+    if c.shape[2]==1
+        col="column"
+    end
+    println(io, "$(c.shape[1]) $row by $(c.shape[2]) $col")
+end 
+
 
 
 
@@ -16,9 +34,7 @@ end
 WP384=Container(
     "WP384",
     80u"µl",
-    (16,24),
-    "Corning",
-    "TBD"
+    (16,24)
 
 )
 
@@ -26,8 +42,6 @@ WP384=Container(
 CON50=Container(
     "CON50",
     50u"mL",
-    (1,1),
-    "TBD",
-    "TBD"
+    (1,1)
 )
 =#

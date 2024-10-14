@@ -1,5 +1,5 @@
 module JLIMS
-import Base: +,-,*,convert
+import Base: +,-,*,convert, show ,sort 
 using 
     Unitful,
     UnitfulParsableString,
@@ -14,6 +14,7 @@ include("./Units/JensenLabUnits.jl")
 #basic information 
 
 #virtual types 
+include("./exceptions.jl")
 include("./virtual_types/Ingredients.jl")
 include("./virtual_types/Compositions.jl")
 include("./virtual_types/Mixtures.jl")
@@ -37,12 +38,12 @@ function Composition(ingredients)
     end 
 end 
 
-
+export CapacityError
 export  JensenLabUnits
 export Ingredient, convert
 export Composition, CompositionQuantity
 export Mixture, MixtureMass, *, ingredients, +,-
-export Soluiton, SolutionVolume
+export Solution, SolutionVolume
 export Empty , EmptyQuantity
 export Container
 export Stock, LiquidStock,SolidStock,deposit,withdraw,transfer

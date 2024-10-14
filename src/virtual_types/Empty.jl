@@ -6,6 +6,15 @@ struct EmptyQuantity <: CompositionQuantity
     quantity::Missing
 end 
 
+function Base.show(io::IO,s::Empty)
+    print(io, "Empty Composition")
+end 
+
+function Base.show(io::IO,::MIME"text/plain",s::Empty)
+    print(io, "Empty Composition")
+end 
+
+
 
 function *(e::Empty,m::Missing)
     return EmptyQuantity(e,m)

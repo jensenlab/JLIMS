@@ -16,8 +16,27 @@ struct Ingredient # predefined individual chemicals  that can be present in a ru
     Ingredient(name,molecular_weight,density,class) = class ∈ [:solid,:liquid,:organism] ? new(name,molecular_weight,density,class) : error("declared class must be either :solid , :liquid ,or :organism ") 
 end 
 
+function Base.show(io::IO,ing::Ingredient)
+    print(io, ing.name)
+end 
+
+function Base.show(io::IO, ::MIME"text/plain", ing::Ingredient)
+    println(io, ing.name) 
+
+    if !ismissing(ing.molecular_weight)
+        println(io ,"molecular weight: ",ing.molecular_weight)
+    end 
+    if !ismissing(ing.density)
+        println(io,"density: ", ing.density)
+    end 
+    println(io,"class: ",string(ing.class))
+end 
 
 
+function Base.sort(v::Vector{T}) where T<: Ingredient
+    idxs=sortperm(map(x->x.name,v))
+    return v[idxs]
+end 
 
 
 function convert(y::Unitful.DensityUnits,x::Unitful.Molarity,ingredient::Ingredient)
@@ -69,15 +88,17 @@ end
 ingredient=Dict{String,Ingredient}()
 
 
-ingredient["water"]=Ingredient(
+water=Ingredient(
     "water",
     18.01u"g/mol" ,
+    1u"g/L",
     :liquid
 )
 
-ingredient["iron_nitrate"]=Ingredient(
+iron_nitrate=Ingredient(
     "iron_nitrate",
     404.0u"g/mol",
+    missing,
     :solid
 )
 

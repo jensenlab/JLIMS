@@ -1,20 +1,26 @@
 using JLIMS, Test, Unitful
 
 #### import a proxy database of lab objects 
-ingredient_db=parse_ingredient_csv("test_ingredients.csv")
+ingredient_db=parse_ingredient_csv("./test/test_ingredients.csv")
 
-container_db=parse_container_csv("test_containers.csv")
+water=ingredient_db[1]
+iron_nitrate=ingredient_db[2]
+SMU_UA159=ingredient_db[78]
+magnesium_sulfate=ingredient_db[4]
 
-primary_solution_db=parse_composition_csv("test_primary_solutions.csv",ingredient_db)
+conical50=Container("conical_50ml",50u"mL",(1,1))
+WP96=Container("plate_96",200u"µL",(8,12))
 
-solution_db=parse_composition_csv("test_solutions.csv",ingredient_db)
 
-water=primary_solution_db[findfirst(x->x.name=="water",primary_solution_db)]
-iron_nitrate=primary_solution_db[findfirst(x->x.name=="iron_nitrate",primary_solution_db)]
-cdm_aas=solution_db[findfirst(x->x.name=="cdm_amino_acids_50x",solution_db)]
+sol1=Solution(Dict(water=>100u"percent"))
+mix1=Mixture(Dict(iron_nitrate=>100u"percent"))
+sol2=Solution(Dict(water=>100u"percent",iron_nitrate=>3u"g/L"))
 
-con50=container_db[findfirst(x->x.name=="conical_50ml",container_db)]
-iron_container=container_db[findfirst(x->x.name=="iron (III) nitrate nonohydrate",container_db)]
+w1=Well(1,"water",1,conical50)
+w2=Well(2,"iron nitrate",1,conical50)
+w3=Well(3,"test",1,conical50)
+w4=Well(4,"plate1",1,WP96)
+
 # test new unit parsing 
 @testset "NewUnitParsing" begin
     @test uparse("OD",unit_context=[Unitful,JensenLabUnits])==u"OD"
@@ -23,29 +29,23 @@ iron_container=container_db[findfirst(x->x.name=="iron (III) nitrate nonohydrate
 end 
 
 
-# test labware building 
-@testset "LabwareBuilding" begin
-    for container in container_db 
-        lw =Labware(named_id(container.name),container,1)
-        @test lw.id[1:length(container.name)]==container.name
-        @test lw.container==container
-    end 
-end 
 
 
 #test stock math 
 @testset "StockMath" begin 
-    s1= Stock(water,50u"ml",Labware(con50,1))
-    s2=Stock(iron_nitrate,20u"g",Labware(iron_container,1))
-    s3=Stock(cdm_aas,40u"ml",Labware(con50,1))
-
+    s1= Stock(sol1,50u"ml",w1)
+    s2=Stock(mix1,20u"g",w2)
+    s3=Stock(sol2,40u"ml",w3)
     s2,s4=transfer(s2,s1,10u"g")
+    e=nothing
+    try Stock(sol1,51u"mL",w1) catch e end 
+    @test e isa CapacityError
     @test typeof(s1)==LiquidStock
     @test typeof(s2)==SolidStock
     @test typeof(s3)==LiquidStock
     @test s4.quantity==50u"ml"
     @test s4.composition.ingredients[ingredient_db[findfirst(x->x.name=="iron_nitrate",ingredient_db)]]==200u"g/l"
-    @test (s4.labware)==(s1.labware)
+    @test (s4.well)==(s1.well)
     @test s2.quantity==10u"g"
     s7,s5=transfer(s4,s3,3u"ml")
     @test s5.composition.ingredients[ingredient_db[findfirst(x->x.name=="iron_nitrate",ingredient_db)]]<s7.composition.ingredients[ingredient_db[findfirst(x->x.name=="iron_nitrate",ingredient_db)]] # concentration of iron nitrate should be less than the stock

@@ -18,19 +18,11 @@ molecular weights are assumed to be in units of g/mol.
 """
 function parse_ingredient_csv(source)
     table=CSV.read(source,DataFrame)
-    names=String.(table.Name)
-    cids=table.CID
-    classes=Symbol.(table.Class)
-    n=nrow(table)
     ingreds=Ingredient[]
-    for i in 1:n
-        if typeof(cids[i])==Missing 
-            push!(ingreds,Ingredient(names[i],missing,missing,classes[i]))
-        else 
-            push!(ingreds,Ingredient(names[i],cids[i],classes[i]))
-        end
+    for row in eachrow(table)
+        ing=Ingredient(row.Name,row.Molecular_Weight*u"g/mol",missing,Symbol(row.Class))
+        push!(ingreds,ing)
     end 
-
     return ingreds
 
 end
@@ -64,7 +56,7 @@ function parse_composition_csv(source,ingredients::Vector{Ingredient})
         conc=table[idxs,:Concentration]
         uns=table[idxs,:Unit]
         quants=conc.*Unitful.uparse.(uns;unit_context=[Unitful,JensenLabUnits])
-        push!(comps,Composition(compnames[i],Dict(ingreds .=>quants)))
+        push!(comps,Composition(Dict(ingreds .=>quants)))
     end 
     return comps
 end 
@@ -96,7 +88,7 @@ function parse_container_csv(source)
         shape=(table[i,:Rows],table[i,:Cols])
         vendor=String(table[i,:Vendor])
         catalog=String(table[i,:Catalog])
-        push!(conts,Container(name,capacity,shape,vendor,catalog))
+        push!(conts,Container(name,capacity,shape))
     end 
 
     return conts

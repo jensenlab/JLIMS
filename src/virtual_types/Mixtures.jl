@@ -4,6 +4,13 @@ struct Mixture <: Composition
 end 
 
 
+function Base.show(io::IO,s::Mixture)
+    println(io, "Mixture ($(length(collect(keys(s.ingredients)))) ingredient(s))")
+    ings=sort(ingredients(s))
+    quants=map(x->s.ingredients[x],ings)
+    show(io , DataFrame(Ingredient=ings,Concentration=quants))
+end 
+
 
 
 struct MixtureMass <: CompositionQuantity 

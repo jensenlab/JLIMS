@@ -27,6 +27,14 @@ struct Solution  <: Composition
 end 
 
 
+function Base.show(io::IO,s::Solution)
+    println(io, "Solution ($(length(collect(keys(s.ingredients)))) ingredient(s))")
+    ings=sort(ingredients(s))
+    quants=map(x->s.ingredients[x],ings)
+    show(io , DataFrame(Ingredient=ings,Concentration=quants))
+end 
+
+
 
 
 
