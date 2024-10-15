@@ -1,7 +1,7 @@
 using JLIMS, Test, Unitful
 
 #### import a proxy database of lab objects 
-ingredient_db=parse_ingredient_csv("./test/test_ingredients.csv")
+ingredient_db=parse_ingredient_csv("test_ingredients.csv")
 
 water=ingredient_db[1]
 iron_nitrate=ingredient_db[2]

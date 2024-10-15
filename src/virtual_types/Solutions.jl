@@ -28,10 +28,10 @@ end
 
 
 function Base.show(io::IO,s::Solution)
-    println(io, "Solution ($(length(collect(keys(s.ingredients)))) ingredient(s))")
+    printstyled(io, "Solution ($(length(collect(keys(s.ingredients)))) ingredient(s))\n";bold=true)
     ings=sort(ingredients(s))
     quants=map(x->s.ingredients[x],ings)
-    show(io , DataFrame(Ingredient=ings,Concentration=quants))
+    show(io , DataFrame(Ingredient=ings,Concentration=quants);eltypes=false,summary=false,truncate=0,show_row_number=false, alignment=[:l,:l])
 end 
 
 

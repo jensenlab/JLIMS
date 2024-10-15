@@ -48,13 +48,13 @@ end
 
 
 function Base.show(io::IO,s::Stock)
-    show(io,s.quantity)
-    show(io,s.composition)
-    show(io,s.well)
+    printstyled(io,s.quantity, " ";bold=true)
+    println(io,s.composition)
+    print(io,s.well)
 end 
 
 function Base.show(io::IO,::MIME"text/plain",s::Stock)
-    println(io,"Quantity: ",s.quantity)
+    printstyled(io,s.quantity, " ";bold=true)
     println(io,s.composition)
     println(io , s.well)
 end 
