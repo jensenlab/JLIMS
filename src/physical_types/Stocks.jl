@@ -33,12 +33,23 @@ struct EmptyStock <: Stock
     well::Well
 end 
 
+struct CultureStock <: Stock 
+    composition::Culture
+    quantity::Unitful.Volume 
+    well::Well 
+    function CultureStock(composition,quantity,well)
+        tolerance*well.container.capacity >= quantity >= 0u"l" || throw(CapacityError("Well $(well.id) -> $(quantity)) stock must be between 0 and $(well.container.capacity).", quantity))
+        return new(composition,quantity,well)
+    end 
+end
 
 function Stock(composition::Composition,quantity::Union{Unitful.Mass,Unitful.Volume,Missing},well::Well)
     if typeof(composition)==Solution && isa(quantity,Unitful.Volume)
         return LiquidStock(composition,quantity,well)
     elseif typeof(composition)==Mixture && isa(quantity,Unitful.Mass)
         return SolidStock(composition,quantity,well)
+    elseif typeof(composition)==Culture && isa(quantity,Unitful.Volume)
+        return CultureStock(composition,quantity,well)
     elseif typeof(composition)==Empty && isa(quantity,Missing)
         return EmptyStock(composition,quantity,well)
     else 
@@ -48,13 +59,14 @@ end
 
 
 function Base.show(io::IO,s::Stock)
-    printstyled(io,s.quantity, " ";bold=true)
+    
+    printstyled(io,round(s.quantity;digits=3), " ";bold=true)
     println(io,s.composition)
-    print(io,s.well)
+    println(io,s.well)
 end 
 
 function Base.show(io::IO,::MIME"text/plain",s::Stock)
-    printstyled(io,s.quantity, " ";bold=true)
+    printstyled(io,round(s.quantity;digits=3), " ";bold=true)
     println(io,s.composition)
     println(io , s.well)
 end 

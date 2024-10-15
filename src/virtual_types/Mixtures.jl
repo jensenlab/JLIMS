@@ -1,15 +1,8 @@
 struct Mixture <: Composition
-    ingredients::Dict{Ingredient,Unitful.DimensionlessQuantity}
-    Mixture(ingredients) = (all(map(x->ustrip(x)>=0,collect(values(ingredients)))) && all(map(x->x.class==:solid,collect(keys(ingredients)))) && sum(collect(values(ingredients)))==100u"percent")  ? new(ingredients) : error("ingredients in a mixture must be solids that have positive %w/w concentrations that sum to 100%")
+    ingredients::Dict{Solid,Unitful.DimensionlessQuantity}
+    Mixture(ingredients) = (all(map(x->ustrip(x)>=0,collect(values(ingredients)))) && sum(collect(values(ingredients)))==100u"percent")  ? new(ingredients) : error("ingredients in a mixture must be solids that have positive %w/w concentrations that sum to 100%")
 end 
 
-
-function Base.show(io::IO,s::Mixture)
-    printstyled(io, "Mixture ($(length(collect(keys(s.ingredients)))) ingredient(s))\n";bold=true)
-    ings=sort(ingredients(s))
-    quants=map(x->s.ingredients[x],ings)
-    show(io , DataFrame(Ingredient=ings,Concentration=quants);eltypes=false,summary=false,truncate=0,show_row_number=false,alignment=[:l,:l])
-end 
 
 
 struct MixtureMass <: CompositionQuantity 
@@ -26,57 +19,9 @@ function *(mass::Unitful.Mass,mix::Mixture)
     return MixtureMass(mix,mass)
 end 
 
-function ingredients(mixture::Mixture)
-    return collect(keys(mixture.ingredients))
-end 
 
 
 
-function +(m1::MixtureMass,m2::MixtureMass)
-
-    new_ingredients=Dict{Ingredient,Unitful.DimensionlessQuantity}()
-    newmass=m1.quantity+m2.quantity
-    m1_ingredients=ingredients(m1.composition)
-    m2_ingredients=ingredients(m2.composition) 
-    unique_ingredients=unique(vcat(m1_ingredients,m2_ingredients))
-    for ingredient in unique_ingredients 
-        a1::Unitful.Quantity=0*unit(newmass)
-        a2::Unitful.Quantity=0*unit(newmass)
-        if ingredient in m1_ingredients
-            a1= m1.composition.ingredients[ingredient] * m1.quantity
-        end 
-        if ingredient in m2_ingredients
-            a2= m2.composition.ingredients[ingredient] *m2.quantity
-        end 
-        new_ingredients[ingredient] =  uconvert(u"percent",(a1+a2)/newmass)
-    end 
-
-   return MixtureMass(Mixture(new_ingredients),newmass)
-
-end 
-
-function -(m1::MixtureMass,m2::MixtureMass)
-
-    new_ingredients=Dict{Ingredient,Unitful.DimensionlessQuantity}()
-    newmass=m1.quantity-m2.quantity
-    m1_ingredients=ingredients(m1.composition)
-    m2_ingredients=ingredients(m2.composition) 
-    unique_ingredients=unique(vcat(m1_ingredients,m2_ingredients))
-    for ingredient in unique_ingredients 
-        a1::Unitful.Quantity=0*unit(newmass)
-        a2::Unitful.Quantity=0*unit(newmass)
-        if ingredient in m1_ingredients
-            a1= m1.composition.ingredients[ingredient] * m1.quantity
-        end 
-        if ingredient in m2_ingredients
-            a2= m2.composition.ingredients[ingredient] *m2.quantity
-        end 
-        new_ingredients[ingredient] =  uconvert(u"percent",(a1-a2)/newmass)
-    end 
-
-   return MixtureMass(Mixture(new_ingredients),newmass)
-
-end 
 
 
 function mixture_density(m::Mixture)
