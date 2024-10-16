@@ -1,5 +1,5 @@
 module JLIMS
-import Base: +,-,*,convert, show ,sort 
+import Base: +,-,*,convert, show ,sort , promote_rule,round
 using 
     Unitful,
     UnitfulParsableString,
@@ -11,6 +11,8 @@ include("./Units/JensenLabUnits.jl")
 
     using .JensenLabUnits
     Unitful.register(JensenLabUnits)
+
+Unitful.promote_unit(::S,::T) where {S<:Unitful.VolumeUnits,T<:Unitful.VolumeUnits} = u"mL"
 #basic information 
 
 #virtual types 
@@ -21,34 +23,31 @@ include("./virtual_types/Mixtures.jl")
 include("./virtual_types/Solutions.jl")
 include("./virtual_types/Empty.jl")
 include("./virtual_types/Containers.jl")
-
+include("./operations/mixing.jl")
 #physical types
 include("./physical_types/Well.jl")
 include("./physical_types/Stocks.jl")
+include("./physical_types/Cultures.jl")
 
 
 include("./csv_uploads.jl")
 
 
-function Composition(ingredients)
-    if all(map(x->x.class==:solid,collect(keys(ingredients))))
-        return Mixture(ingredients)
-    else
-        return Solution(ingredients)
-    end 
-end 
 
 export CapacityError
 export  JensenLabUnits
-export Ingredient, convert
-export Composition, CompositionQuantity
-export Mixture, MixtureMass, *, ingredients, +,-
+export Ingredient,Chemical,Organism,Solid,Liquid,Strain, convert
+export Composition, CompositionQuantity, ingredients
+export Mixture, MixtureMass,*
 export Solution, SolutionVolume
+export Culture, CultureVolume
 export Empty , EmptyQuantity
 export Container
-export Stock, LiquidStock,SolidStock,deposit,withdraw,transfer
+export +,-
+export Stock, LiquidStock,SolidStock,EmptyStock,deposit,withdraw,transfer
+export Culture
 export Well
-export parse_ingredient_csv,parse_composition_csv,parse_container_csv
+export parse_chemical_csv,parse_composition_csv,parse_container_csv,parse_strain_csv
 
 
 

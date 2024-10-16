@@ -1,49 +1,60 @@
+abstract type Ingredient end  # all ingredients have field :name, other fields vary
+abstract type Chemical <: Ingredient end #chemicals have molecular weight and density
+abstract type Organism <: Ingredient end  # organsims have genus species and notes
 
 
 
-
-
-
-
-
-
-
-struct Ingredient # predefined individual chemicals  that can be present in a run. We break down any mixed reagents into individual ingredient components.
+struct Liquid <: Chemical # predefined individual liquid chemicals that can be present in a run. We break down any mixed reagents into individual ingredient components.
     name::String # full name 
     molecular_weight::Union{Unitful.MolarMass, Missing} # some ingredients have an indeterminate molar mass 
     density::Union{Unitful.Density,Missing}
-    class::Symbol
-    Ingredient(name,molecular_weight,density,class) = class ∈ [:solid,:liquid,:organism] ? new(name,molecular_weight,density,class) : error("declared class must be either :solid , :liquid ,or :organism ") 
 end 
+
+struct Solid <: Chemical # predefined individual solid chemicals that can be present in a run. We break down any mixed reagents into individual ingredient components.
+    name::String # full name 
+    molecular_weight::Union{Unitful.MolarMass, Missing} # some ingredients have an indeterminate molar mass 
+    density::Union{Unitful.Density,Missing}
+end 
+
+struct Strain <: Organism
+    name::String
+    genus::String
+    species::String
+    notes::String
+end 
+
+
 
 function Base.show(io::IO,ing::Ingredient)
     print(io, ing.name)
 end 
 
 function Base.show(io::IO, ::MIME"text/plain", ing::Ingredient)
-    println(io, ing.name) 
+    println(io, ing.name) # all ingredients have field :name)
+    props=filter(x->x != :name,fieldnames(typeof(ing))) # get all field names other than :name for the ingredient type
 
-    if !ismissing(ing.molecular_weight)
-        println(io ,"molecular weight: ",ing.molecular_weight)
+    for prop in props 
+        propval=getproperty(ing,prop)
+        if ismissing(propval) 
+            continue 
+        else 
+            println(io,string(prop),": ",propval)
+        end 
     end 
-    if !ismissing(ing.density)
-        println(io,"density: ", ing.density)
-    end 
-    println(io,"class: ",string(ing.class))
 end 
 
 
-function Base.sort(v::Vector{T}) where T<: Ingredient
+function Base.sort(v::Vector{T}) where T<: Ingredient # sort ingredients alphabetically by name 
     idxs=sortperm(map(x->x.name,v))
     return v[idxs]
 end 
 
 
-function convert(y::Unitful.DensityUnits,x::Unitful.Molarity,ingredient::Ingredient)
+function convert(y::Unitful.DensityUnits,x::Unitful.Molarity,ingredient::Chemical)
     typeof(ingredient.molecular_weight)==Missing ? error(" $(ingredient.name)'s molecular weight is unknown") : return uconvert(y,x *ingredient.molecular_weight)
 end 
 
-function convert(y::Unitful.MolarityUnits,x::Unitful.Density,ingredient::Ingredient)
+function convert(y::Unitful.MolarityUnits,x::Unitful.Density,ingredient::Chemical)
     typeof(ingredient.molecular_weight)==Missing ? error(" $(ingredient.name)'s molecular weight is unknown") : return uconvert(y,x / ingredient.molecular_weight)
 end 
 

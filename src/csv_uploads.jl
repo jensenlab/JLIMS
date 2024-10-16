@@ -16,16 +16,28 @@ Example Table:
 molecular weights are assumed to be in units of g/mol.
 
 """
-function parse_ingredient_csv(source)
+function parse_chemical_csv(source)
     table=CSV.read(source,DataFrame)
-    ingreds=Ingredient[]
+    ingreds=Chemical[]
+    types=Dict("solid"=>Solid,"liquid"=>Liquid)
     for row in eachrow(table)
-        ing=Ingredient(row.Name,row.Molecular_Weight*u"g/mol",missing,Symbol(row.Class))
+        ing=types[row.Class](row.Name,row.Molecular_Weight*u"g/mol",missing)
         push!(ingreds,ing)
     end 
     return ingreds
 
 end
+
+function parse_strain_csv(source)
+    table=CSV.read(source,DataFrame)
+    strains=Strain[]
+    for row in eachrow(table)
+        ing=Strain(row.Name,row.Genus,row.Species,row.Notes)
+        push!(strains,ing)
+    end 
+    return strains
+end 
+
 
 
 
