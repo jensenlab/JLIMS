@@ -21,13 +21,13 @@ include("./virtual_types/Ingredients.jl")
 include("./virtual_types/Compositions.jl")
 include("./virtual_types/Mixtures.jl")
 include("./virtual_types/Solutions.jl")
-include("./virtual_types/Cultures.jl")
 include("./virtual_types/Empty.jl")
 include("./virtual_types/Containers.jl")
 include("./operations/mixing.jl")
 #physical types
 include("./physical_types/Well.jl")
 include("./physical_types/Stocks.jl")
+include("./physical_types/Cultures.jl")
 
 
 include("./csv_uploads.jl")
@@ -44,7 +44,8 @@ export Culture, CultureVolume
 export Empty , EmptyQuantity
 export Container
 export +,-
-export Stock, LiquidStock,SolidStock,EmptyStock, CultureStock,deposit,withdraw,transfer
+export Stock, LiquidStock,SolidStock,EmptyStock,deposit,withdraw,transfer
+export Culture
 export Well
 export parse_chemical_csv,parse_composition_csv,parse_container_csv,parse_strain_csv
 

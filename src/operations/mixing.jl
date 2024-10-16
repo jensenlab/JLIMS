@@ -1,10 +1,9 @@
 Base.promote_rule(::Type{Mixture},::Type{Solution}) = Solution
-Base.promote_rule(::Type{Mixture},::Type{Culture}) = Culture
-Base.promote_rule(::Type{Solution},::Type{Culture})= Culture
 
-# Mixture < Solution < Culture in terms of restrictions 
 
-function +(c1::CompositionQuantity,c2::CompositionQuantity;prefconc=Dict(Liquid=>u"percent",Solid=>u"g/l",Strain=>u"OD"))
+# Mixture < Solution in terms of restrictions
+
+function +(c1::CompositionQuantity,c2::CompositionQuantity;prefconc=Dict(Liquid=>u"percent",Solid=>u"g/l"))
     # compute the resulting type and quantity 
     ResultType=promote_type(typeof(c1.composition),typeof(c2.composition))
     result_type=Unitful.Volume
@@ -44,7 +43,7 @@ function +(s1::CompositionQuantity)
 end 
 
 
-function -(c1::CompositionQuantity,c2::CompositionQuantity;prefconc=Dict(Liquid=>u"percent",Solid=>u"g/l",Strain=>u"OD"))
+function -(c1::CompositionQuantity,c2::CompositionQuantity;prefconc=Dict(Liquid=>u"percent",Solid=>u"g/l"))
     # compute the resulting type and quantity 
     ResultType=promote_type(typeof(c1.composition),typeof(c2.composition))
     quanttype=Unitful.Volume

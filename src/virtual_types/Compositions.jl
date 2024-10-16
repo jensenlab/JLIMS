@@ -9,15 +9,11 @@ abstract type CompositionQuantity end
 function Composition(ingredients)
     solids=filter(x-> x isa Solid,collect(keys(ingredients)))
     liquids=filter(x-> x isa Liquid,collect(keys(ingredients)))
-    organisms=filter(x-> x isa Organism,collect(keys(ingredients)))
     S=length(solids)
     L=length(liquids)
-    O=length(organisms)
-    if L >= 1 && O >= 1 
-        return Culture(ingredients)
-    elseif L >=1 && O == 0
+    if L >=1 
         return Solution(ingredients)
-    elseif S >=1 && O == 0 && L==0
+    elseif S >=1
         return Mixture(ingredients)
     else 
         error("invalid combination of ingredients")
