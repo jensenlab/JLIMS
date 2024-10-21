@@ -1,8 +1,8 @@
 using JLIMS, Test, Unitful
 
 #### import a proxy database of lab objects 
-chemicals=parse_chemical_csv("./test/test_ingredients.csv")
-strains=parse_strain_csv("./test/test_strains.csv")
+chemicals=parse_chemical_csv("test_ingredients.csv")
+strains=parse_strain_csv("test_strains.csv")
 water=chemicals[1]
 iron_nitrate=chemicals[2]
 magnesium_sulfate=chemicals[4]
@@ -47,9 +47,9 @@ end
     e=nothing
     try Stock(sol1,51u"mL",w1) catch e end 
     @test e isa CapacityError
-    @test typeof(s1)==LiquidStock
-    @test typeof(s2)==SolidStock
-    @test typeof(c1)==Culture
+    @test s1 isa LiquidStock
+    @test s2 isa SolidStock
+    @test c1 isa Culture
     @test s4.quantity==50u"ml"
     @test s4.composition.ingredients[iron_nitrate]==200u"g/l"
     @test (s4.well)==(s1.well)
