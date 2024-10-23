@@ -74,6 +74,10 @@ end
 
 
 
+function well(c::Culture)
+    return c.media.well
+end 
+
 """
     transfer(donor::Stock,recipient::Stock,quantity::Union{Unitful.Volume,Unitful.Mass})
 
