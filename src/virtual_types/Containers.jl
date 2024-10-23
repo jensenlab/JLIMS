@@ -1,5 +1,9 @@
+"""
+    Container(name,capacity,shape)
 
+Define a new type of JLIMS labware 
 
+"""
 struct Container
     name::String 
     capacity::Unitful.Volume # the volume of each well in the container

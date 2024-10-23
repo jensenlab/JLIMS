@@ -5,8 +5,29 @@ abstract type CompositionQuantity end
 
 
 
+"""
+    function Composition(ingredients)
 
-function Composition(ingredients)
+    
+Construct a Mixture or Solution from a set of ingredients and concentrations. 
+
+Composition has three subtypes: 
+
+
+- `Mixture` contains all Solids
+- `Solution` contains at least one Liquid
+- `Empty` contains no Chemicals
+
+`Composition` parses the ingredients to determine the subtype.
+
+## Example
+
+    Composition(Dict(
+        glucose=>1.5u"g/L",
+        water=>100u"percent"
+    ))
+"""
+function Composition(ingredients) 
     solids=filter(x-> x isa Solid,collect(keys(ingredients)))
     liquids=filter(x-> x isa Liquid,collect(keys(ingredients)))
     S=length(solids)

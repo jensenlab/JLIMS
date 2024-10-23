@@ -8,6 +8,7 @@ A Julia package for defining digital lab objects and computing primitive lab ope
 ## Package Features 
 - Create digital labware 
 - Define reagents with unique chemical properties 
+- Define organisms to create digital cultures
 - Track quantities and concentrations of reagent stocks 
 - Define solutions and mixtures of multiple ingredients 
 - Mix stocks to create new stocks  
@@ -19,4 +20,6 @@ A Julia package for defining digital lab objects and computing primitive lab ope
 ```julia
     pkg>  add JLIMS
 ```
+
+
 
