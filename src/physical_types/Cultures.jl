@@ -99,3 +99,36 @@ function transfer(donor::Culture,recipient::Culture,quantity::Union{Unitful.Volu
     return Culture(donor.strains,donor_media),Culture(r_out_strains,recipient_media)
 end 
 
+"""
+    deposit(recipient::Culture,source::CompositionQuantity)
+
+Add a quantity of an untracked source solution or Ingredient to a recipient culture. Generates a new media if the recipient's composition changes as a result of the deposit.  Helper function for a transfer. 
+
+
+"""
+function deposit(recipient::Culture,source::CompositionQuantity)
+    if recipient.media.composition == source.composition 
+        return Culture(recipient.strains,Stock(recipient.media.composition,recipient.media.quantity+source.quantity,recipient.media.well) )# update the recipient, but check if the labware can hold the deposit
+    else
+        a=*(recipient.media.composition,recipient.media.quantity)
+        res=+(a,source)
+        return Culture(recipient.strains,Stock(res.composition,res.quantity,recipient.media.well))
+    end 
+end 
+
+
+
+
+
+
+
+function deposit(recipient::Culture,strain::Strain)
+    current = recipient.strains
+    if strain in current || strain == current
+        return recipient 
+    else 
+        return Culture(vcat(recipient.strains,strain),recpient.media)
+    end 
+end 
+
+## cannot withdraw a strain from a culture 

@@ -107,6 +107,11 @@ function withdraw(donor::Stock,destination::CompositionQuantity)
 end 
 
 
+function deposit(recipient::Stock,strain::Strain)
+    return Culture(strain,recipient)
+end 
+
+
 """
     transfer(donor::Stock,recipient::Stock,quantity::Union{Unitful.Volume,Unitful.Mass})
 
