@@ -1,6 +1,6 @@
 struct Well 
     id::Integer
-    labwareid::String
+    locationid::Integer
     wellindex::Integer
     container::Container
 end 

@@ -14,10 +14,10 @@ WP96=Container("plate_96",200u"µL",(8,12))
 sol1=Solution(Dict(water=>100u"percent"))
 mix1=Mixture(Dict(iron_nitrate=>100u"percent"))
 sol2=Solution(Dict(water=>100u"percent",iron_nitrate=>3u"g/L"))
-w1=Well(1,"water",1,conical50)
-w2=Well(2,"iron nitrate",1,conical50)
-w3=Well(3,"test",1,conical50)
-w4=Well(4,"plate1",1,WP96)
+w1=Well(1,1,1,conical50)
+w2=Well(2,2,1,conical50)
+w3=Well(3,3,1,conical50)
+w4=Well(4,4,1,WP96)
 
 # test new unit parsing 
 @testset "NewUnitParsing" begin
