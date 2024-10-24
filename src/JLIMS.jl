@@ -44,7 +44,7 @@ export Culture, CultureVolume
 export Empty , EmptyQuantity
 export Container
 export +,-
-export Stock, LiquidStock,SolidStock,EmptyStock,deposit,withdraw,transfer,well
+export Stock, LiquidStock,SolidStock,EmptyStock,deposit,withdraw,transfer,well,quantity,composition
 export Culture, promote_rule
 export Well
 export parse_chemical_csv,parse_composition_csv,parse_container_csv,parse_strain_csv

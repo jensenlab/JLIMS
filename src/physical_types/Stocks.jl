@@ -68,6 +68,13 @@ function well(s::Stock)
     return s.well
 end 
 
+function quantity(s::Stock)
+    return s.quantity
+end 
+
+function composition(s::Stock)
+    return s.composition
+end 
 
 
 

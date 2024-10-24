@@ -78,6 +78,14 @@ function well(c::Culture)
     return c.media.well
 end 
 
+function quantity(c::Culture)
+    return c.media.quantity
+end 
+
+function composition(c::Culture)
+    return c.media.composition
+end 
+
 """
     transfer(donor::Stock,recipient::Stock,quantity::Union{Unitful.Volume,Unitful.Mass})
 
