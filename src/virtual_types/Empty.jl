@@ -7,11 +7,11 @@ struct EmptyQuantity <: CompositionQuantity
 end 
 
 function Base.show(io::IO,s::Empty)
-    print(io, "Empty Composition")
+    print(io, "Empty")
 end 
 
 function Base.show(io::IO,::MIME"text/plain",s::Empty)
-    print(io, "Empty Composition")
+    print(io, "Empty")
 end 
 
 
