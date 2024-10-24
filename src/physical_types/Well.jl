@@ -14,8 +14,8 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", w::Well)
     println(io, "Well ID: ",w.id)
-    println(io,"Labware ID: ",w.locationid," (",w.container,")")
-    println(io,"Well ",w.wellindex)
+    println(io,"Location ID: ",w.locationid," (",w.container,")")
+    println(io,"Well Index: ",w.wellindex)
 end 
 #= 
 w= Well(

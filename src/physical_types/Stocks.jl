@@ -56,7 +56,9 @@ function Base.show(io::IO,s::Stock)
 end 
 
 function Base.show(io::IO,::MIME"text/plain",s::Stock)
-    printstyled(io,round(s.quantity;digits=3), " ";bold=true)
+    if !ismissing(s.quantity)
+        printstyled(io,round(s.quantity;digits=3), " ";bold=true)
+    end 
     println(io,s.composition)
     println(io , s.well)
 end 
