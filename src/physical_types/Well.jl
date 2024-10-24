@@ -8,7 +8,7 @@ end
 
 
 function Base.show(io::IO,w::Well)
-    print(io,"Well ID: $(w.id)",",","Labware ID: ",w.locationid," (",w.container,")",", Well ",w.wellindex)
+    print(io,"Well ID: $(w.id)",",","Location ID: ",w.locationid," (",w.container,")",", Well Index: ",w.wellindex)
 end 
 
 
