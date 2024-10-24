@@ -28,7 +28,7 @@ function Culture(strains,media)
             if length(nonmissing) == 1
                 return MonoCulture(nonmissing[1],media)
             elseif length(nonmissing) > 1 
-                return Coculture(nonmissing,media)
+                return CoCulture(nonmissing,media)
             elseif length(nonmissing) == 0 
                 return Emptyculture(missing,media)
             end 
