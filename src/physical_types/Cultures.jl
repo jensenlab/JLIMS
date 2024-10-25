@@ -87,7 +87,7 @@ function composition(c::Culture)
 end 
 
 
-function in(strain::Strain,culture::Culture)
+function Base.in(strain::Strain,culture::Culture)
     if culture isa EmptyCulture 
         return false 
     elseif culture isa MonoCulture 
