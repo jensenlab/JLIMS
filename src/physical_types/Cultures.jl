@@ -86,6 +86,18 @@ function composition(c::Culture)
     return c.media.composition
 end 
 
+
+function in(strain::Strain,culture::Culture)
+    if culture isa EmptyCulture 
+        return false 
+    elseif culture isa MonoCulture 
+        return strain == culture.strains 
+    elseif culture isa CoCulture 
+        return strain in culture.strains 
+    end 
+end 
+
+
 """
     transfer(donor::Stock,recipient::Stock,quantity::Union{Unitful.Volume,Unitful.Mass})
 
