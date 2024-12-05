@@ -1,3 +1,17 @@
+abstract type Plate <: Labware end # Plates are designed on the SLAS Standard. See Dish for other non-SLAS plate types
+abstract type Bottle <: Labware end 
+    abstract type ReagentBottle <: Bottle end
+    abstract type ScrewBottle <: Bottle end 
+    abstract type FilterBottle <: Bottle end
+abstract type Tube <: Labware end 
+    abstract type Conical <: Tube end 
+    abstract type MicroTube <: Tube end 
+    abstract type CultureTube <: Tube end 
+    abstract type CryoTube <: Tube end 
+abstract type Dish <: Labware end 
+abstract type Reservior <:Labware end 
+
+
 # Plates 
 
 

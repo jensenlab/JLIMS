@@ -1,11 +1,11 @@
-import Base.==
 
 # internal constants and methods 
 const roundtolerance=4
 prefquantunits(::Solid)=u"g"
 prefquantunits(::Liquid)=u"mL"
 
-
+SolidDict=Dict{Solid,Unitful.Mass}
+LiquidDict=Dict{Liquid,Unitful.Volume}
 
 
 abstract type Composition end 
@@ -18,7 +18,7 @@ struct Empty <:Composition end
 
 
 struct Mixture <:Composition  
-    solids::Dict{Solid,Unitful.Mass} 
+    solids::SolidDict
     function Mixture(solids)
         for solid in chemicals(solids)
             x=ustrip(solids[solid])
@@ -28,7 +28,7 @@ struct Mixture <:Composition
         new(solids)
     end 
 end 
-Mixture(solids,liquids)=Mixture(solids)
+
 
 
 
@@ -39,8 +39,8 @@ Mixture(solids,liquids)=Mixture(solids)
 
 
 struct Solution <: Composition 
-    solids::Dict{Solid,Unitful.Mass} 
-    liquids::Dict{Liquid,Unitful.Volume}
+    solids::SolidDict
+    liquids::LiquidDict
     function Solution(solids,liquids)  
         # test for issues 
         for solid in chemicals(solids)
@@ -57,13 +57,14 @@ struct Solution <: Composition
 end 
 
 
+
 """
     solids(::Composition)
 
 access the solids Dict for a composition. 
 """
 solids(c::Composition)=c.solids
-solids(::Empty)=Dict{Solid,Unitful.Mass}() # Empty doesn't have a solids property
+solids(::Empty)=SolidDict() # Empty doesn't have a solids property
 
 
 """
@@ -72,8 +73,8 @@ solids(::Empty)=Dict{Solid,Unitful.Mass}() # Empty doesn't have a solids propert
 access the liquids Dict for a composition
 """
 liquids(c::Composition)=c.liquids
-liquids(::Empty)=Dict{Liquid,Unitful.Volume}() # Empty doesn't have a liquids property
-liquids(c::Mixture)=Dict{Liquid,Unitful.Volume}() # Mixture doesn't have a liquids property
+liquids(::Empty)=LiquidDict() # Empty doesn't have a liquids property
+liquids(c::Mixture)=LiquidDict() # Mixture doesn't have a liquids property
 
 
 """
@@ -99,28 +100,21 @@ quantity(c::Solution)= liquids(c) |> values |> sum
 
 
 
- 
-
-
-
-
 function Composition(solids,liquids) 
     s=length(solids)
     l=length(liquids)
-    if s ==0 && l==0 
-        return Empty()
-    elseif s >0 && l==0 
-        return Mixture(solids)
-    elseif l > 0 
+    if l > 0 
         return Solution(solids,liquids)
-    else 
-        throw(ArgumentError("invalid composition input"))
-    end
+    elseif l ==0 && s>0
+        return Mixture(solids)
+    else
+        return Empty()
+    end 
 end 
 
 
-function chemicals(x::Dict{T,U}) where {T<: Chemical, U}
-    
+function chemicals(x::Union{SolidDict,LiquidDict})
+
     return collect(keys(x))
 end 
 
@@ -128,19 +122,41 @@ end
 # trivial constructors for mixtures and solutions 
 
 
+
+
+"""
+    *(quantity::Unitful.Amount,chemical::Solid)
+
+Overload the `*` operator to construct a Mixture from a molar quantity of a solid. 
+"""
 function *(quantity::Unitful.Amount,chemical::Solid) 
-    return Mixture(Dict(chemical => convert(prefquantunits(chemical),quantity,chemical)))
+    return Mixture(SolidDict(chemical => convert(prefquantunits(chemical),quantity,chemical)))
 end 
 
+"""
+    *(quantity::Unitful.Mass,chemical::Solid)
+
+Overload the `*` operator to construct a Mixture from a mass of a solid. 
+"""
 function *(quantity::Unitful.Mass,chemical::Solid) 
-    return Mixture(Dict(chemical => uconvert(prefquantunits(chemical),quantity)))
+    return Mixture(SolidDict(chemical => uconvert(prefquantunits(chemical),quantity)))
 end
+"""
+    *(quantity::Unitful.Mass,chemical::Solid)
 
+Overload the `*` operator to construct a Solution from a volume of a liquid. 
+"""
 function *(quantity::Unitful.Volume,chemical::Liquid) 
-    return Solution(Dict{Solid,Unitful.Mass}(),Dict(chemical=>uconvert(prefquantunits(chemical),quantity)))
+    return Solution(SolidDict(),LiquidDict(chemical=>uconvert(prefquantunits(chemical),quantity)))
 end 
 
 
+
+"""
+    *(num::Number,comp::Composition)
+
+Overload the `*` operator to multiply a Composition by a scalar. Returns a new composition with all chemical quantities scaled by a factor of `num` 
+"""
 function *(num::Number,comp::Composition)
     new_solids=Dict{Solid,Unitful.Mass}()
     new_liquids=Dict{Liquid,Unitful.Volume}()
@@ -154,6 +170,12 @@ function *(num::Number,comp::Composition)
 end 
 
 *(comp::Composition,num::Number) = *(num,comp)
+
+"""
+    /(comp::Composition,num::Number)
+
+Overload the `/` operator to divide a Composition by a scalar. Returns a new composition with all chemical quantities scaled by a factor of `num` 
+"""
 /(comp::Composition,num::Number) = *(1/num,comp)
 
 
@@ -203,6 +225,17 @@ function Base.show(io::IO,s::Composition;digits::Integer=2)
 end 
 
 
+
+
+"""
+    volume_estimate(c::Composition) 
+
+Return the estimated volume of a Composition `c` 
+
+- *Empty* returns a value of `missing`
+- *Mixture* approximates the volume based on the density of each chemical. If one or more chemicals has a missing density, `volume_estimate` returns a value of `missing`
+- *Solution* returns `quantity(c)`
+"""
 volume_estimate(c::Composition) = quantity(c)
 
 

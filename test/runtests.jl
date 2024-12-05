@@ -11,6 +11,20 @@ using JLIMS, Test, Unitful, AbstractTrees,UUIDs
 @strain SMU_UA159 Streptococcus mutans UA159 
 @strain SSA_SK36 Streptococcus sanguinis SK36 
 
+abstract type Plate <: Labware end # Plates are designed on the SLAS Standard. See Dish for other non-SLAS plate types
+abstract type Bottle <: Labware end 
+    abstract type ReagentBottle <: Bottle end
+    abstract type ScrewBottle <: Bottle end 
+    abstract type FilterBottle <: Bottle end
+abstract type Tube <: Labware end 
+    abstract type Conical <: Tube end 
+    abstract type MicroTube <: Tube end 
+    abstract type CultureTube <: Tube end 
+    abstract type CryoTube <: Tube end 
+abstract type Dish <: Labware end 
+abstract type Reservior <:Labware end 
+
+
 @location Lab false true 
 @location Room 
 @location Bench
@@ -64,9 +78,9 @@ r2=BioSpaSlot(21,"Right")
 r3=BioSpaSlot(23,"Right")
 r4=BioSpaSlot(24,"Right")
 current_idx=25
-b1=generate(Bottle1L, current_idx)
-b2=generate(PabaBottle, current_idx+2)
-plate1=generate(WP96, current_idx+4)
+b1=generate_labware(Bottle1L, current_idx)
+b2=generate_labware(PabaBottle, current_idx+2)
+plate1=generate_labware(WP96, current_idx+4)
 
 
 
@@ -137,7 +151,7 @@ end
     @test allequal([a+b+c , b+c+a , c+a+b]) #commutative property
     @test ((a+b)+c)==(a + (b+c)) #associative property
     @test a+b+c+d-(b+d) == a+c # subtraction 
-    @test_throws MixingError a-b # removing paba from pure water results in a mixing error ->  violation of non-negativity constraints on masses and volumes
+    @test_throws JLIMS.MixingError a-b # removing paba from pure water results in a mixing error ->  violation of non-negativity constraints on masses and volumes
     @test 3*a == a+a+a # scalar multiplication 
     @test a * 3 == 3 * a # scalar multiplication  commutative property
     @test a/3 == 1/3 * a # scalar division 
@@ -147,9 +161,9 @@ end
     @test jensen_lab isa Lab
     @test occupancy(jensen_lab) == 0//1 
     @test occupancy(biospa1)==1//1 
-    @test_throws OccupancyError can_move_into(biospa1,jensen_lab)
-    @test_throws LockedLocationError can_move_into(main_room,dr1)
-    @test_throws AlreadyLocatedInError can_move_into(jensen_lab,main_room)
+    @test_throws JLIMS.OccupancyError can_move_into(biospa1,jensen_lab)
+    @test_throws JLIMS.LockedLocationError can_move_into(main_room,dr1)
+    @test_throws JLIMS.AlreadyLocatedInError can_move_into(jensen_lab,main_room)
 end 
 
 

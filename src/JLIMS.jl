@@ -1,14 +1,16 @@
 module JLIMS
-import Base: +,-,*,/,convert, show ,sort , promote_rule,round,convert , in 
+
 using 
     Unitful,
     UnitfulParsableString,
-    CSV,
-    DataFrames,
+    #CSV,
+    #DataFrames,
     AbstractTrees,
-    HTTP,
-    JSON
-
+    HTTP, # chemical parsing only
+    JSON, # chemical parsing only 
+    UUIDs # used for generating labware name
+import Base: +,-,*,/,convert, show ,sort , promote_rule,round , in, == # all overloaded by this package
+import AbstractTrees: children,parent,nodevalue
 
 include("./Units/JensenLabUnits.jl")
 
@@ -16,20 +18,15 @@ include("./Units/JensenLabUnits.jl")
     Unitful.register(JensenLabUnits)
 
 Unitful.promote_unit(::S,::T) where {S<:Unitful.VolumeUnits,T<:Unitful.VolumeUnits} = u"mL"
-#basic information 
-
-#virtual types 
-
-#include("./virtual_types/Ingredients.jl")
-#include("./virtual_types/Compositions.jl")
-#include("./virtual_types/Mixtures.jl")
-#include("./virtual_types/Solutions.jl")
-#include("./virtual_types/Empty.jl")
+Unitful.promote_unit(::S,::T) where {S<:Unitful.MassUnits,T<:Unitful.MassUnits} = u"g" 
+include("./exceptions.jl")
 include("./locations/Location.jl")
 include("./locations/Labware.jl")
 include("./locations/Well.jl")
+
+
 include("./contents/Chemicals.jl")
-include("./exceptions.jl")
+
 include("./contents/Strains.jl")
 include("./contents/Compositions.jl")
 include("./contents/chemical_parsing.jl")
@@ -37,34 +34,38 @@ include("./contents/Contents.jl")
 include("./operations/movement.jl")
 include("./operations/mixing.jl")
 
-#physical types
-#include("./physical_types/Stocks.jl")
-#nclude("./physical_types/Cultures.jl")
+
 
 
 #include("./csv_uploads.jl")
 
-export CapacityError, MixingError,SummationError, LockedLocationError, AlreadyLocatedInError,OccupancyError
-export  JensenLabUnits
-export Ingredient,Chemical,Solid,Liquid,Strain, convert,Gas
-export Composition
-export Mixture
-export Solution
-export Culture
-export Empty
-export Location, id, parent,children, is_locked,name, unlock!,lock!,toggle!
-export occupancy_cost,parent_cost, child_cost,occupancy
-export can_move_into,move_into! 
-export Labware, Plate, Bottle, Dish, Reservior, Tube,shape,vendor,catalog, generate,wells
-export Well, capacity
-export @labware, @location, @well, @occupancy_cost, @chemical, @strain
-export get_mw_density,molecular_weight,density,pubchemid
-export ChemicalConcentration, SolidConcentration, prefconcunits,prefquantunits
-export quantity,solids,liquids,chemicals,volume_estimate
-export +,-
-export Stock,deposit,withdraw,transfer,well,quantity,composition
-export Culture, promote_rule, in 
-#export parse_chemical_csv,parse_composition_csv,parse_container_csv,parse_strain_csv
+export CapacityError, MixingError, LockedLocationError, AlreadyLocatedInError,OccupancyError #exceptions
+export JensenLabUnits # custom units
+export Chemical,Solid,Liquid,Gas # chemical types
+export Strain # strain type
+export Composition,Empty, Mixture, Solution # composition types 
+export Contents,Culture, Stock # contents types 
+export Location, Labware, Well #location types 
+export @labware, @location, @well, @occupancy_cost, @chemical, @strain # macros for constants 
+
+# chemicals 
+export molecular_weight, density, pubchemid 
+# strains 
+export genus, species, strain 
+# compositions 
+export solids, liquids, chemicals, volume_estimate, quantity
+#contents 
+export organisms, composition, well, transfer 
+# locations 
+export location_id , name, is_locked, unlock!,lock!,toggle!
+export parent_cost, child_cost, occupancy, occupancy_cost 
+export can_move_into, move_into!
+#labware
+export shape, vendor, catalog, generate_labware, wells
+#wells
+export capacity 
+
+
 
 
 

@@ -1,19 +1,6 @@
 abstract type Labware <: Location end 
-    abstract type Plate <: Labware end # Plates are designed on the SLAS Standard. See Dish for other non-SLAS plate types
-    abstract type Bottle <: Labware end 
-        abstract type ReagentBottle <: Bottle end
-        abstract type ScrewBottle <: Bottle end 
-        abstract type FilterBottle <: Bottle end
-    abstract type Tube <: Labware end 
-        abstract type Conical <: Tube end 
-        abstract type MicroTube <: Tube end 
-        abstract type CultureTube <: Tube end 
-        abstract type CryoTube <: Tube end 
-    abstract type Dish <: Labware end 
-    abstract type Reservior <:Labware end 
 
 
- 
 macro labware(name, type, welltype, plate_shape,vendor,catalog)
     n=Symbol(name)
     t=Symbol(type)
@@ -30,8 +17,8 @@ macro labware(name, type, welltype, plate_shape,vendor,catalog)
     return esc(quote
     import JLIMS: shape,vendor,catalog,occupancy_cost,parent_cost
     import AbstractTrees.ParentLinks
-    export $n,shape,vendor,catalog
-    mutable struct $n <: (JLIMS.$t)
+    export $n
+    mutable struct $n <: ($t)
         const id::Base.Integer
         const name::Base.String
         parent::Union{JLIMS.Location,Nothing}
@@ -57,7 +44,7 @@ function alphabet_code(n)
 end 
 
 
-function generate(lw_type::Type{<:Labware},current_idx::Integer)
+function generate_labware(lw_type::Type{<:Labware},current_idx::Integer)
     lw=lw_type(current_idx)
     sh=shape(lw)
     welltype=eltype(children(lw))

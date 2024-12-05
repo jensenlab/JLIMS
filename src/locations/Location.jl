@@ -1,19 +1,12 @@
-using AbstractTrees
-import AbstractTrees: children,parent,nodevalue
+
 abstract type Location end 
 
-struct LockedLocationError <: Exception 
-    loc::Location
-    msg::AbstractString 
-end 
-
-Base.showerror(io::IO,e::LockedLocationError)=print(io,e.loc,e.msg)
 
 
-id(x::Location)=x.id
+location_id(x::Location)=x.location_id
 AbstractTrees.children(x::Location) = x.children
 AbstractTrees.parent(x::Location) =x.parent
-AbstractTrees.nodevalue(x::Location)=id(x)
+AbstractTrees.nodevalue(x::Location)=location_id(x)
 AbstractTrees.ParentLinks(::Type{<:Location})=StoredParent()
 shape(x::Location)=nothing 
 vendor(x::Location)=nothing
@@ -51,7 +44,6 @@ macro occupancy_cost(parent, child, occupancy)
     p=Symbol(parent)
     c=Symbol(child)
     occ =eval(occupancy)
-    println(typeof(occ))
     if !(occ isa Rational)
         throw(ArgumentError("Occupancy must be a Rational datatype"))
     end 
@@ -76,6 +68,10 @@ end
     occupancy(x::Location)
 
 return the fractional occupancy of location x. 
+
+Occupancies can range from 0 (empty) to 1 (fully occupied). 
+
+The occupancy is calculated by summing the `occupancy_cost` of each child in the location.
 
 """
 function occupancy(x::Location)
@@ -105,7 +101,7 @@ macro location(name,constrained_as_parent=false,constrained_as_child=false)
     import AbstractTrees: ParentLinks
     export $n
     mutable struct $n <: (JLIMS.Location)
-        const id::Base.Integer
+        const location_id::Base.Integer
         const name::Base.String
         parent::Union{JLIMS.Location,Nothing}
         children::Vector{T} where T<:JLIMS.Location

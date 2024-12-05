@@ -15,7 +15,7 @@ movements that pass `can_move` satisfy four criteria
 """
 function can_move_into(newparent::Location,child::Location)
         if is_locked(child)
-                throw(LockedLocationError(child,"the child ($child) is locked in its current location"))
+                throw(LockedLocationError(child))
         end 
 
         if AbstractTrees.ischild(child,newparent)

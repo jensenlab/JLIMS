@@ -1,4 +1,4 @@
-
+# internal function
 # mixing just performs the element wise operation on each chemical to compute the new composition
 # addition and subtraction are very similar, this is a single routine for both addition and subtraction but we replace the  differences with "op". See the +/- overloads below. 
 function mix(c1::Composition,c2::Composition;operation=+)
@@ -58,22 +58,24 @@ end
 
 
 # overload the +/- operators for mixing compositions. 
+"""
+    +(c1::Composition,c2::Composition)
+
+Overload the additon operator to mix `c1` and `c2`.
+"""
 function +(c1::Composition,c2::Composition)
     return mix(c1,c2;operation=+)
 end 
 
+"""
+    -(c1::Composition,c2::Composition)
+
+Overload the subtraction operator to remove `c2` from `c1`. 
+
+If the result contains a chemical with a negative quantity, a MixingError will be thrown saying which chemical is causing the problem.
+"""
 function -(c1::Composition,c2::Composition)
     return mix(c1,c2,operation=-)
 end 
-
-
-
-function +(c1::Composition)
-    return c1
-end 
-
-
-function -(c1::Composition)
-    return c1
-end 
+ 
 

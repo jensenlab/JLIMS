@@ -31,14 +31,10 @@ end
 end 
 
 
-
-
-# types 
- AbstractConcentration = Union{Unitful.Density,Unitful.Molarity,Unitful.DimensionlessQuantity} # dimensionless quantities represent percentages ex. %v/v or %w/w
- AbstractAmount = Union{Unitful.Amount,Unitful.Mass,Unitful.Volume}  # solid ingredients can be specified by number (moles) or mass, while liquid ingredients are specified by volume 
-
-
  
  function round(q::Unitful.Quantity;kwargs...)
     return round(unit(q),q;kwargs...)
  end 
+
+
+ 
