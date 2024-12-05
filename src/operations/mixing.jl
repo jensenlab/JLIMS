@@ -1,84 +1,79 @@
-Base.promote_rule(::Type{Mixture},::Type{Solution}) = Solution
 
-
-# Mixture < Solution in terms of restrictions
-
-function +(c1::CompositionQuantity,c2::CompositionQuantity;prefconc=Dict(Liquid=>u"percent",Solid=>u"g/l"))
-    # compute the resulting type and quantity 
-    ResultType=promote_type(typeof(c1.composition),typeof(c2.composition))
-    result_type=Unitful.Volume
-    result_quantity=0u"mL"
-    if ResultType == Mixture
-        result_type=Unitful.Mass
-        result_quantity=0u"g"
-    end 
-
-    if c1.quantity isa result_type
-        result_quantity+=c1.quantity
+# mixing just performs the element wise operation on each chemical to compute the new composition
+# addition and subtraction are very similar, this is a single routine for both addition and subtraction but we replace the  differences with "op". See the +/- overloads below. 
+function mix(c1::Composition,c2::Composition;operation=+)
+    new_liquids=Dict{Liquid,Unitful.Volume}()
+    c1_liquids=liquids(c1)
+    c1_lc=chemicals(c1_liquids)
+    c2_liquids=liquids(c2)
+    c2_lc=chemicals(c2_liquids)
+    unique_chemicals=unique(vcat(c1_lc,c2_lc))
+    for chem in unique_chemicals
+        q1=0u"mL"
+        q2=0u"mL"
+        if chem in c1_lc
+            q1=c1_liquids[chem]
+        end
+        if chem in c2_lc
+            q2=c2_liquids[chem]
+        end 
+        tot=operation(q1,q2)
+        tt=ustrip(tot)
+        if tt== 0 
+            continue
+        elseif tt > 0 
+            new_liquids[chem] = tot 
+        else
+            throw(MixingError(chem,": attempted to add a negative quantity to a composition"))
+        end
     end
-    if c2.quantity isa result_type
-        result_quantity+=c2.quantity
-    end 
-    new_ingredients=Dict{Ingredient,AbstractConcentration}()
-    c1_ingredients=ingredients(c1.composition)
-    c2_ingredients=ingredients(c2.composition)
-    unique_ingredients=unique(vcat(c1_ingredients,c2_ingredients))
-    for ingredient in unique_ingredients
-        a1::Unitful.Quantity=0*prefconc[typeof(ingredient)] *unit(result_quantity)
-        a2::Unitful.Quantity=0*prefconc[typeof(ingredient)] *unit(result_quantity)
-        if ingredient in c1_ingredients
-            a1=c1.composition.ingredients[ingredient]*c1.quantity
+    new_solids=Dict{Solid,Unitful.Mass}() 
+    c1_solids=solids(c1)
+    c1_sc=chemicals(c1_solids)
+    c2_solids=solids(c2)
+    c2_sc=chemicals(c2_solids)
+    unique_chemicals=unique(vcat(c1_sc,c2_sc))
+    for chem in unique_chemicals
+        q1=0u"g"
+        q2=0u"g"
+        if chem in c1_sc
+            q1=c1_solids[chem]
+        end
+        if chem in c2_sc
+            q2=c2_solids[chem] 
         end 
-        if ingredient in c2_ingredients
-            a2=c2.composition.ingredients[ingredient]*c2.quantity
-        end 
-        new_ingredients[ingredient]=uconvert(prefconc[typeof(ingredient)],((a1+a2)/result_quantity))
+        tot=operation(q1,q2)
+        tt=ustrip(tot)
+        if tt== 0 
+            continue
+        elseif tt > 0 
+            new_solids[chem] = tot 
+        else
+            throw(MixingError(chem,": attempted to add a negative quantity to a composition"))
+        end
     end 
-    return *(ResultType(new_ingredients),result_quantity)
+    return Composition(new_solids,new_liquids)
 end 
 
 
-function +(s1::CompositionQuantity)
-    return s1
+
+# overload the +/- operators for mixing compositions. 
+function +(c1::Composition,c2::Composition)
+    return mix(c1,c2;operation=+)
+end 
+
+function -(c1::Composition,c2::Composition)
+    return mix(c1,c2,operation=-)
 end 
 
 
-function -(c1::CompositionQuantity,c2::CompositionQuantity;prefconc=Dict(Liquid=>u"percent",Solid=>u"g/l"))
-    # compute the resulting type and quantity 
-    ResultType=promote_type(typeof(c1.composition),typeof(c2.composition))
-    quanttype=Unitful.Volume
-    if ResultType == Mixture
-        quanttype=Unitful.Mass
-    end 
-    empty_quants=[Unitful.Volume => 0u"mL",Unitful.Mass=>0u"g"]
-    c1_type=typeof(c1.quantity)
-    c2_type=typeof(c2.quantity)
-    result_quantity= empty_quants[quanttype]
-    if c1_type == quanttype
-        result_quantity+=c1.quantity
-    end
-    if c2_type == quanttype 
-        result_quantity-=c2.quantity
-    end 
-    new_ingredients=Dict{T,C}() where {T<:Ingredient,C<:AbstractConcentration}
-    c1_ingredients=ingredients(c1.composition)
-    c2_ingredients=ingredients(c2.composition)
-    unique_ingredients=unique(vcat(c1_ingredients,c2_ingredients))
-    for ingredient in unique_ingredients
-        a1::Unitful.Quantity=0*prefconc[typeof(ingredient)] *unit(result_quantity)
-        a2::Unitful.Quantity=0*prefconc[typeof(ingredient)] *unit(result_quantity)
-        if ingredient in c1_ingredients
-            a1=c1.composition.ingredients[ingredient]*c1.quantity
-        end 
-        if ingredient in c2_ingredients
-            a2=c2.composition.ingredients[ingredient]*c2.quantity
-        end 
-        new_ingredients[ingredient]=uconvert(prefconc[typeof(ingredient)],((a1-a2)/result_quantity))
-    end 
-    return *(ResultType(new_ingredients),result_quantity)
+
+function +(c1::Composition)
+    return c1
 end 
 
 
-function -(c1::CompositionQuantity)
-    return s1
+function -(c1::Composition)
+    return c1
 end 
+

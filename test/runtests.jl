@@ -1,23 +1,102 @@
-using JLIMS, Test, Unitful
+using JLIMS, Test, Unitful, AbstractTrees,UUIDs
 
-#### import a proxy database of lab objects 
-chemicals=parse_chemical_csv("test_ingredients.csv")
-strains=parse_strain_csv("test_strains.csv")
-water=chemicals[1]
-iron_nitrate=chemicals[2]
-magnesium_sulfate=chemicals[4]
-SMU_UA159=strains[1]
-conical50=Container("conical_50ml",50u"mL",(1,1))
-WP96=Container("plate_96",200u"µL",(8,12))
+#### import a proxy database of lab objects
+
+@chemical Water "water" Liquid 962
+@chemical Glycerol "glycerol" Liquid
+@chemical Paba "4-aminobenzoic acid" Solid 978
+@chemical IronNitrate "Iron Nitrate" Solid 9815404
+@chemical LB "LB Broth" Solid 
+
+@strain SMU_UA159 Streptococcus mutans UA159 
+@strain SSA_SK36 Streptococcus sanguinis SK36 
+
+@location Lab false true 
+@location Room 
+@location Bench
+@location Incubator true false 
+@location IncubatorShelf false true 
+@location BioSpa true false 
+@location BioSpaDrawer true true 
+@location BioSpaSlot true true 
+
+@occupancy_cost BioSpa BioSpaDrawer 1//4
+@occupancy_cost BioSpaDrawer BioSpaSlot 1//2
+@occupancy_cost BioSpaSlot Plate 1//1 
+@occupancy_cost Incubator IncubatorShelf 1//3
 
 
-sol1=Solution(Dict(water=>100u"percent"))
-mix1=Mixture(Dict(iron_nitrate=>100u"percent"))
-sol2=Solution(Dict(water=>100u"percent",iron_nitrate=>3u"g/L"))
-w1=Well(1,1,1,conical50)
-w2=Well(2,2,1,conical50)
-w3=Well(3,3,1,conical50)
-w4=Well(4,4,1,WP96)
+@well Well200µL 200u"µL"
+@well Well80µL 80u"µL"
+@well Well1L 1u"L"
+@well Well10mL  10u"mL"
+@well Well50mL 50u"mL"
+
+@labware WP96 Plate Well200µL (8,12) Thermo 123456
+@labware WP384 Plate Well80µL (16,24) Thermo 123457
+@labware Bottle1L ScrewBottle Well1L (1,1) Corning 1 
+@labware IronNitrateBottle ReagentBottle Well1L (1,1) Sigma 111
+@labware LBBottle ReagentBottle Well1L (1,1) Sigma 123 
+@labware PabaBottle ReagentBottle Well50mL (1,1) Sigma 234
+
+
+jensen_lab=Lab(1,"Jensen Lab")
+main_room=Room(2,"Main Room")
+culture_room=Room(3,"Culture Room")
+robot_room=Room(4,"Robot Room")
+incubator1=Incubator(5,"Incubator 1")
+incubator2=Incubator(6,"Incubator 2")
+shelf1=IncubatorShelf(7,"Upper Shelf")
+shelf2=IncubatorShelf(8,"Middle Shelf")
+shelf3=IncubatorShelf(9,"Lower Shelf")
+shelf4=IncubatorShelf(10,"Middle Shelf")
+biospa1=BioSpa(11,"Biospa 1")
+dr1=BioSpaDrawer(12,"Drawer 1")
+dr2=BioSpaDrawer(13,"Drawer 2")
+dr3=BioSpaDrawer(14,"Drawer 3")
+dr4=BioSpaDrawer(15,"Drawer 4")
+l1=BioSpaSlot(16,"Left")
+l2=BioSpaSlot(17,"Left")
+l3=BioSpaSlot(18,"Left")
+l4=BioSpaSlot(19,"Left")
+r1=BioSpaSlot(20,"Right")
+r2=BioSpaSlot(21,"Right")
+r3=BioSpaSlot(23,"Right")
+r4=BioSpaSlot(24,"Right")
+current_idx=25
+b1=generate(Bottle1L, current_idx)
+b2=generate(PabaBottle, current_idx+2)
+plate1=generate(WP96, current_idx+4)
+
+
+
+move_into!(jensen_lab,main_room)
+move_into!(jensen_lab,culture_room)
+move_into!(jensen_lab,robot_room)
+move_into!(culture_room,incubator1)
+move_into!(culture_room,incubator2)
+move_into!(incubator1,shelf1,true)
+move_into!(incubator1,shelf2,true)
+move_into!(incubator1,shelf3,true)
+move_into!(robot_room,biospa1)
+move_into!(biospa1,dr1,true)
+move_into!(biospa1,dr2,true)
+move_into!(biospa1,dr3,true)
+move_into!(biospa1,dr4,true)
+move_into!(dr1,l1,true)
+move_into!(dr1,r1,true)
+move_into!(dr2,l2,true)
+move_into!(dr2,r2,true)
+move_into!(dr3,l3,true)
+move_into!(dr3,r3,true)
+move_into!(dr4,l4,true)
+move_into!(dr4,r4,true)
+move_into!(main_room,b1)
+move_into!(main_room,b2)
+move_into!(main_room,plate1)
+
+
+
 
 # test new unit parsing 
 @testset "NewUnitParsing" begin
@@ -26,43 +105,74 @@ w4=Well(4,4,1,WP96)
     @test uparse("X",unit_context=[Unitful,JensenLabUnits])==u"X"
 end 
 
-@testset "IngredientTypes" begin 
-    @test Solid <: Chemical 
-    @test Liquid <: Chemical
-    @test Chemical <: Ingredient
-    @test Organism <: Ingredient
-    @test water isa Liquid
-    @test iron_nitrate isa Solid 
-    @test SMU_UA159 isa Organism 
+@testset "ChemicalTypes" begin 
+    @test Paba isa Solid
+    @test Water isa Liquid
+
 end 
 
 
 
-#test stock math 
-@testset "StockMath" begin 
-    s1= Stock(sol1,50u"ml",w1)
-    s2=Stock(mix1,20u"g",w2)
-    c1=Culture(SMU_UA159,Stock(sol1,40u"ml",w3))
-    s2,s4=transfer(s2,s1,10u"g")
-    e=nothing
-    try Stock(sol1,51u"mL",w1) catch e end 
-    @test e isa CapacityError
-    @test s1 isa LiquidStock
-    @test s2 isa SolidStock
+
+a=100u"mL"*Water #solution
+b=10u"g"*Paba # mixture
+c=5u"g"*IronNitrate #mixture
+d=10u"mL"*Glycerol #solution
+
+
+@testset "Compositions" begin
+    @test a isa Solution 
+    @test b isa Mixture 
+    @test volume_estimate(b) == quantity(b)/density(Paba) # volume estimate method
+    @test 1u"mol"*Paba == convert(u"g",1u"mol",Paba)*Paba # equivalence of the mass vs mol constructors 
+    @test 0.01u"kg"*Paba == b # equivalence of unit changes 
+end 
+
+
+@testset "MixingArithmetic" begin 
+    @test c+b isa Mixture 
+    @test a+c isa Solution 
+    @test a==a+Empty() #identity  
+    @test a-a == Empty() #identity
+    @test allequal([a+b+c , b+c+a , c+a+b]) #commutative property
+    @test ((a+b)+c)==(a + (b+c)) #associative property
+    @test a+b+c+d-(b+d) == a+c # subtraction 
+    @test_throws MixingError a-b # removing paba from pure water results in a mixing error ->  violation of non-negativity constraints on masses and volumes
+    @test 3*a == a+a+a # scalar multiplication 
+    @test a * 3 == 3 * a # scalar multiplication  commutative property
+    @test a/3 == 1/3 * a # scalar division 
+end 
+
+@testset "Locations" begin
+    @test jensen_lab isa Lab
+    @test occupancy(jensen_lab) == 0//1 
+    @test occupancy(biospa1)==1//1 
+    @test_throws OccupancyError can_move_into(biospa1,jensen_lab)
+    @test_throws LockedLocationError can_move_into(main_room,dr1)
+    @test_throws AlreadyLocatedInError can_move_into(jensen_lab,main_room)
+end 
+
+
+s1=Stock(a,children(b1)[1,1])
+s2=Stock(b,children(b2)[1,1])
+
+s4,s3=transfer(s2,s1,10u"g")
+
+@testset "Stocks" begin
+   @test  s1 isa Stock
+   @test s2 isa Stock
+   @test composition(s3)==a+b
+   @test composition(s4)==Empty()
+   @test_throws MixingError transfer(s2,s1,20u"g") # try to transfer 20 g from a 10 g stock of paba
+end 
+
+c1=s1+SMU_UA159
+c1,c2=transfer(c1,s2,2u"µL")
+@testset "Cultures" begin 
     @test c1 isa Culture
-    @test s4.quantity==50u"ml"
-    @test s4.composition.ingredients[iron_nitrate]==200u"g/l"
-    @test (s4.well)==(s1.well)
-    @test s2.quantity==10u"g"
-    s7,c2=transfer(s4,c1,3u"ml")
-    @test c2.media.composition.ingredients[iron_nitrate]<s7.composition.ingredients[iron_nitrate] # concentration of iron nitrate should be less than the stock
-    @test c2.media.quantity==43u"ml"
-    @test c2 isa Culture 
-    c1,c4=transfer(c1,s4,1u"µL")
-    @test c4 isa Culture
-    
-  
+    @test c2 isa Culture
 end 
+
 
 
 
