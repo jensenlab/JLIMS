@@ -51,7 +51,7 @@ function generate_labware(lw_type::Type{<:Labware},current_idx::Integer)
     current_idx+=1
     for col in 1:sh[2]
         for row in 1:sh[1]
-            lw.children[row,col]=welltype(current_idx,alphabet_code(row)*string(col),lw,true)
+            lw.children[row,col]=welltype(current_idx,alphabet_code(row)*string(col),lw,Empty(),true)
             
             current_idx+=1
         end 

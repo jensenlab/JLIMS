@@ -1,46 +1,20 @@
 # internal function
-# mixing just performs the element wise operation on each chemical to compute the new composition
+# mixing just performs the element wise operation on each chemical to compute the new Stock
 # addition and subtraction are very similar, this is a single routine for both addition and subtraction but we replace the  differences with "op". See the +/- overloads below. 
-function mix(c1::Composition,c2::Composition;operation=+)
-    new_liquids=Dict{Liquid,Unitful.Volume}()
-    c1_liquids=liquids(c1)
-    c1_lc=chemicals(c1_liquids)
-    c2_liquids=liquids(c2)
-    c2_lc=chemicals(c2_liquids)
-    unique_chemicals=unique(vcat(c1_lc,c2_lc))
-    for chem in unique_chemicals
-        q1=0u"mL"
-        q2=0u"mL"
-        if chem in c1_lc
-            q1=c1_liquids[chem]
-        end
-        if chem in c2_lc
-            q2=c2_liquids[chem]
-        end 
-        tot=operation(q1,q2)
-        tt=ustrip(tot)
-        if tt== 0 
-            continue
-        elseif tt > 0 
-            new_liquids[chem] = tot 
-        else
-            throw(MixingError(chem,": attempted to add a negative quantity to a composition"))
-        end
-    end
-    new_solids=Dict{Solid,Unitful.Mass}() 
-    c1_solids=solids(c1)
-    c1_sc=chemicals(c1_solids)
-    c2_solids=solids(c2)
-    c2_sc=chemicals(c2_solids)
-    unique_chemicals=unique(vcat(c1_sc,c2_sc))
+function mix(a::SolidDict,b::SolidDict;operation=+)
+    new_solids=SolidDict() 
+
+    a_sc=chemicals(a)
+    b_sc=chemicals(b)
+    unique_chemicals=union(a_sc,b_sc)
     for chem in unique_chemicals
         q1=0u"g"
         q2=0u"g"
-        if chem in c1_sc
-            q1=c1_solids[chem]
+        if chem in a_sc
+            q1=a[chem]
         end
-        if chem in c2_sc
-            q2=c2_solids[chem] 
+        if chem in b_sc
+            q2=b[chem] 
         end 
         tot=operation(q1,q2)
         tt=ustrip(tot)
@@ -49,33 +23,74 @@ function mix(c1::Composition,c2::Composition;operation=+)
         elseif tt > 0 
             new_solids[chem] = tot 
         else
-            throw(MixingError(chem,": attempted to add a negative quantity to a composition"))
+            throw(MixingError(chem,": attempted to add a negative quantity to a Stock"))
         end
-    end 
-    return Composition(new_solids,new_liquids)
+    end
+    return new_solids
 end 
 
 
+function mix(a::LiquidDict,b::LiquidDict;operation=+)
+    new_liquids=LiquidDict()
+    a_lc=chemicals(a)
+    b_lc=chemicals(b)
+    unique_chemicals=union(a_lc,b_lc)
+    for chem in unique_chemicals
+        q1=0u"mL"
+        q2=0u"mL"
+        if chem in a_lc
+            q1=a[chem]
+        end
+        if chem in b_lc
+            q2=b[chem]
+        end 
+        tot=operation(q1,q2)
+        tt=ustrip(tot)
+        if tt== 0 
+            continue
+        elseif tt > 0 
+            new_liquids[chem] = tot 
+        else
+            throw(MixingError(chem,": attempted to add a negative quantity to a Stock"))
+        end
+    end
+    return new_liquids
+end 
 
-# overload the +/- operators for mixing compositions. 
+# internal addition operator for the strain math. strains can be added, but not removed independently. 
++(a::Set{Strain},b::Set{Strain})=union(a,b)
+-(a::Set{Strain},b::Set{Strain})=a 
+
+
+
+
+
+# overload the +/- operators for mixing Stocks. 
 """
-    +(c1::Composition,c2::Composition)
+    +(c1::Stock,c2::Stock)
 
 Overload the additon operator to mix `c1` and `c2`.
 """
-function +(c1::Composition,c2::Composition)
-    return mix(c1,c2;operation=+)
+function +(c1::Stock,c2::Stock)
+    orgs=organisms(c1)+organisms(c2)
+    sols=mix(solids(c1),solids(c2);operation=+)
+    liqs=mix(liquids(c1),liquids(c2);operation=+)
+    return Stock(orgs,sols,liqs)
 end 
 
 """
-    -(c1::Composition,c2::Composition)
+    -(c1::Stock,c2::Stock)
 
 Overload the subtraction operator to remove `c2` from `c1`. 
 
 If the result contains a chemical with a negative quantity, a MixingError will be thrown saying which chemical is causing the problem.
 """
-function -(c1::Composition,c2::Composition)
-    return mix(c1,c2,operation=-)
+function -(c1::Stock,c2::Stock)
+    orgs=organisms(c1)-organisms(c2)
+    sols=mix(solids(c1),solids(c2);operation=-)
+    liqs=mix(liquids(c1),liquids(c2);operation=-)
+    return Stock(orgs,sols,liqs)
 end 
  
 
++(st::Stock,b::Strain)=st + Stock(Set{Strain}([b]),SolidDict(),LiquidDict())

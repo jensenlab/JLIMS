@@ -1,29 +1,107 @@
 
+"""
+    abstract type Location end
+
+Locations represent the physical objects that make up the lab. `Location` objects use the [AbstractTrees.jl](https://juliacollections.github.io/AbstractTrees.jl/stable/) interface to construct relational hierarchies.
+"""
 abstract type Location end 
 
-
-
-location_id(x::Location)=x.location_id
 AbstractTrees.children(x::Location) = x.children
 AbstractTrees.parent(x::Location) =x.parent
 AbstractTrees.nodevalue(x::Location)=location_id(x)
 AbstractTrees.ParentLinks(::Type{<:Location})=StoredParent()
+
+
+"""
+    location_id(x::Location)
+
+Access the `location_id` property of a location.
+"""
+location_id(x::Location)=x.location_id
+
+
+"""
+    shape(x::Location)
+Access the `shape` property, if defined, of a location. 
+"""
 shape(x::Location)=nothing 
+"""
+    vendor(x::Location)
+Access the `vendor` property, if defined, of a location.
+"""
 vendor(x::Location)=nothing
+"""
+    catalog(x::Location)
+Access the `catalog` poperty, if defined, of a location.
+"""
 catalog(x::Location)=nothing
 
+"""
+    name(x::Location)
+Access the `name` property of a location. The name of a location does not need to be unique and can be used for display purposes. 
+"""
 name(x::Location)=x.name
+
+"""
+    is_locked(x::Location)
+
+Access the state of the `is_locked` property of a location. Locked locations cannot be moved from their current parent, but *children of locked locations can be moved*. 
+
+See also [`unlock!`](@ref),[`lock!`](@ref),[`toggle!`](@ref),[`unlock`](@ref),[`lock`](@ref),[`toggle`](@ref).
+"""
 is_locked(x::Location)=x.is_locked # locked locations cannot be moved from their current parent. Children of locked locations CAN be moved. 
 
+"""
+    unlock!(x::Location)
+Change the state of the `is_locked` property of a location to `false`.
+
+See also [`is_locked`](@ref),[`unlock`](@ref).
+"""
 function unlock!(x::Location)
     x.is_locked=false
 end 
+"""
+    unlock(x::Location)
+Create a copy of Location `x` and change the `is_locked` property to `false`. 
 
+See also [`is_locked`](@ref),[`unlock!`](@ref).
+"""
+function unlock(x::Location)
+    y=deepcopy(x)
+    unlock!(y)
+    return y 
+end 
+
+"""
+    lock!(x::Location)
+Change the state of the `is_locked` property of a location to `true`.
+
+See also [`is_locked`](@ref),[`lock`](@ref).
+"""
 function lock!(x::Location)
     x.is_locked=true
 end
+"""
+    lock(x::Location)
+
+Create a copy of Location `x` and change the `is_locked` property to `true`. 
+
+See also [`is_locked`](@ref),[`lock!`](@ref).
+"""
+function lock(x::Location)
+    y=deepcopy(x)
+    lock!(y)
+    return y
+end 
+
 function toggle!(x::Location)
     x.is_locked=!x.is_locked
+end 
+
+function toggle(x::Location)
+    y=deepcopy(x)
+    toggle!(y)
+    return y
 end 
 
 

@@ -122,8 +122,8 @@ end
 @testset "ChemicalTypes" begin 
     @test Paba isa Solid
     @test Water isa Liquid
-
 end 
+
 
 
 
@@ -132,11 +132,13 @@ a=100u"mL"*Water #solution
 b=10u"g"*Paba # mixture
 c=5u"g"*IronNitrate #mixture
 d=10u"mL"*Glycerol #solution
+e=Empty()+SMU_UA159
 
 
-@testset "Compositions" begin
+@testset "Stocks" begin
     @test a isa Solution 
     @test b isa Mixture 
+    @test e isa Culture
     @test volume_estimate(b) == quantity(b)/density(Paba) # volume estimate method
     @test 1u"mol"*Paba == convert(u"g",1u"mol",Paba)*Paba # equivalence of the mass vs mol constructors 
     @test 0.01u"kg"*Paba == b # equivalence of unit changes 
@@ -146,6 +148,7 @@ end
 @testset "MixingArithmetic" begin 
     @test c+b isa Mixture 
     @test a+c isa Solution 
+    @test a+e isa Culture
     @test a==a+Empty() #identity  
     @test a-a == Empty() #identity
     @test allequal([a+b+c , b+c+a , c+a+b]) #commutative property
@@ -155,6 +158,9 @@ end
     @test 3*a == a+a+a # scalar multiplication 
     @test a * 3 == 3 * a # scalar multiplication  commutative property
     @test a/3 == 1/3 * a # scalar division 
+    @test 3*(a+e) == a+a+a+e+e+e # there is no quantity to track for e in this case, but it does contribute to the organismal contents
+    @test e+a-e !=a # identity property does not hold for cultures 
+    @test e-e != Empty() # ' ' 
 end 
 
 @testset "Locations" begin
@@ -167,25 +173,21 @@ end
 end 
 
 
-s1=Stock(a,children(b1)[1,1])
-s2=Stock(b,children(b2)[1,1])
+w1=Well1L(1,"testwell1",nothing,a)
+w2=Well10mL(2,"testwell2",nothing,b)
+w3=Well1L(2,"testwell3",nothing,(a/10)+e)
 
-s4,s3=transfer(s2,s1,10u"g")
+w4,w5=transfer(w2,w3,5u"g")
 
-@testset "Stocks" begin
-   @test  s1 isa Stock
-   @test s2 isa Stock
-   @test composition(s3)==a+b
-   @test composition(s4)==Empty()
-   @test_throws MixingError transfer(s2,s1,20u"g") # try to transfer 20 g from a 10 g stock of paba
+@testset "Wells" begin
+   @test stock(w1)==a 
+   @test capacity(w1)==1u"L"
+   @test stock(sterilize(w3)) == a/10 # removes the organisms only 
+   @test stock(empty(w3))==Empty()
+   @test stock(w5) == stock(w3)+stock(w2)/2
+   @test_throws MixingError transfer(w2,w1,20u"g") # try to transfer 20 g from a 10 g stock of paba
 end 
 
-c1=s1+SMU_UA159
-c1,c2=transfer(c1,s2,2u"µL")
-@testset "Cultures" begin 
-    @test c1 isa Culture
-    @test c2 isa Culture
-end 
 
 
 

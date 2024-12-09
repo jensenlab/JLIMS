@@ -2,6 +2,8 @@ abstract type Well<: Location  end
 
 AbstractTrees.children(::Well) = ()
 capacity(::Well) = 0u"mL"
+stock(x::Well)=x.stock
+
 
 macro well(name,capacity)
     n=Symbol(name)
@@ -19,8 +21,9 @@ macro well(name,capacity)
         const id::Base.Integer
         const name::Base.String
         parent::Union{JLIMS.Labware,Nothing}
+        stock::JLIMS.Stock
         is_locked::Bool
-        ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Labware,Nothing}=nothing,is_locked::Bool=false) = new(id,name,parent,is_locked) 
+        ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Labware,Nothing}=nothing,stock::JLIMS.Stock=Empty(),is_locked::Bool=false) = new(id,name,parent,stock,is_locked) 
     end 
     AbstractTrees.ParentLinks(::Type{<:$(n)})=StoredParents()
     JLIMS.capacity(::($n))=$cap
@@ -35,7 +38,61 @@ end
 function Base.show(io::IO,w::Well)
     print(io,name(w))
 end 
+
+
+function empty!(x::Well)
+    x.stock=Empty()
+end 
+
+function empty(x)
+    y=deepcopy(x)
+    empty!(y)
+    return y
+end 
+    
+
+function sterilize!(x::Well)
+    st=stock(x)
+    st_new=Stock(Set{Strain}(),solids(st),liquids(st))
+    x.stock=st_new
+end 
+
+function sterilize(x)
+    y=deepcopy(x)
+    sterilize!(y)
+    return y
+end 
+
+
+
+function withdraw!(donor::Well,quant::Union{Unitful.Volume,Unitful.Mass})
+    st=stock(donor)
+    q_tot=quantity(st) 
+    factor=quant/q_tot
+    st_out= factor*st
+    donor.stock=st-st_out  
+    return st_out
+end 
+
+function deposit!(recipient::Well,trf_stock::Stock)
+    st=stock(recipient)
+    recipient.stock=st+trf_stock
+end 
+function transfer!(donor::Well,recipient::Well,quantity::Union{Unitful.Volume,Unitful.Mass})
+    trf_stock=withdraw!(donor,quantity)
+    deposit!(recipient,trf_stock) 
+end 
+
+
+function transfer(donor,recipient,quantity)
+    d=deepcopy(donor)
+    r=deepcopy(recipient)
+    transfer!(d,r,quantity)
+    return d,r
+end 
 #=
+
+
 
 
 

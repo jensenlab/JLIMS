@@ -19,7 +19,7 @@ function can_move_into(newparent::Location,child::Location)
         end 
 
         if AbstractTrees.ischild(child,newparent)
-                throw(AlreadyLocatedInError("the child is already located in the parent"))  #the child is already located in parent 
+                throw(AlreadyLocatedInError())  #the child is already located in parent 
         end 
         occ_cost = occupancy_cost(newparent,child)
         current= occupancy(newparent)
