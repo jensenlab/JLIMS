@@ -148,7 +148,7 @@ organisms(c::Culture)=c.organisms
 
 a generic stock constructor that returns the appropriate stock subtype. 
 """
- 
+function Stock(organisms,solids,liquids) 
     o=length(organisms)
     s=length(solids)
     l=length(liquids)
@@ -167,7 +167,7 @@ end
 
 
 """
-    function chemicals(x::Union{SolidDict,LiquidDict})
+    chemicals(x::Union{SolidDict,LiquidDict})
 
 a wrapper for `collect(keys(x))` that returns an array of the chemical keys.
 """

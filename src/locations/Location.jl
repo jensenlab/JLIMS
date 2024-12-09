@@ -3,6 +3,8 @@
     abstract type Location end
 
 Locations represent the physical objects that make up the lab. `Location` objects use the [AbstractTrees.jl](https://juliacollections.github.io/AbstractTrees.jl/stable/) interface to construct relational hierarchies.
+
+See also: [`@location`](@ref)
 """
 abstract type Location end 
 
@@ -47,7 +49,7 @@ name(x::Location)=x.name
 
 Access the state of the `is_locked` property of a location. Locked locations cannot be moved from their current parent, but *children of locked locations can be moved*. 
 
-See also [`unlock!`](@ref),[`lock!`](@ref),[`toggle!`](@ref),[`unlock`](@ref),[`lock`](@ref),[`toggle`](@ref).
+See also: [`unlock!`](@ref),[`lock!`](@ref),[`toggle!`](@ref),[`unlock`](@ref),[`lock`](@ref),[`toggle`](@ref).
 """
 is_locked(x::Location)=x.is_locked # locked locations cannot be moved from their current parent. Children of locked locations CAN be moved. 
 
@@ -55,7 +57,7 @@ is_locked(x::Location)=x.is_locked # locked locations cannot be moved from their
     unlock!(x::Location)
 Change the state of the `is_locked` property of a location to `false`.
 
-See also [`is_locked`](@ref),[`unlock`](@ref).
+See also: [`is_locked`](@ref),[`unlock`](@ref).
 """
 function unlock!(x::Location)
     x.is_locked=false
@@ -64,7 +66,7 @@ end
     unlock(x::Location)
 Create a copy of Location `x` and change the `is_locked` property to `false`. 
 
-See also [`is_locked`](@ref),[`unlock!`](@ref).
+See also: [`is_locked`](@ref),[`unlock!`](@ref).
 """
 function unlock(x::Location)
     y=deepcopy(x)
@@ -76,7 +78,7 @@ end
     lock!(x::Location)
 Change the state of the `is_locked` property of a location to `true`.
 
-See also [`is_locked`](@ref),[`lock`](@ref).
+See also: [`is_locked`](@ref),[`lock`](@ref).
 """
 function lock!(x::Location)
     x.is_locked=true
@@ -86,7 +88,7 @@ end
 
 Create a copy of Location `x` and change the `is_locked` property to `true`. 
 
-See also [`is_locked`](@ref),[`lock!`](@ref).
+See also: [`is_locked`](@ref),[`lock!`](@ref).
 """
 function lock(x::Location)
     y=deepcopy(x)
@@ -94,10 +96,25 @@ function lock(x::Location)
     return y
 end 
 
+"""
+    toggle!(x:Location)
+
+Flip the state of the `is_locked` property of a location.
+
+See also: [`is_locked`](@ref),[`toggle`](@ref).
+"""
 function toggle!(x::Location)
-    x.is_locked=!x.is_locked
+    x.is_locked=!is_locked(x)
 end 
 
+
+"""
+    toggle(x::Location)
+
+Create a copy of Location `x` and flip the state of its `is_locked` peroperty
+
+See also: [`is_locked`](@ref),[`toggle!`](@ref).
+"""
 function toggle(x::Location)
     y=deepcopy(x)
     toggle!(y)
@@ -164,7 +181,16 @@ end
 
 
 
+"""
+    macro location(name,constrained_as_parent=false,constrained_as_child=false)
 
+Create a new Type `name` that is a [`Location`](@ref) subtype. 
+
+The `constrained_as_parent` flag indicates that `name` will be unable to be a parent by defualt.
+The `constrained_as_child` flag indicates that `name` will be unable to be a child by defualt.  
+
+
+"""
 macro location(name,constrained_as_parent=false,constrained_as_child=false)
     n=Symbol(name)
     p_constraint::Bool=eval(constrained_as_parent)
@@ -198,7 +224,15 @@ macro location(name,constrained_as_parent=false,constrained_as_child=false)
 end
 
 
-function ancestors(x::Location)
+
+"""
+    ancestors(x::Location;rev=false)
+
+return the parent location chain of location `x` in the order of most to least proximal. 
+
+Use the keyword arg `rev=true` to reverse the order from least proximal to most proximal
+"""
+function ancestors(x::Location;rev=false)
     out=Location[]
     node=deepcopy(x)
     while !AbstractTrees.isroot(node)
@@ -206,7 +240,11 @@ function ancestors(x::Location)
         node=AbstractTrees.parent(node)
     end 
     push!(out,node)
-    return reverse(out) 
+    if rev
+        return reverse(out)
+    else
+        return out
+    end 
 end 
        
 
@@ -216,44 +254,3 @@ function Base.show(io::IO,x::Location)
     print(name(x))
 end 
 
-
-
-#=
-function Base.show(io::IO,c::Container)
-    print(io, c.name," => ",c.capacity," ($(c.shape[1]) by $(c.shape[2]))")
-end
-
-function Base.show(io::IO, ::MIME"text/plain", c::Container)
-    println(io, c.name)
-    println(io,"Well Capacity: $(c.capacity)")
-    row="rows"
-    col="columns"
-    if c.shape[1]==1
-        row="row"
-    end 
-    if c.shape[2]==1
-        col="column"
-    end
-    println(io, "$(c.shape[1]) $row by $(c.shape[2]) $col")
-end 
-
-=#
-
-
-
-
-#=
-WP384=Container(
-    "WP384",
-    80u"µl",
-    (16,24)
-
-)
-
-
-CON50=Container(
-    "CON50",
-    50u"mL",
-    (1,1)
-)
-=#

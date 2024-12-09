@@ -1,4 +1,12 @@
+"""
+    abstract type Labware <: Location end 
+
+Labware are [`Location`] subtypes that can only contain `Well` objects as children.
+
+See also [`@labware`](@ref)
+"""
 abstract type Labware <: Location end 
+
 
 
 macro labware(name, type, welltype, plate_shape,vendor,catalog)
@@ -44,7 +52,7 @@ function alphabet_code(n)
 end 
 
 
-function generate_labware(lw_type::Type{<:Labware},current_idx::Integer)
+function generate_labware(lw_type::Type{<:Labware},current_idx::Integer,name=string(UUIDs.uuid4()))
     lw=lw_type(current_idx)
     sh=shape(lw)
     welltype=eltype(children(lw))
