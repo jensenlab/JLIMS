@@ -19,6 +19,8 @@ using Unitful
 
 @derived_dimension AbsorbanceVolume 𝐀𝐛*Unitful.𝐋^3 true 
 
+@unit xg "xg" GravityUnits Unitful.gn false 
+
 const localpromotion=copy(Unitful.promotion)
 function __init__()
 Unitful.register(JensenLabUnits)

@@ -124,14 +124,28 @@ quantity(c::Empty)=missing
 
 returns the sum of each solid's mass in a Mixture
 """
-quantity(c::Mixture)= solids(c) |> values |> sum
+function quantity(c::Mixture)
+    s= values(solids(c))
+    if length(s) == 0 
+        return 0u"g"
+    else
+        return sum(s)
+    end 
+end 
 
 """
     quantity(::Stock)
 
 returns the sum of each liquid's volume in a Stock
 """
-quantity(c::Stock)= liquids(c) |> values |> sum
+function quantity(c::Stock)
+    s=values(liquids(c))
+    if length(s)==0
+        return 0u"mL"
+    else
+        return sum(s)
+    end 
+end 
 
 
 """
@@ -317,11 +331,11 @@ end
 Return the estimated volume of a Stock `s` 
 
 - *Empty* returns a value of `missing`
-- *Mixture* approximates the volume based on the density of each chemical. If one or more chemicals has a missing density, `volume_estimate` returns a value of `missing`
+- *Mixture* approximates the volume based on the density of each chemical. If one or more chemicals has a missing density, `volume_estimate` returns a value of 0u"mL"
 - *Solution* returns `quantity(s)`
 """
 volume_estimate(s::Stock) = quantity(s)
-
+volume_estimate(s::Empty)=0u"mL"
 
 function volume_estimate(m::Mixture)
     vol=0u"mL"
@@ -329,8 +343,12 @@ function volume_estimate(m::Mixture)
     for sol in chemicals(sols)
         q=sols[sol]
         vol+= q/density(sol)
-    end 
-    return vol
+    end
+    if ismissing(vol)
+        return 0u"mL"
+    else
+        return vol
+    end
 end 
 
 

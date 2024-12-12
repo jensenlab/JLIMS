@@ -1,6 +1,6 @@
 using JLIMS, Test, Unitful, AbstractTrees,UUIDs
 
-#### import a proxy database of lab objects
+#### set up a test lab
 
 @chemical Water "water" Liquid 962
 @chemical Glycerol "glycerol" Liquid
@@ -10,6 +10,12 @@ using JLIMS, Test, Unitful, AbstractTrees,UUIDs
 
 @strain SMU_UA159 Streptococcus mutans UA159 
 @strain SSA_SK36 Streptococcus sanguinis SK36 
+
+@attribute Temperature Unitful.Temperature
+@attribute Pressure Unitful.Pressure
+@attribute LinearShaking Unitful.Frequency
+@attribute Oxygen Unitful.DimensionlessQuantity
+
 
 abstract type Plate <: Labware end # Plates are designed on the SLAS Standard. See Dish for other non-SLAS plate types
 abstract type Bottle <: Labware end 
@@ -82,6 +88,11 @@ b1=generate_labware(Bottle1L, current_idx)
 b2=generate_labware(PabaBottle, current_idx+2)
 plate1=generate_labware(WP96, current_idx+4)
 
+
+set_attribute!(jensen_lab,Temperature(25u"°C"))
+set_attribute!(jensen_lab,Pressure(1u"atm"))
+set_attribute!(biospa1,Temperature(37u"°C"))
+set_attribute!(incubator1,Temperature(37u"°C"))
 
 
 move_into!(jensen_lab,main_room)
@@ -183,13 +194,21 @@ w4,w5=transfer(w2,w3,5u"g")
    @test stock(w1)==a 
    @test capacity(w1)==1u"L"
    @test stock(sterilize(w3)) == a/10 # removes the organisms only 
+   @test stock(drain(w3)) == e
    @test stock(empty(w3))==Empty()
+   @test stock(empty(w3)) == stock(sterilize(drain(w3))) # empty == dump |> sterilize 
    @test stock(w5) == stock(w3)+stock(w2)/2
    @test_throws MixingError transfer(w2,w1,20u"g") # try to transfer 20 g from a 10 g stock of paba
+   @test_throws WellCapacityError Well10mL(4,"testwell4",nothing,a) # try to put a 100mL stock in a 10 mL well
 end 
 
 
-
+@testset "Environments" begin 
+    @test Temperature(10u"°C") == Temperature(10u"°C")
+    @test Temperature(10u"°C") != Temperature(1u"°C")
+    @test environment(jensen_lab)==environment(main_room)
+    @test environment(biospa1)==environment(dr1)
+end 
 
 
 

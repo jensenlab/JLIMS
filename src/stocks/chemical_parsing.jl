@@ -67,6 +67,14 @@ function get_compound_properties(cid::Integer)
 
 end
 
+
+"""
+    get_mw_density(cid::Integer)
+
+Query the [PubChem](https://pubchem.ncbi.nlm.nih.gov) database for the checmical properties of the compound with PubChem ID `cid`,
+
+`get_mw_density` returns the molecular weight (g/mol) and density (g/mL) as a Tuple. 
+"""
 function get_mw_density(cid::Integer)
     try 
         properties=get_compound_properties(cid);

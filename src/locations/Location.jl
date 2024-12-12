@@ -45,6 +45,11 @@ Access the `name` property of a location. The name of a location does not need t
 name(x::Location)=x.name
 
 """
+    attributes(x::Location)
+Access the `attributes` property of a location. 
+"""
+attributes(x::Location)=x.attributes
+"""
     is_locked(x::Location)
 
 Access the state of the `is_locked` property of a location. Locked locations cannot be moved from their current parent, but *children of locked locations can be moved*. 
@@ -188,8 +193,6 @@ Create a new Type `name` that is a [`Location`](@ref) subtype.
 
 The `constrained_as_parent` flag indicates that `name` will be unable to be a parent by defualt.
 The `constrained_as_child` flag indicates that `name` will be unable to be a child by defualt.  
-
-
 """
 macro location(name,constrained_as_parent=false,constrained_as_child=false)
     n=Symbol(name)
@@ -209,8 +212,9 @@ macro location(name,constrained_as_parent=false,constrained_as_child=false)
         const name::Base.String
         parent::Union{JLIMS.Location,Nothing}
         children::Vector{T} where T<:JLIMS.Location
+        attributes::AttributeDict
         is_locked::Bool
-        ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Location,Nothing}=nothing,children=JLIMS.Location[],is_locked::Bool=false) = new(id,name,parent,children,is_locked) 
+        ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Location,Nothing}=nothing,children=JLIMS.Location[],attributes::AttributeDict=AttributeDict(),is_locked::Bool=false) = new(id,name,parent,children,attributes,is_locked) 
     end 
     AbstractTrees.ParentLinks(::Type{<:($n)})=AbstractTrees.StoredParents()
     if $p_constraint
@@ -248,9 +252,51 @@ function ancestors(x::Location;rev=false)
 end 
        
 
+"""
+    environment(x::Location)
+Compute the environmental attributes of location `x`. 
+
+Going down the chain of ancestors from least proximal to most proximal, overwrite any attributes with a more proximal value for each attribute.
+
+"""
+function environment(x::Location)
+    out=AttributeDict()
+    ancestry =ancestors(x;rev=true)
+    for ancestor in ancestry
+        attrs=attributes(ancestor)
+        for attr in values(attrs) 
+        set_attribute!(out,attr)
+        end 
+    end 
+    return out 
+end 
+
+
 
 
 function Base.show(io::IO,x::Location)
     print(name(x))
 end 
 
+""" 
+    set_attribute!(x::Location,attribute::Attribute)
+
+Set the value for a location's environmental attributes to `attribute`. 
+
+We use this method to ensure a proper pairing between the attribute type and the attribute in the dict.
+"""
+function set_attribute!(loc::Location,attribute::Attribute)
+    set_attribute!(attributes(loc),attribute) 
+    nothing 
+end 
+
+""" 
+    set_attribute(dict::Location,attribute::Attribute)
+
+Create a copy of `loc` and set it's environmental attributes to attribute
+"""
+function set_attribute(loc::Location,attribute::Attribute)
+    y=deepcopy(loc)
+    set_attribute!(y,attribute) 
+    return y 
+end 

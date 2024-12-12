@@ -8,7 +8,11 @@ See also [`@labware`](@ref)
 abstract type Labware <: Location end 
 
 
+"""
+    @labware name type welltype plate_shape vendor catalog 
 
+Define a new labware Type `name` and overload methods to make `name` a JLIMS compatible labware. 
+"""
 macro labware(name, type, welltype, plate_shape,vendor,catalog)
     n=Symbol(name)
     t=Symbol(type)
@@ -31,8 +35,9 @@ macro labware(name, type, welltype, plate_shape,vendor,catalog)
         const name::Base.String
         parent::Union{JLIMS.Location,Nothing}
         const children::Matrix{$wt}
+        attributes::AttributeDict
         is_locked::Bool
-        ($n)(id,name=string(UUIDs.uuid4()),parent=nothing,children=Matrix{$wt}(undef,$ps...),is_locked=false)=new(id,name,parent,children,is_locked)
+        ($n)(id,name=string(UUIDs.uuid4()),parent=nothing,children=Matrix{$wt}(undef,$ps...),attributes::AttributeDict=AttributeDict(),is_locked=false)=new(id,name,parent,children,attributes,is_locked)
     end  
     JLIMS.shape(x::$n)= Base.size(AbstractTrees.children(x)) 
     JLIMS.vendor(::$n)=$v
@@ -52,6 +57,11 @@ function alphabet_code(n)
 end 
 
 
+"""
+    generate_labware(lw_type::Type{<:Labware},current_idx::Integer,name=string(UUIDs.uuid4()))
+
+Generate a a `lw_type` object and fill it with empty wells. 
+"""
 function generate_labware(lw_type::Type{<:Labware},current_idx::Integer,name=string(UUIDs.uuid4()))
     lw=lw_type(current_idx)
     sh=shape(lw)
@@ -59,7 +69,7 @@ function generate_labware(lw_type::Type{<:Labware},current_idx::Integer,name=str
     current_idx+=1
     for col in 1:sh[2]
         for row in 1:sh[1]
-            lw.children[row,col]=welltype(current_idx,alphabet_code(row)*string(col),lw,Empty(),true)
+            lw.children[row,col]=welltype(current_idx,alphabet_code(row)*string(col),lw)
             
             current_idx+=1
         end 

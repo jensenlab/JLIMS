@@ -3,15 +3,15 @@
 """
     can_move_into(parent::Location,child::Location)
 
-returns `true` if child can be moved into parent, and false if not. 
+returns `true` if child can be moved into parent, throw an error if not
 
-movements that pass `can_move` satisfy four criteria 
+there are three errors that prevent movement 
 
-1) the child is not locked in its current position. 
-2) the child is not already located in the newparent
-3) there are no constraints that block the newparent from containing the child
-3) the movement would not result in an over-occupancy of the newparent
+1) [`LockedLocationError`](@ref): `child` is locked in its current parent.  
+2) [`AlreadyLocatedInError`](@ref): `child` is already located in `parent`
+3) [`OccupancyError`](@ref): `parent` has occupancy constraints that prevent it from containing `child`. This could happen if `parent` is full or if `child` is never meant to be able to fit inside `parent`. 
 
+See also: [`move_into`](@ref)
 """
 function can_move_into(newparent::Location,child::Location)
         if is_locked(child)
@@ -35,7 +35,13 @@ end
 
 
 
+"""
+    move_into!(parent::Location,child::Location,lock::Bool=false)
 
+Move `child` into `parent`, if allowed. 
+
+if `lock=true`, then also lock the child after the movement. 
+"""
 function move_into!(parent::Location,child::Location,lock::Bool=false)
     oldparent=child.parent
     check=can_move_into(parent,child) 

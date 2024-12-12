@@ -85,20 +85,21 @@ end
 
 
 """
-    @chemical labname name type pubchemid 
+    @chemical labname name type pubchemid
+    @chemical labname name type
 
-A macro to define a new chemical and import it into the workspace under `labname`. The `name` argument is the display name for the chemical, which can include a larger set of characters and formatting than the `labname`
+Define a new chemical and import it into the workspace under `labname`. The `name` argument is the display name for the chemical, which can include a larger set of characters and formatting than the `labname`
     
 There are three valid type parameters for chemicals: 
-1) Solid
-2) Liquid
-3) Gas
+1) [`Solid`](@ref)
+2) [`Liquid`](@ref)
+3) [`Gas`](@ref)
 
-For a given chemical, its type parameter should be the phase in which it exists at STP. 
+For a given chemical, its `type` parameter should be the phase in which it exists at STP. 
 
 
 
-We provide the optional argument for `pubchemid` to access the Pub Chem database for chemicals. Attaching a pubchemid to a chemical triggers a call to the PUG REST API to query the molecular weight and density of the chemical. 
+We provide the optional argument for `pubchemid` to access the [PubChem](https://pubchem.ncbi.nlm.nih.gov) database. Attaching a pubchemid to a chemical triggers a call to the PUG REST API to query the molecular weight and density of the chemical. 
 If no `pubchemid` is provided, the chemical is defined with `missing` for the `molecular_weight` and `density` properties.
 
 Examples: 
@@ -113,11 +114,18 @@ julia> @chemical water "water" Liquid 962
 water
 
 julia> molecular_weight(water)
-18.015 g mol⁻
+18.015 g mol⁻¹
 ```
 
 Chemicals can also be defined manually with type constructors.
 
+Example:
+```jldoctest
+julia> water=Liquid("water",18.015u"g/mol",1.00u"g/mL",962)
+water
+```
+
+See also: [`Solid`](@ref), [`Liquid`](@ref), [`Gas`](@ref)
 """
 macro chemical(labname, name, type, pubchemid)
     ln=Symbol(labname)
