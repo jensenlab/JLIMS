@@ -1,0 +1,147 @@
+﻿Name,Class,Vendor,Catalog,Rows,Cols,Capacity,Unit,IsConstrained
+Bottle 1L,ScrewBottle,Fisher,FB-800-1000,1,1,1,L,TRUE
+Bottle 500mL,ScrewBottle,Fisher,FB-800-500,1,1,500,mL,TRUE
+Bottle 250mL,ScrewBottle,Fisher,FB-800-250,1,1,250,mL,TRUE
+Conical 50mL,Conical,Thermo,339652,1,1,50,mL,TRUE
+Conical 15mL,Conical,Corning,430791,1,1,15,mL,TRUE
+MicroTube 1500µL,MicroTube,Fisher,02-682-002,1,1,1.5,mL,TRUE
+MicroTube 500µL,MicroTube,Fisher,02-682-000,1,1,500,µL,TRUE
+Dish 10cm,Dish,Fisher,FB 0875712,1,1,110,mL,TRUE
+Dish 6cm,Dish,Fisher,FB 0875713A,1,1,35,mL,TRUE
+Breakaway PCR 96,Plate,Thermo,A32811,8,12,200,µL,TRUE
+FilterBottle 1L,FilterBottle,Fisher,FB12566506,1,1,1,L,TRUE
+WellPlate 96,Plate,Thermo,266120,8,12,200,µL,TRUE
+WellPlate 384,Plate,Corning,3680,16,24,80,µL,TRUE
+Iron (III) Nitrate Nonohydrate,ReagentBottle,Sigma ,F8508,1,1,100,mL,TRUE
+Iron (II) Sulfate Heptahydrate,ReagentBottle,Sigma ,F7002,1,1,250,mL,TRUE
+Magnesium Sulfate Heptahydrate,ReagentBottle,Sigma ,M1880,1,1,1,L,TRUE
+Manganese Sulfate Monohydrate,ReagentBottle,Sigma,M8179,1,1,100,mL,TRUE
+Sodium Acetate Anhydrous,ReagentBottle,VWR Ameresco,602,1,1,500,mL,TRUE
+Soidum Acetate Trihydrate,ReagentBottle,Fisher,BP334-1,1,1,1,L,TRUE
+Calcium Chloride Dihydrate,ReagentBottle,Fisher,BP510,1,1,500,mL,TRUE
+Cysteine,ReagentBottle,Fisher,BP376,1,1,100,mL,TRUE
+Sodium Bicarbonate,ReagentBottle,Fisher,BP328,1,1,1,L,TRUE
+Potassium Phosphate Dibasic,ReagentBottle,Fisher,BP363,1,1,500,mL,TRUE
+Potassium Phosphate Monobasic,ReagentBottle,Fisher,BP362,1,1,500,mL,TRUE
+Sodium Phosphate Monobasic Monohydrate,ReagentBottle,Fisher,BP330,1,1,1,L,TRUE
+Soidum Phosphate Dibasic Heptahydrate,ReagentBottle,Fisher,BP331,1,1,1,L,TRUE
+Four Aminobenzoic Acid,ReagentBottle,Sigma,A9878,1,1,25,mL,TRUE
+Biotin,ReagentBottle,Millipore,2031,1,1,1,mL,TRUE
+Folic Acid,ReagentBottle,Sgma,F8758,1,1,5,mL,TRUE
+Nicotinamide,ReagentBottle,Sigma,72340,1,1,100,mL,TRUE
+D Pantothenic Acid Hemicalcium,ReagentBottle,Sigma,21210,1,1,100,mL,TRUE
+Pyridoxal Hydrochloride,ReagentBottle,Millipore,P6155,1,1,5,mL,TRUE
+Pyridoxamine Dihydrochloride,ReagentBottle,Sigma ,R4500,1,1,5,mL,TRUE
+CoenzymeII (Bnadph),ReagentBottle,Goldbio,B-625-10,1,1,10,mL,TRUE
+Riboflavin,ReagentBottle,Sigma,R4500,1,1,100,mL,TRUE
+Thiamine Hydrochloride,ReagentBottle,Fisher,BP892,1,1,100,mL,TRUE
+Vitamin B12,ReagentBottle,Millipore,V6629,1,1,5,mL,TRUE
+Adenine,ReagentBottle,Sigma,A2786,1,1,25,mL,TRUE
+Guanine Hydrochloride,ReagentBottle,Aldrich,51030,1,1,10,mL,TRUE
+Uracil,ReagentBottle,Sigma,U1128,1,1,25,mL,TRUE
+Alanine,ReagentBottle,Sigma,A7502,1,1,1,L,TRUE
+Arginine,ReagentBottle,Fisher,BP2505,1,1,1,L,TRUE
+Aspartic Acid,ReagentBottle,Fisher,BP374,1,1,100,mL,TRUE
+Asparagine,ReagentBottle,Sigma,A0844,1,1,500,mL,TRUE
+Cystine,ReagentBottle,Fisher,BP377,1,1,100,mL,TRUE
+Glutamic Acid,ReagentBottle,Sigma,G1521,1,1,250,mL,TRUE
+Glutamine,ReagentBottle,Sigma,G3126,1,1,250,mL,TRUE
+Glycine,ReagentBottle,Fisher,BP381,1,1,1,L,TRUE
+Histidine,ReagentBottle,Fisher,BP382,1,1,100,mL,TRUE
+Isoleucine,ReagentBottle,Fisher,BP384,1,1,100,mL,TRUE
+Leucine,ReagentBottle,Fisher,BP385,1,1,100,mL,TRUE
+Lysine,ReagentBottle,Sigma,62840,1,1,100,mL,TRUE
+Methionine,ReagentBottle,Fisher,BP388,1,1,100,mL,TRUE
+Phenylalanine,ReagentBottle,Fisher,BP391,1,1,100,mL,TRUE
+Proline,ReagentBottle,Fisher,BP392,1,1,100,mL,TRUE
+Hydroxy L Proline,ReagentBottle,Aldrich,H54409,1,1,100,mL,TRUE
+Serine,ReagentBottle,Fisher,BP393,1,1,100,mL,TRUE
+Threonine,ReagentBottle,Fisher,BP394,1,1,100,mL,TRUE
+Tryptophan,ReagentBottle,Fisher,BP395,1,1,100,mL,TRUE
+Valine,ReagentBottle,Fisher,BP397,1,1,100,mL,TRUE
+Tyrosine,ReagentBottle,Sigma,T3754,1,1,100,mL,TRUE
+Cellobiose,ReagentBottle,Sigma,22150,1,1,50,mL,TRUE
+Maltodextrin,ReagentBottle,Aldrich,419672,1,1,100,mL,TRUE
+Dextrin From Corn,ReagentBottle,Sigma ,D2006,1,1,100,mL,TRUE
+Fructose,ReagentBottle,Sigma,F3510,1,1,500,mL,TRUE
+Galactose,ReagentBottle,Fisher,BP656,1,1,500,mL,TRUE
+Glucose,ReagentBottle,Fisher,D16,1,1,1,L,TRUE
+Mannitol,ReagentBottle,Sigma,M4125,1,1,500,mL,TRUE
+Lactose Dihydrate,ReagentBottle,Sigma,61345,1,1,1,L,TRUE
+Sorbitol,ReagentBottle,Sigma,S1876,1,1,500,mL,TRUE
+Trehalose Dihydrate,ReagentBottle,Fisher,BP2687,1,1,25,mL,TRUE
+Mannose,ReagentBottle,Sigma,M6020,1,1,25,mL,TRUE
+Sucrose,ReagentBottle,Fisher,BP220,1,1,1,L,TRUE
+Raffinose Pentahydrate,ReagentBottle,Sigma,R0250,1,1,25,mL,TRUE
+Melibiose,ReagentBottle,Sigma,M5500,1,1,25,mL,TRUE
+Dimethyl Sulfoxide,ReagentBottle,Sigma,472301,1,1,500,mL,TRUE
+Todd Hewitt Broth,ReagentBottle,Oxoid,CM0189B,1,1,500,mL,TRUE
+Brain Heart Infusion Broth,ReagentBottle,Millipore,53286,1,1,500,mL,TRUE
+Tryptone,ReagentBottle,Sigma,T7293,1,1,250,mL,TRUE
+MRS Broth,ReagentBottle,Millipore,69966,1,1,500,mL,TRUE
+Sodium Hydroxide,ReagentBottle,Fisher,SS255,1,1,1,L,TRUE
+Ethanol,ReagentBottle,DECON,2701,1,1,3.875,L,TRUE
+Hydrochloric Acid,ReagentBottle,Sigma,258148,1,1,2.5,L,TRUE
+Acetic Acid,ReagentBottle,Sigma,695092,1,1,2.5,L,TRUE
+Spectinomycin,ReagentBottle,Sigma,S4014,1,1,10,mL,TRUE
+Kanamycin,ReagentBottle,Sigma,K1377,1,1,10,mL,TRUE
+Erythromycin,ReagentBottle,Sigma,E5389,1,1,10,mL,TRUE
+Ampicillin,ReagentBottle,Fisher,BP1760,1,1,10,mL,TRUE
+TrypticSoyBroth,ReagentBottle,Sigma,22092,1,1,500,mL,TRUE
+LBBroth,ReagentBottle,Fisher,BP1427,1,1,500,mL,TRUE
+DeepWell96 2mL,Plate,VWR,76329-998,8,12,2,mL,TRUE
+DeepWell96 1mL,Plate,VWR,76330-000,8,12,1,mL,TRUE
+Lab,,,,0,0,0,L,FALSE
+MainRoom,,,,0,0,0,L,FALSE
+RobotRoom,,,,0,0,0,L,FALSE
+CultureRoom,,,,0,0,0,L,FALSE
+CO2Incubator,,,,0,0,0,L,TRUE
+Incubator Shelf,,,,0,0,0,L,FALSE
+Anaerobic Chamber,,,,0,0,0,L,FALSE
+Biosafety Cabinet,,,,0,0,0,L,FALSE
+Freezer Minus 80C,,,,0,0,0,L,FALSE
+Freezer Rack,,,,0,0,0,L,TRUE
+Freezer Box,,,,0,0,0,L,TRUE
+Refrigerator,,,,0,0,0,L,FALSE
+Refrigerator Door Shelf,,,,0,0,0,L,FALSE
+Refrigerator Drawer,,,,0,0,0,L,FALSE
+Refrigerator Shelf,,,,0,0,0,L,FALSE
+Cobra,,,,0,0,0,L,TRUE
+Cobra Deck Slot,,,,0,0,0,L,TRUE
+Tempest,,,,0,0,0,L,TRUE
+Tempest Input,,,,0,0,0,L,TRUE
+Tempest Output,,,,0,0,0,L,TRUE
+Tempest Reagent Holder,,,,0,0,0,L,TRUE
+Tempest Reagent Slot,,,,0,0,0,L,TRUE
+Cytation 5,,,,0,0,0,L,TRUE
+Cytation Drawer,,,,0,0,0,L,TRUE
+Cytation 10,,,,0,0,0,L,TRUE
+BioSpa,,,,0,0,0,L,TRUE
+Biospa Drawer,,,,0,0,0,L,TRUE
+Biospa Slot,,,,0,0,0,L,TRUE
+Mini Fridge,,,,0,0,0,L,FALSE
+Mini Fridge Shelf,,,,0,0,0,L,FALSE
+Conical Tube Rack,,,,0,0,0,L,TRUE
+Conical Tube Slot 50 mL,,,,0,0,0,L,TRUE
+Lab Shelf,,,,0,0,0,L,FALSE
+Lab Drawer ,,,,0,0,0,L,FALSE
+Lab Cabinet ,,,,0,0,0,L,FALSE
+Mantis,,,,0,0,0,L,TRUE
+Mantis Deck,,,,0,0,0,L,TRUE
+Mantis 50mL Rack,,,,0,0,0,L,TRUE
+Mantis LC3,,,,0,0,0,L,TRUE
+Mantis Chip Slot,,,,0,0,0,mL,TRUE
+Mantis Chip,,,,1,1,15,mL,TRUE
+Equipment Bench,,,,0,0,0,L,FALSE
+Workstation,,,,0,0,0,L ,FALSE
+Mantis 50 mL Slot,,,,0,0,0,L ,TRUE
+Nimbus,,,,0,0,0,L ,TRUE
+Nimbus Deck Slot,,,,0,0,0,L ,TRUE
+Nimbus Rack Plate,,,,0,0,0,L ,TRUE
+Nimbus Rack conical_15ml,,,,0,0,0,L ,TRUE
+Nimbus Rack conical_50ml,,,,0,0,0,L ,TRUE
+Conical Tube Slot 15 mL,,,,0,0,0,L,TRUE
+Altemis Tube 1400µL,CryoTube,,,1,1,1.4,mL,TRUE
+Altemis SBS Rack,,,,0,0,0,L,TRUE
+Altemis Tube Slot,,,,0,0,0,L,TRUE
+Glycerol,ReagentBottle,Sigma,G2025,1,1,1,L,TRUE
