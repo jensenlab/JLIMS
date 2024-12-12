@@ -240,10 +240,10 @@ function ancestors(x::Location;rev=false)
     out=Location[]
     node=deepcopy(x)
     while !AbstractTrees.isroot(node)
-        push!(out,node)
-        node=AbstractTrees.parent(node)
+        push!(out,node);
+        node=AbstractTrees.parent(node);
     end 
-    push!(out,node)
+    push!(out,node);
     if rev
         return reverse(out)
     else
@@ -275,7 +275,7 @@ end
 
 
 function Base.show(io::IO,x::Location)
-    print(name(x))
+    print(io,name(x))
 end 
 
 """ 

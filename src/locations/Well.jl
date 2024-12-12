@@ -36,6 +36,8 @@ Define a new well type `name` with capacity `capacity`
 
 See also: [`Well`](@ref),[`capacity`](@ref)
 """
+
+occupancy(::Well) = 1//1
 macro well(name,capacity)
     n=Symbol(name)
     cap::Unitful.Volume=eval(capacity)
@@ -49,7 +51,7 @@ macro well(name,capacity)
     import AbstractTrees: ParentLinks
     export $n, occupancy_cost
     mutable struct $n <: (JLIMS.Well)
-        const id::Base.Integer
+        const location_id::Base.Integer
         const name::Base.String
         parent::Union{JLIMS.Labware,Nothing}
         stock::JLIMS.Stock

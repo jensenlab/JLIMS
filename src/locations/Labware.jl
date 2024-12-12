@@ -31,7 +31,7 @@ macro labware(name, type, welltype, plate_shape,vendor,catalog)
     import AbstractTrees.ParentLinks
     export $n
     mutable struct $n <: ($t)
-        const id::Base.Integer
+        const location_id::Base.Integer
         const name::Base.String
         parent::Union{JLIMS.Location,Nothing}
         const children::Matrix{$wt}
@@ -44,7 +44,7 @@ macro labware(name, type, welltype, plate_shape,vendor,catalog)
     JLIMS.catalog(::$n)=$c
     AbstractTrees.ParentLinks(::Type{<:$(n)})=AbstractTrees.StoredParents()
     JLIMS.parent_cost(::($n))=2//1 # occupancy cost is greater than 1. The value of 2//1 was chosen arbitrarily the new location is not allowed to be a parent unless otherwise specified
-    JLIMS.occupancy_cost(::($n),::($wt))= 1//Base.prod($ps...) # !!!Exception!!! the plate can hold up to prod(ps...) wells of type wt. 
+    JLIMS.occupancy_cost(::($n),::($wt))= 1//Base.prod($ps) # !!!Exception!!! the plate can hold up to prod(ps...) wells of type wt. 
     end)
 end 
 
