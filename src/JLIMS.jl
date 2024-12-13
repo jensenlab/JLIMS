@@ -53,7 +53,7 @@ export genus, species, strain
 # Stocks 
 export solids, liquids, chemicals, organisms, volume_estimate, quantity
 # locations 
-export location_id, name, is_locked, unlock!,lock!,toggle!, unlock, lock, toggle, ancestors, environment,attributes 
+export location_id, name, is_locked, unlock!,lock!,toggle_lock!, unlock, lock, toggle_lock, ancestors, environment,attributes , is_active, activate!,activate, deactivate!,deactivate, toggle_activity!,toggle_activity
 export parent_cost, child_cost, occupancy, occupancy_cost 
 export can_move_into, move_into!
 #labware

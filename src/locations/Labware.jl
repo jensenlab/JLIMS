@@ -37,7 +37,8 @@ macro labware(name, type, welltype, plate_shape,vendor,catalog)
         const children::Matrix{$wt}
         attributes::AttributeDict
         is_locked::Bool
-        ($n)(id,name=string(UUIDs.uuid4()),parent=nothing,children=Matrix{$wt}(undef,$ps...),attributes::AttributeDict=AttributeDict(),is_locked=false)=new(id,name,parent,children,attributes,is_locked)
+        is_active::Bool
+        ($n)(id,name=string(UUIDs.uuid4()),parent=nothing,children=Matrix{$wt}(undef,$ps...),attributes::AttributeDict=AttributeDict(),is_locked=false,is_active=true)=new(id,name,parent,children,attributes,is_locked,is_active)
     end  
     JLIMS.shape(x::$n)= Base.size(AbstractTrees.children(x)) 
     JLIMS.vendor(::$n)=$v

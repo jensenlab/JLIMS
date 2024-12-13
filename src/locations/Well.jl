@@ -28,6 +28,7 @@ stock(x::Well)=x.stock
 # all wells are always locked
 is_locked(::Well)=true
 
+is_active(x::Well)==is_active(AbstractTrees.parent(x)) # wells inherit the activity of their parent.
 
 """
     @well name capacity

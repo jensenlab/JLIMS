@@ -54,7 +54,7 @@ attributes(x::Location)=x.attributes
 
 Access the state of the `is_locked` property of a location. Locked locations cannot be moved from their current parent, but *children of locked locations can be moved*. 
 
-See also: [`unlock!`](@ref),[`lock!`](@ref),[`toggle!`](@ref),[`unlock`](@ref),[`lock`](@ref),[`toggle`](@ref).
+See also: [`unlock!`](@ref),[`lock!`](@ref),[`toggle_lock!`](@ref),[`unlock`](@ref),[`lock`](@ref),[`toggle_lock`](@ref).
 """
 is_locked(x::Location)=x.is_locked # locked locations cannot be moved from their current parent. Children of locked locations CAN be moved. 
 
@@ -102,28 +102,106 @@ function lock(x::Location)
 end 
 
 """
-    toggle!(x:Location)
+    toggle_lock!(x:Location)
 
 Flip the state of the `is_locked` property of a location.
 
-See also: [`is_locked`](@ref),[`toggle`](@ref).
+See also: [`is_locked`](@ref),[`toggle_lock`](@ref).
 """
-function toggle!(x::Location)
+function toggle_lock!(x::Location)
     x.is_locked=!is_locked(x)
 end 
 
 
 """
-    toggle(x::Location)
+    toggle_lock(x::Location)
 
 Create a copy of Location `x` and flip the state of its `is_locked` peroperty
 
-See also: [`is_locked`](@ref),[`toggle!`](@ref).
+See also: [`is_locked`](@ref),[`toggle_lock!`](@ref).
 """
-function toggle(x::Location)
+function toggle_lock(x::Location)
     y=deepcopy(x)
     toggle!(y)
     return y
+end 
+
+"""
+    is_active(x::Location)
+
+Access the `is_active` property of a location
+
+
+See also: [`activate!`](@ref), [`deactivate!`](@ref), [`toggle_activity!`](@ref)
+"""
+function is_active(x::Location)
+    return x.is_active
+end 
+
+
+"""
+    activate!(x::Location)
+
+Set the `is_active` property of [`Location`](@ref) `x` to `true`
+
+See also: [`is_active`](@ref), [`activate`](@ref)
+"""
+function activate!(x::Location)
+    x.is_active=true
+end 
+"""
+    deactivate!(x::Location)
+
+Set the `is_active` property of [`Location`](@ref) `x` to `false`
+
+See also: [`is_active`](@ref), [`deactivate`](@ref)
+"""
+function deactivate!(x::Location)
+    x.is_active=false
+end 
+
+"""
+    toggle_activity!(x::Location)
+
+Switch the `is_active` property of [`Location`](@ref) `x` from its current state.
+
+See also: [`is_active`](@ref), [`toggle_activity`](@ref)
+"""
+function toggle_activity!(x::Location)
+    x.is_active=!is_active(x)
+end 
+"""
+    activate!(x::Location)
+
+Copy [`Location`](@ref) `x` and Set the `is_active` property of the copy to `true`
+
+See also: [`is_active`](@ref), [`activate!`](@ref)
+"""
+function activate(x::Location)
+    y=deepcopy(x)
+    return activate!(y)
+end 
+"""
+    deactivate!(x::Location)
+
+Copy [`Location`](@ref) `x` and Set the `is_active` property of the copy to `false`
+
+See also: [`is_active`](@ref), [`deactivate!`](@ref)
+"""
+function deactivate(x::Location)
+    y=deepcopy(x)
+    return deactivate!(y)
+end 
+"""
+    toggle_activity!(x::Location)
+
+Copy [`Location`](@ref) `x` and Switch the `is_active` property of the copy from its current state.
+
+See also: [`is_active`](@ref), [`toggle_activity!`](@ref)
+"""
+function toggle_activity(x::Location)
+    y=deepcopy(x)
+    return toggle_activity!(y)
 end 
 
 
@@ -214,7 +292,8 @@ macro location(name,constrained_as_parent=false,constrained_as_child=false)
         children::Vector{T} where T<:JLIMS.Location
         attributes::AttributeDict
         is_locked::Bool
-        ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Location,Nothing}=nothing,children=JLIMS.Location[],attributes::AttributeDict=AttributeDict(),is_locked::Bool=false) = new(id,name,parent,children,attributes,is_locked) 
+        is_active::Bool
+        ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Location,Nothing}=nothing,children=JLIMS.Location[],attributes::AttributeDict=AttributeDict(),is_locked::Bool=false,is_active::Bool=true) = new(id,name,parent,children,attributes,is_locked,is_active) 
     end 
     AbstractTrees.ParentLinks(::Type{<:($n)})=AbstractTrees.StoredParents()
     if $p_constraint
