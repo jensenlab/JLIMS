@@ -9,7 +9,7 @@ using
     HTTP, # chemical parsing only
     JSON, # chemical parsing only 
     UUIDs # used for generating labware name
-import Base: +,-,*,/,convert, show ,sort , promote_rule,round , in, ==,empty,empty! # all overloaded by this package
+import Base: +,-,*,/,convert, show ,sort , promote_rule,round , in, ==,empty,empty!, hash # all overloaded by this package
 import AbstractTrees: children,parent,nodevalue
 
 include("./Units/JensenLabUnits.jl")
@@ -31,6 +31,11 @@ include("./stocks/chemical_parsing.jl")
 
 include("./operations/movement.jl")
 include("./operations/mixing.jl")
+include("./database/database.jl")
+include("./database/db_utils.jl")
+include("./database/caching.jl")
+include("./database/fetching.jl")
+include("./database/uploads.jl")
 
 
 
@@ -60,8 +65,12 @@ export can_move_into, move_into!
 export shape, vendor, catalog, generate_labware, wells
 #wells
 export capacity, stock, sterilize!,sterilize,transfer!,transfer, drain!,drain
-
-
+#database
+export create_db
+#db_utils 
+export connect_SQLite
+#uploads 
+export @upload 
 
 
 

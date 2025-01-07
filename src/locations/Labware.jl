@@ -33,12 +33,12 @@ macro labware(name, type, welltype, plate_shape,vendor,catalog)
     mutable struct $n <: ($t)
         const location_id::Base.Integer
         const name::Base.String
-        parent::Union{JLIMS.Location,Nothing}
-        const children::Matrix{$wt}
+        parent::Union{JLIMS.Location,Nothing,JLIMS.LocationRef}
+        const children::Union{Matrix{$wt},Matrix{JLIMS.LocationRef}}
         attributes::AttributeDict
         is_locked::Bool
         is_active::Bool
-        ($n)(id,name=string(UUIDs.uuid4()),parent=nothing,children=Matrix{$wt}(undef,$ps...),attributes::AttributeDict=AttributeDict(),is_locked=false,is_active=true)=new(id,name,parent,children,attributes,is_locked,is_active)
+        ($n)(id::Integer,name::String=string(UUIDs.uuid4()),parent=nothing,children=Matrix{$wt}(undef,$ps...),attributes=AttributeDict(),is_locked=false,is_active=true)=new(id,name,parent,children,attributes,is_locked,is_active)
     end  
     JLIMS.shape(x::$n)= Base.size(AbstractTrees.children(x)) 
     JLIMS.vendor(::$n)=$v

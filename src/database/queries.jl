@@ -11,6 +11,42 @@ function get_last_ledger_id()
 end 
 
 
+function get_component(id::Integer)
+    comp=query_db("SELECT * FROM Components WHERE ID=$id")
+    if nrow(comp)==0
+        error("No component with id #$id found")
+    end 
+    type=comp[1,"Type"]
+    if type == "Chemical"
+        return get_chemical(id)
+    elseif type == "Strain"
+        return get_strain(id)
+    else
+        error("invalid component type for component id #$id")
+    end 
+end 
+
+function get_chemical(id::Integer)
+    chems=query_db("SELECT * FROM Chemicals WHERE ComponentID = $id")
+    if nrow(chems)==0
+        error("No chemical with component id #$id found.")
+    end 
+    chem=chems[1,:]
+    type=eval(Symbol(chem["Type"]))
+    return type(chem["Name"],chem["Molecular_Weight"]*u"g/mol",chem["Density"]*u"g/ml",chem["pubchemid"])
+end 
+
+function get_strain(id::Integer)
+    strs=query_db("SELECT * FROM Strains WHERE ComponentID")
+    if nrow(strs)==0
+        error("No strain with component id #$id found.")
+    end 
+    str=strs[1,:]
+    return Strain(str["Genus"],str["Species"],str["Strain"])
+end 
+
+
+
 """ 
     is_barcode_assignable(Barcode::AbstractString)
 

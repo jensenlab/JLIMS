@@ -357,6 +357,11 @@ function ==(a::Stock,b::Stock)
 end 
 
 
+function Base.hash(s::Stock, h::UInt)
+    hash(organisms(s),hash(solids(s),hash(liquids(s),h)))
+end 
+
+
 function Base.in(str::Strain,stock::Stock)
     return str in organisms(stock)
 end 

@@ -25,4 +25,14 @@ end
 
 
 
+function query_join_vector(entry::Vector{Number})
+    return string("(",join(entry,","),")")
+end 
+
+function query_join_vector(entry::Vector{String})
+    return string("('",join(entry,"','"),"')")
+end 
+
+
+
         

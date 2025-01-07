@@ -31,10 +31,30 @@ function upload_operation(fun::Function)
         activate! => upload_activity,
         deactivate! => upload_activity,
         toggle_activity! => upload_activity,
+        lock! => upload_lock,
+        unlock! => upload_lock,
+        toggle_lock!=>upload_lock,
         move_into! => upload_movement,
-        transfer! => upload_transfer
+        transfer! => upload_transfer,
+        set_attribute! => upload_environmental_attribute
     )
+    return opfun_dict[fun]
 end 
+
+
+
+macro upload(expr) 
+    fun=eval(expr.args[1])
+    upload_op=upload_operation(fun)
+    return esc(quote 
+        $expr
+        upload_op($(expr.args[2:end])...)
+    end )
+end 
+
+
+
+
 
 
 """
@@ -44,9 +64,9 @@ Add an entry to the Activity table a [`Locaiton`](@ref)
     
 Locations can be toggled between an active and inactive state. Activity can be used to show or hide locations in user interfaces.  
 """
-function upload_activity(location::Location)
+function upload_activity(location::Location,time::DateTime=Dates.now())
     ledger_id=upload_ledger()
-    return execute_db("INSERT OR IGNORE INTO Activity(LedgerID,LocationID,IsActive,Time) Values($ledger_id,$(location_id(location)),$(Int(is_active(location))),datetime('now'))")
+    return execute_db("INSERT OR IGNORE INTO Activity(LedgerID,LocationID,IsActive,Time) Values($ledger_id,$(location_id(location)),$(Int(is_active(location))),$(string(time)))")
 end 
 
 function upload_attribute(attribute::Type{<:Attribute})
@@ -74,174 +94,59 @@ function upload_new_location(name::String,t::Type{<:Location})
     return id[1,1]
 end 
 
-function upload_lock(location::Location)
+function upload_lock(location::Location,time::DateTime=Dates.now())
     ledger_id=upload_ledger()
-    return execute_db("INSERT OR IGNORE INTO Locks(LedgerID,LocationID,IsLocked,Time) Values($ledger_id,$(location_id(location)),$(Int(is_locked(location))),datetime('now'))")
-
-
-
-
-
-"""
-    upload_chemical(name::AbstractString,cid::Union{Integer,Missing},molecular_weight::Union{Real,Missing},density::Union{Real,Missing},class::AbstractString)
-
-Upload a new chemical to the database. Use the [PubChem CID](https://pubchem.ncbi.nlm.nih.gov) to automatically parse chemical properties from the NIH PubChem database. 
-"""
-function upload_chemical(name::AbstractString,cid::Union{Integer,Missing},molecular_weight::Union{Real,Missing},density::Union{Real,Missing},class::AbstractString)
-    x=ismissing(cid) ? "NULL" : cid
-    y=ismissing(molecular_weight) ? "NULL" : molecular_weight
-    z=ismissing(density) ? "NULL" : density
-    return execute_db("
-    INSERT OR IGNORE INTO Chemicals (Name, CID, Molar_Mass, Density, Class)
-    Values('$name', $x, $y,$z,'$class')")
+    execute_db("INSERT OR IGNORE INTO Locks(LedgerID,LocationID,IsLocked,Time) Values($ledger_id,$(location_id(location)),$(Int(is_locked(location))),$(string(time)))")
+    return nothing
 end 
 
-function upload_chemical(name::AbstractString,cid::Integer,class::AbstractString)
-molecular_weight,density=get_mw_density(cid)
-upload_chemical(name,cid,molecular_weight,density,class)
+function upload_component(chem::Chemical)
+    execute_db("INSERT OR IGNORE INTO Components(ComponentHash, Type) Values($(hash(chem)),'Chemical')")
+    id=get_component_id(chem)
+    execute_db("INSERT OR IGNORE INTO Chemicals(Name,ComponentID,Type,Molecular_Weight,Density,CID) Values($(name(chem)),$(id),$(string(typeof(chem))),$(molecular_weight(chem)),$(density(chem)),$(pubchemid(chem)))")
+    return id
 end 
 
-
-"""
-    upload_strain(name::AbstractString,genus::AbstractString,species::AbstractString,NCBI_ID::AbstractString,notes::AbstractString="")
-
-Upload a new strain to the database. Include the [NCBI Taxonomy ID](https://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/index.cgi) to standardize strain types.
-"""
-function upload_strain(name::AbstractString,genus::AbstractString,species::AbstractString,NCBI_ID::Union{Integer,Missing},notes::Union{AbstractString,Missing}="")
-    a=ismissing(NCBI_ID) ? "NULL" : NCBI_ID
-    b=ismissing(notes) ? "" : notes 
-    execute_db("""INSERT OR IGNORE INTO Strains(Name,Genus,Species,NCBI_ID,Notes) Values('$name','$genus','$species',$a,'$b')""")
-end 
-   
-
-"""
-    upload_composition(name::AbstractString) 
-
-Upload a new composition name to the database.
-"""
-function upload_composition(name::AbstractString) 
-    return execute_db("INSERT OR IGNORE INTO Compositions (Name) Values('$name')")
-end
-
-"""
-    upload_composition_chemical(name::AbstractString,chemical::AbstractString,concentration::Real,unit::AbstractString) 
-
-Upload a new composition-chemical pair to the database.
-"""
-function upload_composition_chemical(name::AbstractString,chemical::AbstractString,concentration::Real,unit::AbstractString)
-    concentration >=0 ? nothing : throw(DomainError(concentration,"Concentrations must be nonnegative."))
-    upload_composition(name)
-    return execute_db("INSERT OR IGNORE INTO CompositionChemicals(CompositionID,ChemicalID,Concentration,Unit) Values ('$name','$chemical',$concentration,'$unit')")
-end
-
-
-"""
-   upload_source(compname::AbstractString,location_type::AbstractString) 
-
-Upload a new composition source that ties a `compname` to a `location_type`
-
-##Example:
-    The reagent D-glucose has a `compname` "D-glucose" which arrives in a "D-glucose" bottle.
-"""
-function upload_source(compname::AbstractString,location_type::AbstractString)
-    return execute_db("INSERT OR IGNORE INTO Sources(CompositionID,LocationType) Values('$compname','$location_type')")
-end 
-
-"""
-    upload_well(loc_id::Integer,well_idx::Integer)
-
-Upload a new well in location `loc_id` in well index `well_idx`. 
- 
-See `generate_location` to automatically generate wells of relevant locations. 
-"""
-function upload_well(loc_id::Integer,well_idx::Integer)
-    return execute_db("INSERT OR IGNORE INTO Wells(LocationID,Well_Index) Values($loc_id,$well_idx)")
-end 
-
-""" 
-    upload_source_transfer(sourceID::Integer,wellID::Integer,quantity::Real,unit::AbstractString,price::Real)
-
-commit a source transfer to the ledger. Transfer a `quantity` of `sourceID` to `wellID`. price will be used to reconstruct the price of reagents for experiments.  
-"""
-function upload_source_transfer(sourceID::Integer,wellID::Integer,quantity::Real,unit::AbstractString,price::Real)
-    price >=0 ? nothing : throw(DomainError(price,"price must be non-negative."))
-    quantity >= 0 ? nothing : throw(DomainError(quantity,"quantity must be non-negative"))
-    ledger_id=upload_ledger()
-    return execute_db("INSERT OR IGNORE INTO SourceTransfers(LedgerID,SourceID,WellID,Quantity,Unit,Time,Price) Values($ledger_id,$sourceID,$wellID,$quantity,'$unit',datetime('now'),$price)")
+function upload_component(str::Strain)
+    execute_db("INSERT OR IGNORE INTO Components(ComponentHash,Type) Values($(hash(str)),'Strain')")
+    id=get_component_id(str)
+    execute_db("INSERT OR IGNORE INTO Strains(ComponentID,Genus,Species,Strain) Values($(id),$(genus(str)),$(species(str)),$(strain(str)))")
+    return id
 end 
 
 
 
-"""
-    upload_strain_transfer(strainID::AbstractString,wellID::Integer)
-
-commit a strain transfer to the ledger. Initial transfer a strain into a well from the outside world. Analgous to a source transfer but for strains. 
-"""
-function upload_strain_transfer(strainID::AbstractString,wellID::Integer)
-    ledger_id=upload_ledger()
-    return execute_db("INSERT OR IGNORE INTO StrainTransfers(LedgerID,StrainID,WellID,Time) Values($ledger_id,'$strainID',$wellID,datetime('now'))")
-end 
 
 """
     upload_transfer(sourceID::Integer,destinationID::Integer,quantity::Real,unit::AbstractString,configuration::AbstractString)
 
 commit a transfer of `quantity` from  well `sourceID` to well `destinationID` using a particular robot `configuration`
 """
-function upload_transfer(sourceID::Integer,destinationID::Integer,quantity::Real,unit::AbstractString,configuration::AbstractString)
+function upload_transfer(source::Well,destination::Well,quant::Union{Unitful.Mass,Unitful.Volume},configuration::AbstractString="",time::DateTime=now())
     ledger_id=upload_ledger()
-    return execute_db("""INSERT INTO Transfers(LedgerID,Source,Destination,Quantity,Unit,Time,Configuration) Values('$ledger_id','$sourceID','$destinationID','$quantity','$unit',datetime('now'),'$configuration')""")
+    execute_db("""INSERT INTO Transfers(LedgerID,Source,Destination,Quantity,Unit,Time,Configuration) Values('$ledger_id','$(location_id(source))','$(location_id(destination))','$(ustrip(quant))','$(string(unit(quant)))',$(string(time)),'$configuration')""")
+    return nothing
 end 
-
-"""
-    upload_barcode(Barcode::AbstractString,Name::AbstractString="")
-
-Upload an optionally named barcode to the database that can be assigned to a location.
-"""
-function upload_barcode(Barcode::AbstractString,Name::AbstractString="")
-    return execute_db("INSERT OR IGNORE INTO Barcodes(Barcode,Name) Values('$Barcode','$Name')")
-end 
+ 
 
 
-
-
-"""
-    upload_location_type(name::AbstractString,vendor::Union{AbstractString,Missing},catalog::Union{AbstractString,Missing},well_rows::Integer,well_cols::Integer,well_capacity::Real,unit::AbstractString,is_constrained::Bool)
-
-Upload a new locaton type to the database. `is_constrained` enforces constraints found in the location constraints table. Adding a location constraint for a location type automatically updates `is_constrained`
-"""
-function upload_location_type(name::AbstractString,vendor::Union{AbstractString,Missing},catalog::Union{AbstractString,Missing},well_rows::Integer,well_cols::Integer,well_capacity::Real,unit::AbstractString,is_constrained::Bool)
-    a=ismissing(vendor) ? "NULL" : vendor
-    b=ismissing(catalog) ? "NULL" : catalog
-    return execute_db("INSERT OR IGNORE INTO LocationTypes(Name,Vendor,Catalog,WellRows,WellCols,WellCapacity,Unit,IsConstrained) Values('$name','$a','$b',$well_rows,$well_cols,$well_capacity,'$unit',$(Int(is_constrained)))")
-end 
-
-
-"""
-    upload_location(name::AbstractString,type::AbstractString)
-
-Upload a new instance of location `type` with human-readable name `name`
-
-ex. upload_location("conical_50ml", 
-"""
-function upload_location(name::AbstractString,type::AbstractString)
-    return execute_db("INSERT OR IGNORE INTO Locations(Name,Type) Values('$name','$type')")
-end
-
-
-
-function upload_location_constraint(parent::AbstractString,child::AbstractString,occupancy::Real)
-    0 <= occupancy <= 1 ? nothing : throw(DomainError(occupancy,"occupancy must be a real number between zero and one."))
-    !is_constrained(parent) ? constrain_location(parent) : nothing  # update IsConstrained on the parent location type if it isn't already constrained 
-    return execute_db("INSERT OR IGNORE INTO LocationConstraints(ParentType, ChildType,Occupancy) Values('$parent','$child',$occupancy)")
-end 
-
-function upload_movement(childid::Integer,parentid::Union{Integer,Missing},is_locked::Bool=false)
-    parent= ismissing(parentid) ? "NULL" : parentid
+function upload_movement(parent::Location,child::Location,lock::Bool=false,time::DateTime=now())
     ledger_id=upload_ledger()
-    return execute_db("INSERT OR IGNORE INTO Movements(LedgerID,Child,Parent,IsLocked,Time) Values($ledger_id,$childid,$parent,$(Int(is_locked)),datetime('now'))")
+    execute_db("INSERT OR IGNORE INTO Movements(LedgerID,Parent,Child,Time) Values($ledger_id,$(location_id(parent)),$(location_id(child)),$(string(time))")
+    if lock
+        upload_lock(child,time) # only needed if the lock flag is true. This means that the lock state has changed (you had to be unlocked to move in the first place)
+    end 
+    return nothing 
+end 
+
+function upload_environmental_attribute(loc::Location,attr::Attribute,time::DateTime=now()) 
+    ledger_id=upload_ledger()
+    val=value(attr)
+    execute_db("""INSERT OR IGNORE INTO EnvironmentalAttributes(LedgerID,LocationID,Attribute,Value,Unit,Time) Values($ledger_id,$(location_id(loc)),$(string(typeof(attr))),$(ustrip(val)),$(string(unit(val))),$(string(time)))""")
 end 
 
 
+#=
 function upload_protocol(exp_id,name::AbstractString) 
     execute_db("""
     INSERT INTO Protocols(ExperimentID,Name) Values('$exp_id','$name');
@@ -312,16 +217,10 @@ function upload_configuration(config::AbstractString,instrument_type::AbstractSt
     execute_db("""INSERT OR IGNORE INTO Configurations(Configuration, InstrumentType) Values('$config','$instrument_type')""")
 end 
 
-function upload_environmental_attribute(attribute::AbstractString) 
-    execute_db("""INSERT OR IGNORE INTO EnvironmentalAttributes(Attribute) Values('$attribute')""")
-end 
 
 
 
-function upload_environment(locationid::Integer,attribute::AbstractString,value::Real,unit::AbstractString)
-    ledger_id=upload_ledger()
-    execute_db("""INSERT OR IGNORE INTO Environments(LedgerID,LocationID,Attribute,Value,Unit,Time) Values('$ledger_id',$locationid,'$attribute','$value','$unit',datetime('now'))""")
-end 
+
 
 
 
@@ -334,3 +233,4 @@ end
 function upload_encumbered_activity(e_id::Integer,loc_id::Integer,is_active::Bool)
     execute_db("""Insert INTO EncumberedActivity(EncumbranceID,LocationID,IsActive) Values($e_id,$loc_id,$(Int(is_active)))""")
 end 
+=#

@@ -6,7 +6,7 @@ Wells are special [`Location`](@ref) subtypes that contain a single [`Stock`](@r
 
 Wells are only allowed to be located in [`Labware`] objects and cannot be moved from the labware. They are physically tied to a Labware. 
 """
-abstract type Well<: Location  end 
+abstract type Well <: Location  end 
 
 AbstractTrees.children(::Well) = ()
 """
@@ -28,7 +28,7 @@ stock(x::Well)=x.stock
 # all wells are always locked
 is_locked(::Well)=true
 
-is_active(x::Well)==is_active(AbstractTrees.parent(x)) # wells inherit the activity of their parent.
+is_active(x::Well)=is_active(AbstractTrees.parent(x)) # wells inherit the activity of their parent.
 
 """
     @well name capacity
@@ -54,10 +54,10 @@ macro well(name,capacity)
     mutable struct $n <: (JLIMS.Well)
         const location_id::Base.Integer
         const name::Base.String
-        parent::Union{JLIMS.Labware,Nothing}
+        parent::Union{JLIMS.Labware,Nothing,JLIMS.LocationRef}
         stock::JLIMS.Stock
         attributes::AttributeDict
-        function ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Labware,Nothing}=nothing,stock::JLIMS.Stock=Empty(),attributes::AttributeDict=AttributeDict()) 
+        function ($n)(id::Base.Integer,name::Base.String,parent=nothing,stock=Empty(),attributes=AttributeDict()) 
             (JLIMS.volume_estimate(stock) <= $cap) || throw(WellCapacityError(JLIMS.volume_estimate(stock),$cap))
             new(id,name,parent,stock,attributes) 
         end 

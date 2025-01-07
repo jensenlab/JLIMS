@@ -33,10 +33,35 @@ function create_db(path)
 
     create_Components="""
         CREATE TABLE Components(
-            Name TEXT Primary KEY
+            ID INTEGER PRIMARY KEY NOT NULL,
+            ComponentHash TEXT,
+            Type TEXT,
+            Unique(ComponentHash)
             );
     """
 
+    create_Chemicals="""
+        CREATE TABLE Chemicals(
+            Name TEXT PRIMARY KEY 
+            ComponentID Integer,
+            Type TEXT,
+            Molecular_Weight REAL,
+            Density REAL,
+            CID INTEGER,
+            FOREIGN KEY(ComponentID) REFERENCES Components(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        );
+        """
+
+    create_Strains="""
+        CREATE TABLE Strains(
+            ID INTEGER PRIMARY KEY NOT NULL,
+            ComponentID INTEGER,
+            Genus TEXT,
+            Species TEXT,
+            Strain TEXT,
+            FOREIGN KEY(ComponentID) REFERENCES Components(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        );
+        """
 
     create_CacheSets="""
     CREATE TABLE CacheSets(
@@ -59,7 +84,7 @@ function create_db(path)
         ID INTEGER PRIMARY KEY NOT NULL,
         LocationID INTEGER,
         CacheSetID INTEGER,
-        LedgerID, INTEGER,
+        LedgerID INTEGER,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(CacheSetID) REFERENCES CacheSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -70,7 +95,8 @@ function create_db(path)
 
     create_CachedChildSets="""
     CREATE TABLE CachedChildSets(
-        ID INTEGER PRIMARY KEY NOT NULL
+        ID INTEGER PRIMARY KEY NOT NULL,
+        ChildSetHash TEXT
     );
     """
 
@@ -79,6 +105,8 @@ function create_db(path)
         ID INTEGER PRIMARY KEY NOT NULL,
         CachedChildSetID INTEGER,
         ChildID INTEGER,
+        RowIdx INTEGER,
+        ColIdx INTEGER,
         FOREIGN KEY(CachedChildSetID) REFERENCES CachedChildSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(ChildID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
@@ -86,7 +114,9 @@ function create_db(path)
 
     create_CachedAttributeSets="""
     CREATE TABLE CachedAttributeSets(
-        ID INTEGER PRIMARY KEY NOT NULL
+        ID INTEGER PRIMARY KEY NOT NULL,
+        AttributeSetHash, TEXT
+
         );
     """
     create_CachedAttributes="""
@@ -103,7 +133,8 @@ function create_db(path)
 
     create_CachedStocks="""
     CREATE TABLE CachedStocks(
-        ID INTEGER PRIMARY KEY NOT NULL
+        ID INTEGER PRIMARY KEY NOT NULL,
+        StockHash TEXT
     );
     """
 
@@ -192,10 +223,10 @@ function create_db(path)
 
     create_Movements="""
     CREATE TABLE Movements(
-        ID INTEGER PRIMARY KEY NOT NULL ,
+        ID INTEGER PRIMARY KEY NOT NULL,
         LedgerID INTEGER,
-        Child INTEGER,
-        Parent INTEGER,
+        Parent Integer,
+        Child Integer,
         Time TEXT, 
         FOREIGN KEY(Child) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(Parent) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,

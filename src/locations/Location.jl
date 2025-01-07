@@ -13,7 +13,7 @@ AbstractTrees.parent(x::Location) =x.parent
 AbstractTrees.nodevalue(x::Location)=location_id(x)
 AbstractTrees.ParentLinks(::Type{<:Location})=StoredParent()
 
-
+stock(::Location)=Empty()
 """
     location_id(x::Location)
 
@@ -48,7 +48,7 @@ name(x::Location)=x.name
     attributes(x::Location)
 Access the `attributes` property of a location. 
 """
-attributes(x::Location)=x.attributes
+attributes(x::Location)=x.attributes    
 """
     is_locked(x::Location)
 
@@ -288,12 +288,12 @@ macro location(name,constrained_as_parent=false,constrained_as_child=false)
     mutable struct $n <: (JLIMS.Location)
         const location_id::Base.Integer
         const name::Base.String
-        parent::Union{JLIMS.Location,Nothing}
-        children::Vector{T} where T<:JLIMS.Location
+        parent::Union{JLIMS.Location,Nothing,JLIMS.LocationRef}
+        children::Vector{T} where T<:Union{JLIMS.Location,JLIMS.LocationRef}
         attributes::AttributeDict
         is_locked::Bool
         is_active::Bool
-        ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Location,Nothing}=nothing,children=JLIMS.Location[],attributes::AttributeDict=AttributeDict(),is_locked::Bool=false,is_active::Bool=true) = new(id,name,parent,children,attributes,is_locked,is_active) 
+        ($n)(id::Base.Integer,name::Base.String,parent=nothing,children=JLIMS.Location[],attributes=AttributeDict(),is_locked::Bool=false,is_active::Bool=true) = new(id,name,parent,children,attributes,is_locked,is_active) 
     end 
     AbstractTrees.ParentLinks(::Type{<:($n)})=AbstractTrees.StoredParents()
     if $p_constraint
