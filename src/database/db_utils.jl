@@ -1,5 +1,6 @@
 macro connect_SQLite(DB_PATH)
     return esc(quote
+        import JLIMS: execute_db,query_db
         function execute_db(query::String)
             db=SQLite.DB($DB_PATH)
             DBInterface.execute(db, "PRAGMA foreign_keys = ON;") # when you open a connection, it defaults to turning foreign key constraints off.
@@ -23,7 +24,13 @@ macro connect_SQLite(DB_PATH)
 
 end 
 
+function execute_db(query::String)
+    return error("use @connect_SQLite to connect to a database")
+end 
 
+function query_db(query::String)
+    return error("use @connect_SQLite to connect to a database")
+end 
 
 function query_join_vector(entry::Vector{Number})
     return string("(",join(entry,","),")")

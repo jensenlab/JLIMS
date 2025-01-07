@@ -33,7 +33,7 @@ function upload_operation(fun::Function)
         toggle_activity! => upload_activity,
         lock! => upload_lock,
         unlock! => upload_lock,
-        toggle_lock!=>upload_lock,
+        toggle_lock! => upload_lock,
         move_into! => upload_movement,
         transfer! => upload_transfer,
         set_attribute! => upload_environmental_attribute
@@ -72,7 +72,7 @@ end
 function upload_attribute(attribute::Type{<:Attribute})
     return execute_db("INSERT OR IGNORE INTO Attributes(Attribute) Values($(string(attribute)))")
 end 
-
+#=
 function upload_barcode(bc::Barcode)
     loc_id=location_id(bc)
     if ismissing(loc_id)
@@ -80,16 +80,16 @@ function upload_barcode(bc::Barcode)
     end 
     return execute_db("INSERT OR IGNORE INTO Barcodes(Barcode,LocationID,Name) Values($(string(barcode(bc))),$(loc_id),$(name(bc)))")
 end 
-
+=#
 
 
 function upload_location_type(l::Type{<:Location})
-    return execute_db("INSERT OR IGNORE INTO LocationTypes(Name) Values($(string(l)))")
+    return execute_db("INSERT OR IGNORE INTO LocationTypes(Name) Values('$(string(l))')")
 end 
 
 
 function upload_new_location(name::String,t::Type{<:Location})
-    execute_db("INSERT INTO Locations(Name,Type) Values($name,$(string(t)))")
+    execute_db("INSERT INTO Locations(Name,Type) Values('$name','$(string(t))')")
     id=query_db("SELECT Max(ID) FROM Locations")
     return id[1,1]
 end 

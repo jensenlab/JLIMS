@@ -8,7 +8,8 @@ using
     AbstractTrees,
     HTTP, # chemical parsing only
     JSON, # chemical parsing only 
-    UUIDs # used for generating labware name
+    UUIDs, # used for generating labware name
+    Dates
 import Base: +,-,*,/,convert, show ,sort , promote_rule,round , in, ==,empty,empty!, hash # all overloaded by this package
 import AbstractTrees: children,parent,nodevalue
 
@@ -21,6 +22,7 @@ Unitful.promote_unit(::S,::T) where {S<:Unitful.VolumeUnits,T<:Unitful.VolumeUni
 Unitful.promote_unit(::S,::T) where {S<:Unitful.MassUnits,T<:Unitful.MassUnits} = u"g" 
 include("./exceptions.jl")
 include("./environments/Attributes.jl")
+include("./locations/LocationRef.jl")
 include("./locations/Location.jl")
 include("./locations/Labware.jl")
 include("./stocks/Chemicals.jl")
@@ -36,7 +38,7 @@ include("./database/db_utils.jl")
 include("./database/caching.jl")
 include("./database/fetching.jl")
 include("./database/uploads.jl")
-
+include("./database/generate_location.jl")
 
 
 
@@ -49,6 +51,7 @@ export Chemical,Solid,Liquid,Gas # chemical types
 export Strain # strain type
 export Stock,Empty, Mixture, Solution, Culture # Stock types 
 export Location, Labware, Well #location types 
+export LocationRef
 export @labware, @location, @well, @occupancy_cost, @chemical, @strain , @attribute # macros for constants 
 export get_mw_density
 # chemicals 
@@ -62,16 +65,17 @@ export location_id, name, is_locked, unlock!,lock!,toggle_lock!, unlock, lock, t
 export parent_cost, child_cost, occupancy, occupancy_cost 
 export can_move_into, move_into!
 #labware
-export shape, vendor, catalog, generate_labware, wells
+export shape, vendor, catalog, wells
 #wells
 export capacity, stock, sterilize!,sterilize,transfer!,transfer, drain!,drain
 #database
 export create_db
 #db_utils 
-export connect_SQLite
+export @connect_SQLite, execute_db, query_db
 #uploads 
 export @upload 
 
-
+#generate_location
+export generate_location
 
 end # module JLIMS

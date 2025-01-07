@@ -22,13 +22,13 @@ function get_stock_id(s::Stock)
         return id[1,1]
     else 
         return nothing 
-    
+
     end
 end 
 
-function get_component_id(comp::Union{Chemcial,Strain})
+function get_component_id(comp::Union{Chemical,Strain})
     id=query_db("SELECT * FROM Components WHERE ComponentHash = '$(hash(comp))' " ) 
-    elseif nrow(id)==1
+    if nrow(id)==1
         return id[1,1] # return the id if it exists
     else
         return upload_component(comp) # if not, upload a new component--this function also returns the id 
