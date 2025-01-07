@@ -10,7 +10,7 @@ function get_last_ledger_id()
     return current_id[1,1]
 end 
 
-
+#=
 function get_component(id::Integer)
     comp=query_db("SELECT * FROM Components WHERE ID=$id")
     if nrow(comp)==0
@@ -480,3 +480,4 @@ function well_location(entry)
     return query_db(x;returnDataFrame=true)
 end 
 
+=#

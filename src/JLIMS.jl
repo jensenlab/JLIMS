@@ -39,6 +39,7 @@ include("./database/caching.jl")
 include("./database/fetching.jl")
 include("./database/uploads.jl")
 include("./database/generate_location.jl")
+include("./database/queries.jl")
 
 
 

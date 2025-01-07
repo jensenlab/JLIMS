@@ -379,3 +379,8 @@ function set_attribute(loc::Location,attribute::Attribute)
     set_attribute!(y,attribute) 
     return y 
 end 
+
+
+function location_id(::Nothing)
+    return NaN
+end 

@@ -67,7 +67,7 @@ function cache(s::Stock)
 end 
 
 function get_attribute_set_id(a::AttributeDict)
-    id=query_db("SELECT ID FROM CachedAttributeSets WHERE AttributeSetHash = $(hash(s))") # search to see if attribute set is in the database
+    id=query_db("SELECT ID FROM CachedAttributeSets WHERE AttributeSetHash = $(hash(a))") # search to see if attribute set is in the database
     if nrow(id)==1 
         return id[1,1]
     else 
@@ -78,10 +78,11 @@ end
 
 
 
+
 function cache(a::AttributeDict)
     id=get_attribute_set_id(a)
     if isnothing(a)
-        execute_db("INSERT OR IGNORE INTO CachedAttributeSets(AttributeSetHash) Values($(hash(s)))") # upload the hash as a new id 
+        execute_db("INSERT OR IGNORE INTO CachedAttributeSets(AttributeSetHash) Values($(hash(a)))") # upload the hash as a new id 
         id=get_attribute_set_id(a)
         attrs=collect(keys(a))
         for attr in attrs 
@@ -94,10 +95,20 @@ function cache(a::AttributeDict)
 end 
 
 
+function get_child_set_id(c)
+    id=query_db("SELECT ID FROM CachedChildSets WHERE ChildSetHash = $(hash(c))") # search to see if attribute set is in the database
+    if nrow(id)==1 
+        return id[1,1]
+    else 
+        return nothing 
+    
+    end
+end 
+
 function cache(c::Matrix{T}) where T<:Well 
 id=get_child_set_id(c)
 if isnothing(id)
-    execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(s)))")
+    execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(c)))")
     id=get_child_set_id(c)
     rows,cols=size(c)
     for col in 1:cols
@@ -112,7 +123,7 @@ end
 function cache(c::Vector{T}) where T<:Location
     id=get_child_set_id(c)
     if isnothing(id)
-        execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(s)))")
+        execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(c)))")
         id=get_child_set_id(c)
         for child in c 
             execute_db("INSERT OR IGNORE INTO CachedChildren(ChildSetID,ChildID) Values($id,$(location_id(child)))")
@@ -121,6 +132,17 @@ function cache(c::Vector{T}) where T<:Location
     return id 
 end 
 
+function cache(c::Tuple{})
+    id=get_child_set_id(c)
+    if isnothing(id)
+        execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(c)))")
+        id=get_child_set_id(c)
+        for child in c 
+            execute_db("INSERT OR IGNORE INTO CachedChildren(ChildSetID,ChildID) Values($id,$(location_id(child)))")
+        end
+    end
+    return id 
+end 
 
 
 
