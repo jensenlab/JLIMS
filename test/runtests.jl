@@ -1,5 +1,9 @@
 using JLIMS, Test, Unitful, AbstractTrees,UUIDs
 
+create_db("./test/test_db.db")
+
+
+
 #### set up a test lab
 
 @chemical Water "water" Liquid 962
@@ -211,4 +215,6 @@ end
 end 
 
 
+
+@upload 
 
