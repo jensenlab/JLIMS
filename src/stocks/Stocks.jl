@@ -327,70 +327,75 @@ function quantity_split(x::Unitful.Quantity)
     return (ustrip(x),string(Unitful.unit(x)))
 end 
 
-function component_display(s::Empty;concentration=true,digits=2)
-    out_solids=Dict{String,Tuple{Number,String}}()
-    out_liquids=Dict{String,Tuple{Number,String}}()
+function out_dict(chems,amts,concs)
+
+    out_dict=Dict{String,Dict{String,Tuple{Number,String}}}()
+    for i in eachindex(chems)
+        out_dict[name(chems[i])]=Dict("Amount"=>quantity_split(amts[i]),"Concentration"=>quantity_split(concs[i]))
+    end 
+    return out_dict
+end 
+
+function component_display(s::Empty;digits=2)
+    out_solids=Dict{String,Dict{String,Tuple{Number,String}}}()
+    out_liquids=Dict{String,Dict{String,Tuple{Number,String}}}()
     out_organisms=Vector{String}[]
     return out_solids,out_liquids,out_organisms
 end 
 
-function component_display(s::Mixture;concentration=true,digits=2)
-    out_solids=Dict{String,Tuple{Number,String}}()
-    out_liquids=Dict{String,Tuple{Number,String}}()
+function component_display(s::Mixture;digits=2)
+    out_solids=Dict{String,Dict{String,Tuple{Number,String}}}()
+    out_liquids=Dict{String,Dict{String,Tuple{Number,String}}}()
     out_organisms=Vector{String}[]
     q=quantity(s)
     arr_sol=sort(chemicals(solids(s)),by=name)
     vals=round.(map( x-> solids(s)[x],arr_sol);digits=digits)
-    if concentration
-        vals =round.(map(x->uconvert(u"percent",solids(s)[x]/q),arr_sol);digits=digits)
-    end 
-    out_solids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_sol) .=> quantity_split.(vals))
+    conc =round.(map(x->uconvert(u"percent",solids(s)[x]/q),arr_sol);digits=digits)
+
+    out_solids=out_dict(arr_sol,vals,conc)
     return out_solids,out_liquids,out_organisms
 end 
 
-function component_display(s::Solution;concentration=true,digits=2)
-    out_solids=Dict{String,Tuple{Number,String}}()
-    out_liquids=Dict{String,Tuple{Number,String}}()
+function component_display(s::Solution;digits=2)
+    out_solids=Dict{String,Dict{String,Tuple{Number,String}}}()
+    out_liquids=Dict{String,Dict{String,Tuple{Number,String}}}()
     out_organisms=Vector{String}[]
     q=quantity(s)
     if length(solids(s))>0 
         arr_sol=sort(chemicals(solids(s)),by=name)
         vals=round.(map( x-> solids(s)[x],arr_sol);digits=digits)
-        if concentration
-            massunit=unit(sum(values(solids(s))))
-            vals =round.(map(x->uconvert(massunit/unit(q),solids(s)[x]/q),arr_sol);digits=digits)
-        end 
-        out_solids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_sol) .=> quantity_split.(vals))
+        massunit=unit(sum(values(solids(s))))
+        concs =round.(map(x->uconvert(massunit/unit(q),solids(s)[x]/q),arr_sol);digits=digits)
+        
+        out_solids=out_dict(arr_sol,vals,concs)
     end 
     arr_liq=sort(chemicals(liquids(s)),by=name)
     vals=round.(map( x-> liquids(s)[x],arr_liq);digits=digits)
-    if concentration 
-        vals =round.(map(x->uconvert(u"percent",liquids(s)[x]/q),arr_liq);digits=digits)
-    end 
-    out_liquids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_liq) .=> quantity_split.(vals))
+    concs =round.(map(x->uconvert(u"percent",liquids(s)[x]/q),arr_liq);digits=digits)
+    out_liquids=out_dict(arr_liq,vals,concs)
     return out_solids,out_liquids,out_organisms
 end 
 
-function component_display(s::Culture;concentration=true,digits=2)
-    out_solids=Dict{String,Tuple{Number,String}}()
-    out_liquids=Dict{String,Tuple{Number,String}}()
+function component_display(s::Culture;digits=2)
+    out_solids=Dict{String,Dict{String,Tuple{Number,String}}}()
+    out_liquids=Dict{String,Dict{String,Tuple{Number,String}}}()
     out_organisms=Vector{String}[]
     q=quantity(s)
     if length(solids(s))>0 
         arr_sol=sort(chemicals(solids(s)),by=name)
         vals=round.(map( x-> solids(s)[x],arr_sol);digits=digits)
-        if concentration
-            massunit=unit(sum(values(solids(s))))
-            vals =round.(map(x->uconvert(massunit/unit(q),solids(s)[x]/q),arr_sol);digits=digits)
-        end 
-        out_solids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_sol) .=> quantity_split.(vals))
+        massunit=unit(sum(values(solids(s))))
+        concs =round.(map(x->uconvert(massunit/unit(q),solids(s)[x]/q),arr_sol);digits=digits)
+        
+        out_solids=out_dict(arr_sol,vals,concs)
     end 
-    arr_liq=sort(chemicals(liquids(s)),by=name)
-    vals=round.(map( x-> liquids(s)[x],arr_liq);digits=digits)
-    if concentration 
-        vals =round.(map(x->uconvert(u"percent",liquids(s)[x]/q),arr_liq);digits=digits)
+    if length(liquids(s))>0
+        arr_liq=sort(chemicals(liquids(s)),by=name)
+        vals=round.(map( x-> liquids(s)[x],arr_liq);digits=digits)
+
+        concs =round.(map(x->uconvert(u"percent",liquids(s)[x]/q),arr_liq);digits=digits)
+        out_liquids=out_dict(arr_liq,vals,concs)
     end 
-    out_liquids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_liq) .=> quantity_split.(vals))
     out_organisms=sort(collect(organisms(s)),by=name)
     return out_solids,out_liquids,out_organisms
 end
