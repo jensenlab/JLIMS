@@ -51,7 +51,7 @@ export molecular_weight, density, pubchemid
 # strains 
 export genus, species, strain 
 # Stocks 
-export solids, liquids, chemicals, organisms, volume_estimate, quantity
+export solids, liquids, chemicals, organisms, volume_estimate, quantity, component_display
 # locations 
 export location_id, name, is_locked, unlock!,lock!,toggle!, unlock, lock, toggle, ancestors, environment,attributes 
 export parent_cost, child_cost, occupancy, occupancy_cost 

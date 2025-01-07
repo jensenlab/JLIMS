@@ -323,6 +323,82 @@ function Base.show(io::IO,s::Stock;digits::Integer=2)
 end 
 
 
+function quantity_split(x::Unitful.Quantity) 
+    return (ustrip(x),string(Unitful.unit(x)))
+end 
+
+function component_display(s::Empty;concentration=true,digits=2)
+    out_solids=Dict{String,Tuple{Number,String}}()
+    out_liquids=Dict{String,Tuple{Number,String}}()
+    out_organisms=Vector{String}[]
+    return out_solids,out_liquids,out_organisms
+end 
+
+function component_display(s::Mixture;concentration=true,digits=2)
+    out_solids=Dict{String,Tuple{Number,String}}()
+    out_liquids=Dict{String,Tuple{Number,String}}()
+    out_organisms=Vector{String}[]
+    q=quantity(s)
+    arr_sol=sort(chemicals(solids(s)),by=name)
+    vals=round.(map( x-> solids(s)[x],arr_sol);digits=digits)
+    if concentration
+        vals =round.(map(x->uconvert(u"percent",solids(s)[x]/q),arr_sol);digits=digits)
+    end 
+    out_solids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_sol) .=> quantity_split.(vals))
+    return out_solids,out_liquids,out_organisms
+end 
+
+function component_display(s::Solution;concentration=true,digits=2)
+    out_solids=Dict{String,Tuple{Number,String}}()
+    out_liquids=Dict{String,Tuple{Number,String}}()
+    out_organisms=Vector{String}[]
+    q=quantity(s)
+    if length(solids(s))>0 
+        arr_sol=sort(chemicals(solids(s)),by=name)
+        vals=round.(map( x-> solids(s)[x],arr_sol);digits=digits)
+        if concentration
+            massunit=unit(sum(values(solids(s))))
+            vals =round.(map(x->uconvert(massunit/unit(q),solids(s)[x]/q),arr_sol);digits=digits)
+        end 
+        out_solids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_sol) .=> quantity_split.(vals))
+    end 
+    arr_liq=sort(chemicals(liquids(s)),by=name)
+    vals=round.(map( x-> liquids(s)[x],arr_liq);digits=digits)
+    if concentration 
+        vals =round.(map(x->uconvert(u"percent",liquids(s)[x]/q),arr_liq);digits=digits)
+    end 
+    out_liquids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_liq) .=> quantity_split.(vals))
+    return out_solids,out_liquids,out_organisms
+end 
+
+function component_display(s::Culture;concentration=true,digits=2)
+    out_solids=Dict{String,Tuple{Number,String}}()
+    out_liquids=Dict{String,Tuple{Number,String}}()
+    out_organisms=Vector{String}[]
+    q=quantity(s)
+    if length(solids(s))>0 
+        arr_sol=sort(chemicals(solids(s)),by=name)
+        vals=round.(map( x-> solids(s)[x],arr_sol);digits=digits)
+        if concentration
+            massunit=unit(sum(values(solids(s))))
+            vals =round.(map(x->uconvert(massunit/unit(q),solids(s)[x]/q),arr_sol);digits=digits)
+        end 
+        out_solids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_sol) .=> quantity_split.(vals))
+    end 
+    arr_liq=sort(chemicals(liquids(s)),by=name)
+    vals=round.(map( x-> liquids(s)[x],arr_liq);digits=digits)
+    if concentration 
+        vals =round.(map(x->uconvert(u"percent",liquids(s)[x]/q),arr_liq);digits=digits)
+    end 
+    out_liquids=Dict{String,Tuple{Number,String}}(map(x->name(x),arr_liq) .=> quantity_split.(vals))
+    out_organisms=sort(collect(organisms(s)),by=name)
+    return out_solids,out_liquids,out_organisms
+end
+
+
+
+
+
 
 
 """
