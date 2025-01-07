@@ -1,7 +1,7 @@
 using JLIMS, Test, Unitful, AbstractTrees,UUIDs, SQLite, DataFrames
 
 file="./test/test_db.db"
-
+rm(file)
 create_db(file)
 @connect_SQLite "./test/test_db.db" 
 
