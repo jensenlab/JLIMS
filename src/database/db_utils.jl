@@ -63,6 +63,6 @@ function db_time(time::Dates.DateTime)
 end 
 
 
-function juliatime(time::Float)
+function julia_time(time::Int)
     return Dates.unix2datetime(time)
 end 

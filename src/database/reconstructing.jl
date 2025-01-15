@@ -324,7 +324,7 @@ function get_movements_as_parent(entry::AbstractString,starting::Integer=0,endin
     return query_db(x)
 end 
 
-function get_movements_as_child(entry::AbstractString,starting::Integer=0,ending::Integer=get_last_sequence_id()time::DateTime=Dates.now();encumbrances=false)
+function get_movements_as_child(entry::AbstractString,starting::Integer=0,ending::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
     ledger_time=db_time(time)
     x=""
     if encumbrances 
