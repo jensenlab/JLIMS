@@ -43,7 +43,7 @@ macro strain(labname, genus, species, strain)
     end)
 end 
 
-Base.show(io::IO,str::Strain)=print(io, "$(genus(str)[1]). $(species(str)) $(strain(str)))")
+Base.show(io::IO,str::Strain)=print(io, name(str))
 """
     genus(x::Strain)
 Access the `genus` property of a `Strain` object.

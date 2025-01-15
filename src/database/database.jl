@@ -34,7 +34,7 @@ function create_db(path)
     create_Components="""
         CREATE TABLE Components(
             ID INTEGER PRIMARY KEY NOT NULL,
-            ComponentHash TEXT,
+            ComponentHash BLOB,
             Type TEXT,
             Unique(ComponentHash)
             );
@@ -42,10 +42,10 @@ function create_db(path)
 
     create_Chemicals="""
         CREATE TABLE Chemicals(
-            Name TEXT PRIMARY KEY 
+            Name TEXT PRIMARY KEY,
             ComponentID Integer,
             Type TEXT,
-            Molecular_Weight REAL,
+            MolecularWeight REAL,
             Density REAL,
             CID INTEGER,
             FOREIGN KEY(ComponentID) REFERENCES Components(ID) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -96,12 +96,12 @@ function create_db(path)
     create_CachedChildSets="""
     CREATE TABLE CachedChildSets(
         ID INTEGER PRIMARY KEY NOT NULL,
-        ChildSetHash TEXT
+        ChildSetHash BLOB
     );
     """
 
     create_CachedChildren="""
-    CREATE TABLE CachedParents(
+    CREATE TABLE CachedChildren(
         ID INTEGER PRIMARY KEY NOT NULL,
         CachedChildSetID INTEGER,
         ChildID INTEGER,
@@ -115,7 +115,7 @@ function create_db(path)
     create_CachedAttributeSets="""
     CREATE TABLE CachedAttributeSets(
         ID INTEGER PRIMARY KEY NOT NULL,
-        AttributeSetHash, TEXT
+        AttributeSetHash BLOB
 
         );
     """
@@ -127,14 +127,14 @@ function create_db(path)
         Value REAL,
         Unit TEXT,
         FOREIGN KEY(AttributeSetID) REFERENCES CachedAttributeSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(AttributeID) REFERENCES Attributes(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        FOREIGN KEY(AttributeID) REFERENCES Attributes(Attribute) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
 
     create_CachedStocks="""
     CREATE TABLE CachedStocks(
         ID INTEGER PRIMARY KEY NOT NULL,
-        StockHash TEXT
+        StockHash BLOB
     );
     """
 
@@ -142,7 +142,7 @@ function create_db(path)
     CREATE TABLE CachedComponents(
         ID INTEGER PRIMARY KEY NOT NULL,
         StockID INTEGER,
-        ComponentID TEXT, 
+        ComponentID INTEGER, 
         Quantity REAl,
         Unit TEXT,
         FOREIGN KEY(StockID) REFERENCES CachedStocks(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -180,7 +180,7 @@ function create_db(path)
         LocationID INTEGER,
         Attribute TEXT,
         Value Real,
-        Unit,
+        Unit TEXT,
         Time TEXT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT, 
         FOREIGN KEY(Attribute) REFERENCES Attributes(Attribute) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -194,8 +194,8 @@ function create_db(path)
     create_Configurations="""
     CREATE TABLE Configurations(
         ID TEXT PRIMARY KEY,
-        Configuration TEXT,
-        InstrumentID TEXT,
+        ConfigurationHash Integer,
+        InstrumentID Integer,
         FOREIGN KEY(InstrumentID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
@@ -213,11 +213,11 @@ function create_db(path)
         FOREIGN KEY(Source) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(Destination) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(Configuration) REFERENCES Configurations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+
         CHECK (Source != Destination)
     );
     """
-    
+    #FOREIGN KEY(Configuration) REFERENCES Configurations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
 
 
 
@@ -286,6 +286,7 @@ function create_db(path)
         ID INTEGER PRIMARY KEY NOT NULL ,
         LedgerID INTEGER,
         Comment TEXT,
+        Time TEXT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
@@ -366,11 +367,11 @@ function create_db(path)
         FOREIGN KEY(Source) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(Destination) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(Configuration) REFERENCES Configuration(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        
         CHECK (Source != Destination)
     );
     """
-
+    #FOREIGN KEY(Configuration) REFERENCES Configuration(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
 
 
     create_EncumberedEnvironments="""
@@ -382,7 +383,7 @@ function create_db(path)
         Value Real,
         Unit,
         FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT, 
-        FOREIGN KEY(Attribute) REFERENCES Attributes(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(Attribute) REFERENCES Attributes(Attribute) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY (LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT 
     )
     """
@@ -391,8 +392,8 @@ function create_db(path)
     CREATE TABLE EncumberedMovements(
         ID INTEGER PRIMARY KEY NOT NULL,
         EncumbranceID INTEGER,
-        Child INTEGER,
         Parent INTEGER,
+        Child INTEGER,
         FOREIGN KEY(Child) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(Parent) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -428,6 +429,8 @@ function create_db(path)
     DBInterface.execute(db,create_LocationTypes)
     DBInterface.execute(db,create_Locations)
     DBInterface.execute(db, create_Components)
+    DBInterface.execute(db,create_Chemicals)
+    DBInterface.execute(db,create_Strains)
     DBInterface.execute(db,create_Attributes)
     DBInterface.execute(db,create_EnvironmentAttributes)
     DBInterface.execute(db,create_Configurations)
@@ -461,9 +464,11 @@ function create_db(path)
     DBInterface.execute(db,create_EncumberedActivity)
     DBInterface.execute(db,create_EncumbranceEnforcement)
 
-    DBInterface.execute(db,"""INSERT INTO Ledger(Time) Values(datetime('now'))""")
-    DBInterface.execute(db,"""INSERT INTO Tags(LedgerID,Comment) Values(1,'Big Bang')""")
+    DBInterface.execute(db,"""INSERT INTO Ledger(Time) Values('$(string(Dates.now()))')""")
+    DBInterface.execute(db,"""INSERT INTO Tags(LedgerID,Comment,Time) Values(1,'Big Bang','$(string(Dates.now()))')""")
 end
+#=
 file="./src/database/test_create_db.db"
 rm(file)
 create_db(file)
+=#

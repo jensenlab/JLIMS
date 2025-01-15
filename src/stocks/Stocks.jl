@@ -305,7 +305,7 @@ function Base.show(io::IO,::MIME"text/plain",s::Culture;digits::Integer=2)
         show(io,df_sol;eltypes=false,show_row_number=false,summary=false)
         print(io,"\n\n")
     end 
-    if length(solids(s)) > 0
+    if length(liquids(s)) > 0
         volunit=unit(sum(values(liquids(s))))
         arr_liq=sort(chemicals(liquids(s)),by=name)
         vals =round.(map(x->uconvert(u"percent",liquids(s)[x]/q),arr_liq);digits=digits)

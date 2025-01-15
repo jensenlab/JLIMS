@@ -8,8 +8,10 @@ end
 location_id(x::LocationRef)=x.id
 name(x::LocationRef)=x.name 
 
-
 function Base.show(io::IO,x::LocationRef)
-    print(io,name(x))
+    print(io,"REF: $(name(x))")
 end 
 
+location_type(x::LocationRef)=x.type
+
+occupancy_cost(parent::Location,child::LocationRef)= occupancy_cost(parent,location_type(child)(location_id(child),name(child)))

@@ -32,7 +32,26 @@ end
 
 
 
+function remove!(parent::Location,child::Location)
+    filter!(x->x !== child,parent.children)
+    return nothing 
+end 
+function remove!(parent::Location,child::LocationRef)
+    filter!(x->x !== child,parent.children)
+    return nothing 
+end 
 
+function add_to!(parent::Location,child::Location)
+    check=can_move_into(parent,child) 
+    push!(parent.children,child)
+    child.parent=parent
+    return nothing 
+end 
+
+function add_to!(parent::Location,child::LocationRef)
+    push!(parent.children,child)
+    return nothing 
+end 
 
 
 """
@@ -43,19 +62,24 @@ Move `child` into `parent`, if allowed.
 if `lock=true`, then also lock the child after the movement. 
 """
 function move_into!(parent::Location,child::Location,lock::Bool=false)
+    add_to!(parent,child)
     oldparent=child.parent
-    check=can_move_into(parent,child) 
     if !isnothing(oldparent)
-        filter!(x->x !== child,oldparent.children)
+        remove!(oldparent,child)
     end
-    push!(parent.children,child)
-    child.parent=parent
     if lock 
         lock!(child)
     end 
 end 
 
 
+
+function move_into(parent::Location,child::Location,lock::Bool=false)
+    p=deepcopy(parent)
+    c=deepcopy(child)
+    move_into!(p,c,lock)
+    return p,c
+end 
 
 
 

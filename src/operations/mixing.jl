@@ -1,6 +1,6 @@
 # internal function
 # mixing just performs the element wise operation on each chemical to compute the new Stock
-# addition and subtraction are very similar, this is a single routine for both addition and subtraction but we replace the  differences with "op". See the +/- overloads below. 
+# addition and subtraction are very similar, this is a single routine for both addition and subtraction but we replace the  differences with "operation". See the +/- overloads below. 
 function mix(a::SolidDict,b::SolidDict;operation=+)
     new_solids=SolidDict() 
 

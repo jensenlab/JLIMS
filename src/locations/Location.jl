@@ -12,7 +12,7 @@ AbstractTrees.children(x::Location) = x.children
 AbstractTrees.parent(x::Location) =x.parent
 AbstractTrees.nodevalue(x::Location)=location_id(x)
 AbstractTrees.ParentLinks(::Type{<:Location})=StoredParent()
-
+childtype(::Location)=Location 
 stock(::Location)=Empty()
 """
     location_id(x::Location)
@@ -293,7 +293,7 @@ macro location(name,constrained_as_parent=false,constrained_as_child=false)
         attributes::AttributeDict
         is_locked::Bool
         is_active::Bool
-        ($n)(id::Base.Integer,name::Base.String,parent=nothing,children=JLIMS.Location[],attributes=AttributeDict(),is_locked::Bool=false,is_active::Bool=true) = new(id,name,parent,children,attributes,is_locked,is_active) 
+        ($n)(id::Base.Integer,name::Base.String,parent=nothing,children=Union{JLIMS.Location,JLIMS.LocationRef}[],attributes=AttributeDict(),is_locked::Bool=false,is_active::Bool=true) = new(id,name,parent,children,attributes,is_locked,is_active) 
     end 
     AbstractTrees.ParentLinks(::Type{<:($n)})=AbstractTrees.StoredParents()
     if $p_constraint
@@ -382,5 +382,8 @@ end
 
 
 function location_id(::Nothing)
-    return NaN
+    return nothing
 end 
+
+is_active(::Nothing)=false
+is_locked(::Nothing)=false

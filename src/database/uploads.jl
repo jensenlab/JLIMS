@@ -6,11 +6,12 @@
 Add an entry to the ledger and return the ID of that entry.
 """
 function upload_ledger() 
+        time=Dates.now()
         #1) make an entry to the ledger
         current=get_last_ledger_id()
         ex=execute_db("""
         INSERT OR IGNORE INTO Ledger(Time)
-        Values(datetime('now'))   
+        Values('$(string(time))')   
         """)
         #2) query the ledger to get the id of the entry you just made
         new=get_last_ledger_id()
@@ -36,21 +37,23 @@ function upload_operation(fun::Function)
         toggle_lock! => upload_lock,
         move_into! => upload_movement,
         transfer! => upload_transfer,
-        set_attribute! => upload_environmental_attribute
+        set_attribute! => upload_environment_attribute
     )
     return opfun_dict[fun]
 end 
 
 
 
-macro upload(expr) 
+macro upload(expr,time=Dates.now()) 
     fun=eval(expr.args[1])
     upload_op=upload_operation(fun)
     return esc(quote 
         $expr
-        upload_op($(expr.args[2:end])...)
+        $upload_op(eval.($(expr.args[2:end]))...; time=$time)
     end )
 end 
+
+
 
 
 
@@ -64,13 +67,15 @@ Add an entry to the Activity table a [`Locaiton`](@ref)
     
 Locations can be toggled between an active and inactive state. Activity can be used to show or hide locations in user interfaces.  
 """
-function upload_activity(location::Location,time::DateTime=Dates.now())
+function upload_activity(location::Location;time::DateTime=Dates.now())
     ledger_id=upload_ledger()
-    return execute_db("INSERT OR IGNORE INTO Activity(LedgerID,LocationID,IsActive,Time) Values($ledger_id,$(location_id(location)),$(Int(is_active(location))),$(string(time)))")
+    execute_db("INSERT OR IGNORE INTO Activity(LedgerID,LocationID,IsActive,Time) Values($ledger_id,$(location_id(location)),$(Int(is_active(location))),'$(string(time))')")
+    return nothing
 end 
 
 function upload_attribute(attribute::Type{<:Attribute})
-    return execute_db("INSERT OR IGNORE INTO Attributes(Attribute) Values($(string(attribute)))")
+    execute_db("INSERT OR IGNORE INTO Attributes(Attribute) Values('$(string(attribute))')")
+    return nothing 
 end 
 #=
 function upload_barcode(bc::Barcode)
@@ -84,33 +89,37 @@ end
 
 
 function upload_location_type(l::Type{<:Location})
-    return execute_db("INSERT OR IGNORE INTO LocationTypes(Name) Values('$(string(l))')")
+    execute_db("INSERT OR IGNORE INTO LocationTypes(Name) Values('$(string(l))')")
+    return nothing 
 end 
 
 
 function upload_new_location(name::String,t::Type{<:Location})
+    upload_location_type(t)
     execute_db("INSERT INTO Locations(Name,Type) Values('$name','$(string(t))')")
     id=query_db("SELECT Max(ID) FROM Locations")
     return id[1,1]
 end 
 
-function upload_lock(location::Location,time::DateTime=Dates.now())
+function upload_lock(location::Location;time::DateTime=Dates.now())
     ledger_id=upload_ledger()
-    execute_db("INSERT OR IGNORE INTO Locks(LedgerID,LocationID,IsLocked,Time) Values($ledger_id,$(location_id(location)),$(Int(is_locked(location))),$(string(time)))")
+    execute_db("INSERT OR IGNORE INTO Locks(LedgerID,LocationID,IsLocked,Time) Values($ledger_id,$(location_id(location)),$(Int(is_locked(location))),'$(string(time))')")
     return nothing
 end 
 
 function upload_component(chem::Chemical)
     execute_db("INSERT OR IGNORE INTO Components(ComponentHash, Type) Values($(hash(chem)),'Chemical')")
     id=get_component_id(chem)
-    execute_db("INSERT OR IGNORE INTO Chemicals(Name,ComponentID,Type,Molecular_Weight,Density,CID) Values($(name(chem)),$(id),$(string(typeof(chem))),$(molecular_weight(chem)),$(density(chem)),$(pubchemid(chem)))")
+    mw=ustrip(uconvert(u"g/mol",molecular_weight(chem)))
+    d=ustrip(uconvert(u"g/mL",density(chem)))
+    execute_db("INSERT OR IGNORE INTO Chemicals(Name,ComponentID,Type,MolecularWeight,Density,CID) Values('$(name(chem))',$(id),'$(string(typeof(chem)))',$(mw),$(d),$(pubchemid(chem)))")
     return id
 end 
 
 function upload_component(str::Strain)
     execute_db("INSERT OR IGNORE INTO Components(ComponentHash,Type) Values($(hash(str)),'Strain')")
     id=get_component_id(str)
-    execute_db("INSERT OR IGNORE INTO Strains(ComponentID,Genus,Species,Strain) Values($(id),$(genus(str)),$(species(str)),$(strain(str)))")
+    execute_db("INSERT OR IGNORE INTO Strains(ComponentID,Genus,Species,Strain) Values($(id),'$(genus(str))','$(species(str))','$(strain(str))')")
     return id
 end 
 
@@ -122,27 +131,53 @@ end
 
 commit a transfer of `quantity` from  well `sourceID` to well `destinationID` using a particular robot `configuration`
 """
-function upload_transfer(source::Well,destination::Well,quant::Union{Unitful.Mass,Unitful.Volume},configuration::AbstractString="",time::DateTime=now())
+function upload_transfer(source::Well,destination::Well,quant::Union{Unitful.Mass,Unitful.Volume},configuration::AbstractString="";time::DateTime=now())
     ledger_id=upload_ledger()
-    execute_db("""INSERT INTO Transfers(LedgerID,Source,Destination,Quantity,Unit,Time,Configuration) Values('$ledger_id','$(location_id(source))','$(location_id(destination))','$(ustrip(quant))','$(string(unit(quant)))',$(string(time)),'$configuration')""")
+    execute_db("""INSERT INTO Transfers(LedgerID,Source,Destination,Quantity,Unit,Time,Configuration) Values($ledger_id,$(location_id(source)),$(location_id(destination)),$(ustrip(quant)),'$(string(unit(quant)))','$(string(time))','$configuration')""")
     return nothing
 end 
  
 
 
-function upload_movement(parent::Location,child::Location,lock::Bool=false,time::DateTime=now())
+function upload_movement(parent::Location,child::Location,lock::Bool=false;time::DateTime=now())
     ledger_id=upload_ledger()
-    execute_db("INSERT OR IGNORE INTO Movements(LedgerID,Parent,Child,Time) Values($ledger_id,$(location_id(parent)),$(location_id(child)),$(string(time))")
+    execute_db("INSERT OR IGNORE INTO Movements(LedgerID,Parent,Child,Time) Values($ledger_id,$(location_id(parent)),$(location_id(child)),'$(string(time))')")
     if lock
-        upload_lock(child,time) # only needed if the lock flag is true. This means that the lock state has changed (you had to be unlocked to move in the first place)
+        upload_lock(child;time=time) # only needed if the lock flag is true. This means that the lock state has changed (you had to be unlocked to move in the first place)
     end 
     return nothing 
 end 
 
-function upload_environmental_attribute(loc::Location,attr::Attribute,time::DateTime=now()) 
+function upload_environment_attribute(loc::Location,attr::Attribute;time::Dates.DateTime=now()) 
     ledger_id=upload_ledger()
     val=value(attr)
-    execute_db("""INSERT OR IGNORE INTO EnvironmentalAttributes(LedgerID,LocationID,Attribute,Value,Unit,Time) Values($ledger_id,$(location_id(loc)),$(string(typeof(attr))),$(ustrip(val)),$(string(unit(val))),$(string(time)))""")
+    at=typeof(attr)
+    upload_attribute(at)
+    execute_db("""INSERT OR IGNORE INTO EnvironmentAttributes(LedgerID,LocationID,Attribute,Value,Unit,Time) Values($ledger_id,$(location_id(loc)),'$(string(typeof(attr)))',$(ustrip(val)),'$(string(unit(val)))','$(string(time))')""")
+    return nothing
+end 
+
+
+function upload_tag(comment::String,ledger_id::Integer=get_last_ledger_id();time::DateTime=Dates.now())
+    execute_db("INSERT INTO Tags(LedgerID,Comment,Time) Values($ledger_id,'$comment','$(string(time))')")
+    return nothing
+end 
+
+function upload_barcode(bc::Barcode)
+    loc_id=location_id(bc)
+    if ismissing(loc_id)
+        loc_id="NULL"
+    end 
+    execute_db("INSERT OR IGNORE INTO Barcodes(Barcode,LocationID,Name) Values('$(string(barcode(bc)))',$loc_id,'$(name(bc))')")
+end 
+
+function update_barcode(bc::Barcode)
+    loc_id=location_id(bc)
+    if ismissing(loc_id)
+        loc_id="NULL"
+    end 
+    execute_db("UPDATE Barcodes SET LocationID = $loc_id WHERE Barcode = '$(string(barcode(bc)))'")
+    return nothing 
 end 
 
 

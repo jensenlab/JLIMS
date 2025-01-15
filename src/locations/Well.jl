@@ -201,7 +201,7 @@ Remove `quantity` from `donor` and move it to `recipient`
 
 See also: [`transfer`](@ref)
 """
-function transfer!(donor::Well,recipient::Well,quantity::Union{Unitful.Volume,Unitful.Mass})
+function transfer!(donor::Well,recipient::Well,quantity::Union{Unitful.Volume,Unitful.Mass},configuration::String="")
     trf_stock=withdraw!(donor,quantity)
     deposit!(recipient,trf_stock) 
     nothing
@@ -216,10 +216,10 @@ Remove `quantity` from `donor` and move it to `recipient`
 
 See also: [`transfer!`](@ref)
 """
-function transfer(donor,recipient,quantity)
+function transfer(donor,recipient,quantity,configuration::String="")
     d=deepcopy(donor)
     r=deepcopy(recipient)
-    transfer!(d,r,quantity)
+    transfer!(d,r,quantity,configuration)
     return d,r
 end 
 #=

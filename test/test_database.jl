@@ -21,6 +21,7 @@ create_db(file)
 @attribute Pressure Unitful.Pressure
 @attribute LinearShaking Unitful.Frequency
 @attribute Oxygen Unitful.DimensionlessQuantity
+@attribute Humidity Unitful.DimensionlessQuantity
 
 
 abstract type Plate <: Labware end # Plates are designed on the SLAS Standard. See Dish for other non-SLAS plate types
@@ -72,62 +73,129 @@ abstract type Reservior <:Labware end
 
 jensen_lab=generate_location(Lab,"Jensen Lab")  
 main_room=generate_location(Room,"Main Room")
+culture_room=generate_location(Room,"Culture Room")
+robot_room=generate_location(Room,"Robot Room")
+incubator1=generate_location(Incubator,"Upper Incubator")
+incubator2=generate_location(Incubator,"Lower Incubator")
+shelf1=generate_location(IncubatorShelf,"Upper Shelf")
+shelf2=generate_location(IncubatorShelf,"Middle Shelf")
+shelf3=generate_location(IncubatorShelf,"Lower Shelf")
+shelf4=generate_location(IncubatorShelf,"Middle Shelf")
+biospa1=generate_location(BioSpa,"Biospa 1")
+dr1=generate_location(BioSpaDrawer,"Drawer 1")
+dr2=generate_location(BioSpaDrawer,"Drawer 2")
+dr3=generate_location(BioSpaDrawer,"Drawer 3")
+dr4=generate_location(BioSpaDrawer,"Drawer 4")
+l1=generate_location(BioSpaSlot,"Left")
+l2=generate_location(BioSpaSlot,"Left")
+l3=generate_location(BioSpaSlot,"Left")
+l4=generate_location(BioSpaSlot,"Left")
+r1=generate_location(BioSpaSlot,"Right")
+r2=generate_location(BioSpaSlot,"Right")
+r3=generate_location(BioSpaSlot,"Right")
+r4=generate_location(BioSpaSlot,"Right")
 
-#=
-culture_room=Room(3,"Culture Room")
-robot_room=Room(4,"Robot Room")
-incubator1=Incubator(5,"Incubator 1")
-incubator2=Incubator(6,"Incubator 2")
-shelf1=IncubatorShelf(7,"Upper Shelf")
-shelf2=IncubatorShelf(8,"Middle Shelf")
-shelf3=IncubatorShelf(9,"Lower Shelf")
-shelf4=IncubatorShelf(10,"Middle Shelf")
-biospa1=BioSpa(11,"Biospa 1")
-dr1=BioSpaDrawer(12,"Drawer 1")
-dr2=BioSpaDrawer(13,"Drawer 2")
-dr3=BioSpaDrawer(14,"Drawer 3")
-dr4=BioSpaDrawer(15,"Drawer 4")
-l1=BioSpaSlot(16,"Left")
-l2=BioSpaSlot(17,"Left")
-l3=BioSpaSlot(18,"Left")
-l4=BioSpaSlot(19,"Left")
-r1=BioSpaSlot(20,"Right")
-r2=BioSpaSlot(21,"Right")
-r3=BioSpaSlot(23,"Right")
-r4=BioSpaSlot(24,"Right")
-=#
+
+
+
 b1=generate_location(Bottle1L)
 b2=generate_location(PabaBottle,"Paba")
 plate1=generate_location(WP96)
 
+
+
+@upload set_attribute!(jensen_lab,Temperature(25u"°C"))
+@upload set_attribute!(jensen_lab,Pressure(1u"atm"))
+@upload set_attribute!(biospa1,Temperature(37u"°C"))
+@upload set_attribute!(incubator1,Temperature(37u"°C"))
+
+cache(jensen_lab)
+
+
+@upload lock!(main_room)
+@upload unlock!(main_room)
+@upload toggle_lock!(jensen_lab)
+@upload toggle_lock!(jensen_lab)
+
+@upload activate!(main_room)
+@upload deactivate!(main_room)
+@upload toggle_activity!(main_room)
+
+
+
+@upload move_into!(jensen_lab,main_room)
+@upload move_into!(jensen_lab,culture_room)
+@upload move_into!(jensen_lab,robot_room)
+@upload move_into!(culture_room,incubator1)
+@upload move_into!(culture_room,incubator2)
+@upload move_into!(incubator1,shelf1,true)
+@upload move_into!(incubator1,shelf2,true)
+@upload move_into!(incubator1,shelf3,true)
+@upload move_into!(robot_room,biospa1)
+@upload move_into!(biospa1,dr1,true)
+@upload move_into!(biospa1,dr2,true)
+@upload move_into!(biospa1,dr3,true)
+@upload move_into!(biospa1,dr4,true)
+@upload move_into!(dr1,l1,true)
+@upload move_into!(dr1,r1,true)
+@upload move_into!(dr2,l2,true)
+@upload move_into!(dr2,r2,true)
+@upload move_into!(dr3,l3,true)
+@upload move_into!(dr3,r3,true)
+@upload move_into!(dr4,l4,true)
+@upload move_into!(dr4,r4,true)
+@upload move_into!(main_room,b1)
+@upload move_into!(main_room,b2)
+@upload move_into!(main_room,plate1)
+
+
+w1=children(b1)[1,1]
+
+w2=children(b2)[1,1]
+
+deposit!(w2,50u"g"*Paba)
+deposit!(w1,500u"mL"*Water)
+deposit!(w1,Empty()+SMU_UA159)
+cache(w1)
+cache(w2)
+
+@upload transfer!(w2,w1,5u"g")
+
+
+upload_tag("test_comment")
+
+bc=Barcode(UUIDs.uuid4(),"lazy_blue_poodle")
+upload_barcode(bc)
+
+bc2=Barcode(UUIDs.uuid4(),"nasty_green_baboon")
+upload_barcode(bc2)
+
+assign_barcode!(bc2,plate1)
+update_barcode(bc2)
+
+
+exp_id =upload_experiment("test_experiment","Ben")
+
+p_id=upload_protocol(exp_id,"test_protocol")
+@encumber p_id move_into!(shelf1,plate1)
+
+@encumber p_id move_into!(l1,plate1)
+@encumber p_id move_into!(main_room,plate1)
+@encumber p_id transfer!(w2,w1,2u"g")
+@encumber p_id set_attribute!(jensen_lab,Humidity(43u"percent"))
+@encumber p_id JLIMS.lock!(plate1)
+@encumber p_id JLIMS.unlock!(plate1)
+@encumber p_id toggle_activity!(plate1)
+@encumber p_id toggle_activity!(plate1)
+@encumber p_id set_attribute!(jensen_lab,Humidity(40u"percent"))
+@encumber p_id move_into!(jensen_lab,b1)
+encumber_cache(upload_encumbrance(p_id),plate1)
+
+reconstruct_location(collect(25:30))
 #=
-set_attribute!(jensen_lab,Temperature(25u"°C"))
-set_attribute!(jensen_lab,Pressure(1u"atm"))
-set_attribute!(biospa1,Temperature(37u"°C"))
-set_attribute!(incubator1,Temperature(37u"°C"))
+@time reconstruct_location(collect(25:30))
 
+@time reconstruct_location(collect(25:30);cache_results=true)
 
-move_into!(jensen_lab,main_room)
-move_into!(jensen_lab,culture_room)
-move_into!(jensen_lab,robot_room)
-move_into!(culture_room,incubator1)
-move_into!(culture_room,incubator2)
-move_into!(incubator1,shelf1,true)
-move_into!(incubator1,shelf2,true)
-move_into!(incubator1,shelf3,true)
-move_into!(robot_room,biospa1)
-move_into!(biospa1,dr1,true)
-move_into!(biospa1,dr2,true)
-move_into!(biospa1,dr3,true)
-move_into!(biospa1,dr4,true)
-move_into!(dr1,l1,true)
-move_into!(dr1,r1,true)
-move_into!(dr2,l2,true)
-move_into!(dr2,r2,true)
-move_into!(dr3,l3,true)
-move_into!(dr3,r3,true)
-move_into!(dr4,l4,true)
-move_into!(dr4,r4,true)
-move_into!(main_room,b1)
-move_into!(main_room,b2)
-move_into!(main_room,plate1)
+@time reconstruct_location(collect(25:30))
+=#

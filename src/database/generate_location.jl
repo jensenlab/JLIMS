@@ -26,16 +26,18 @@ function generate_labware(type::Type{<:Labware},name::String=string(UUIDs.uuid4(
     loc_id=upload_new_location(name,type)
     lw=type(loc_id,name)
     sh=shape(lw)
-    welltype=eltype(children(lw))
+    welltype=childtype(lw)
+    wells=Well[]
     for col in 1:sh[2]
         for row in 1:sh[1]
             well=generate_location(welltype,alphabet_code(row)*string(col))
             well.parent=lw
             lw.children[row,col]=well
-            cache(well)
+            push!(wells,well)
         end 
     end
     cache(lw)
+    cache.(wells)
     return lw
 end 
 

@@ -22,25 +22,28 @@ Unitful.promote_unit(::S,::T) where {S<:Unitful.VolumeUnits,T<:Unitful.VolumeUni
 Unitful.promote_unit(::S,::T) where {S<:Unitful.MassUnits,T<:Unitful.MassUnits} = u"g" 
 include("./exceptions.jl")
 include("./environments/Attributes.jl")
-include("./locations/LocationRef.jl")
+
 include("./locations/Location.jl")
+include("./locations/LocationRef.jl")
 include("./locations/Labware.jl")
 include("./stocks/Chemicals.jl")
 include("./stocks/Strains.jl")
 include("./stocks/Stocks.jl")
 include("./locations/Well.jl")
 include("./stocks/chemical_parsing.jl")
+include("./barcodes/barcodes.jl")
+
 
 include("./operations/movement.jl")
 include("./operations/mixing.jl")
 include("./database/database.jl")
 include("./database/db_utils.jl")
 include("./database/caching.jl")
-include("./database/fetching.jl")
+include("./database/reconstructing.jl")
 include("./database/uploads.jl")
 include("./database/generate_location.jl")
 include("./database/queries.jl")
-
+include("./database/encumbrances.jl")
 
 
 #include("./csv_uploads.jl")
@@ -63,20 +66,25 @@ export genus, species, strain
 export solids, liquids, chemicals, organisms, volume_estimate, quantity
 # locations 
 export location_id, name, is_locked, unlock!,lock!,toggle_lock!, unlock, lock, toggle_lock, ancestors, environment,attributes , is_active, activate!,activate, deactivate!,deactivate, toggle_activity!,toggle_activity
-export parent_cost, child_cost, occupancy, occupancy_cost 
-export can_move_into, move_into!
+export parent_cost, child_cost, occupancy, occupancy_cost , parent, children 
+export can_move_into, move_into!,move_into
 #labware
 export shape, vendor, catalog, wells
 #wells
-export capacity, stock, sterilize!,sterilize,transfer!,transfer, drain!,drain
+export capacity, stock, sterilize!,sterilize,transfer!,transfer, drain!,drain,deposit!,deposit,withdraw!,withdraw
 #database
 export create_db
 #db_utils 
 export @connect_SQLite, execute_db, query_db
 #uploads 
-export @upload 
-
+export @upload , upload_tag, upload_barcode, update_barcode 
+#queries
+export get_last_ledger_id
 #generate_location
 export generate_location
-
+#caching and fetching 
+export cache , fetch_cache, get_location_info, @get_location, reconstruct_location, build_location_ledger_map
+#barcodes
+export Barcode, assign_barcode!,assign_barcode
+export @protocol ,upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache
 end # module JLIMS
