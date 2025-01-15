@@ -1,4 +1,4 @@
-function cache(loc::Location,ledger_id=get_last_ledger_id())
+function cache(loc::Location,sequence_id=get_last_sequence_id())
     parent_id=location_id(parent(loc))
     if isnothing(parent_id)
         parent_id="NULL"
@@ -16,7 +16,7 @@ function cache(loc::Location,ledger_id=get_last_ledger_id())
         id=id[1,1]
     end
     loc_id=location_id(loc)
-
+    ledger_id= upload_ledger(sequence_id)
     execute_db("INSERT INTO Caches(LocationID,CacheSetID,LedgerID) Values($loc_id,$id,$ledger_id)")
     return nothing
 end 

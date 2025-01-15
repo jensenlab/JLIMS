@@ -1,15 +1,22 @@
 ### Functions that query the database and return information go here ####
 """
-    get_last_ledger_id()
+    get_last_ledger_id(time::DateTime=Dates.now())
 
-Return the most recent ledger id entry.
+Return the most recent ledger id entry at or before a certain time 
 """
-function get_last_ledger_id()
-    x = "SELECT Max(ID) FROM Ledger"
+function get_last_ledger_id(time::DateTime=Dates.now())
+    ledger_time = db_time(time)
+    x = "SELECT Max(ID) FROM Ledger WHERE TIME <= $ledger_time"
     current_id = query_db(x)
     return current_id[1,1]
 end 
 
+function get_last_sequence_id(time::DateTime=Dates.now())
+    ledger_time = db_time(time)
+    x= "SELECT Max(SequenceID) FROM Ledger WHERE Time <= $ledger_time "
+    current_id = query_db(x)
+    return current_id[1,1]
+end 
 #=
 function get_component(id::Integer)
     comp=query_db("SELECT * FROM Components WHERE ID=$id")

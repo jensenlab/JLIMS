@@ -58,5 +58,11 @@ function query_join_vector(entry::Vector{String})
 end 
 
 
+function db_time(time::Dates.DateTime)
+    return Dates.datetime2unix(time)
+end 
 
-        
+
+function juliatime(time::Float)
+    return Dates.unix2datetime(time)
+end 

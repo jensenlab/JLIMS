@@ -2,25 +2,22 @@
 
 
 """
-    upload_ledger()
+    upload_ledger(sequenceID::Integer)
 Add an entry to the ledger and return the ID of that entry.
 """
+function upload_ledger(sequenceID::Integer)
+    time=db_time(Dates.now())
+    execute_db("""
+    INSERT OR IGNORE INTO Ledger(SequenceID,Time)
+    Values($sequenceID,$time)   
+    """)
+    out=query_db("SELECT Max(ID) FROM Ledger")[1,:]
+    return out["Max(ID)"]
+end 
+
 function upload_ledger() 
-        time=Dates.now()
-        #1) make an entry to the ledger
-        current=get_last_ledger_id()
-        ex=execute_db("""
-        INSERT OR IGNORE INTO Ledger(Time)
-        Values('$(string(time))')   
-        """)
-        #2) query the ledger to get the id of the entry you just made
-        new=get_last_ledger_id()
-        if current+1 != new 
-            @warn("collision occurred, retrying ledger upload...")
-            upload_ledger()
-        else
-            return new
-        end 
+    seq_id=get_last_sequence_id()+1
+    return upload_ledger(seq_id)
 end 
 
 
@@ -68,8 +65,9 @@ Add an entry to the Activity table a [`Locaiton`](@ref)
 Locations can be toggled between an active and inactive state. Activity can be used to show or hide locations in user interfaces.  
 """
 function upload_activity(location::Location;time::DateTime=Dates.now())
+    upload_time=db_time(time)
     ledger_id=upload_ledger()
-    execute_db("INSERT OR IGNORE INTO Activity(LedgerID,LocationID,IsActive,Time) Values($ledger_id,$(location_id(location)),$(Int(is_active(location))),'$(string(time))')")
+    execute_db("INSERT OR IGNORE INTO Activity(LedgerID,LocationID,IsActive,Time) Values($ledger_id,$(location_id(location)),$(Int(is_active(location))),$upload_time)")
     return nothing
 end 
 
@@ -103,7 +101,8 @@ end
 
 function upload_lock(location::Location;time::DateTime=Dates.now())
     ledger_id=upload_ledger()
-    execute_db("INSERT OR IGNORE INTO Locks(LedgerID,LocationID,IsLocked,Time) Values($ledger_id,$(location_id(location)),$(Int(is_locked(location))),'$(string(time))')")
+    upload_time=db_time(time)
+    execute_db("INSERT OR IGNORE INTO Locks(LedgerID,LocationID,IsLocked,Time) Values($ledger_id,$(location_id(location)),$(Int(is_locked(location))),$upload_time)")
     return nothing
 end 
 
@@ -133,7 +132,8 @@ commit a transfer of `quantity` from  well `sourceID` to well `destinationID` us
 """
 function upload_transfer(source::Well,destination::Well,quant::Union{Unitful.Mass,Unitful.Volume},configuration::AbstractString="";time::DateTime=now())
     ledger_id=upload_ledger()
-    execute_db("""INSERT INTO Transfers(LedgerID,Source,Destination,Quantity,Unit,Time,Configuration) Values($ledger_id,$(location_id(source)),$(location_id(destination)),$(ustrip(quant)),'$(string(unit(quant)))','$(string(time))','$configuration')""")
+    upload_time=db_time(time)
+    execute_db("""INSERT INTO Transfers(LedgerID,Source,Destination,Quantity,Unit,Time,Configuration) Values($ledger_id,$(location_id(source)),$(location_id(destination)),$(ustrip(quant)),'$(string(unit(quant)))',$upload_time,'$configuration')""")
     return nothing
 end 
  
@@ -141,7 +141,8 @@ end
 
 function upload_movement(parent::Location,child::Location,lock::Bool=false;time::DateTime=now())
     ledger_id=upload_ledger()
-    execute_db("INSERT OR IGNORE INTO Movements(LedgerID,Parent,Child,Time) Values($ledger_id,$(location_id(parent)),$(location_id(child)),'$(string(time))')")
+    upload_time=db_time(time)
+    execute_db("INSERT OR IGNORE INTO Movements(LedgerID,Parent,Child,Time) Values($ledger_id,$(location_id(parent)),$(location_id(child)),$upload_time)")
     if lock
         upload_lock(child;time=time) # only needed if the lock flag is true. This means that the lock state has changed (you had to be unlocked to move in the first place)
     end 
@@ -150,16 +151,18 @@ end
 
 function upload_environment_attribute(loc::Location,attr::Attribute;time::Dates.DateTime=now()) 
     ledger_id=upload_ledger()
+    upload_time=db_time(time)
     val=value(attr)
     at=typeof(attr)
     upload_attribute(at)
-    execute_db("""INSERT OR IGNORE INTO EnvironmentAttributes(LedgerID,LocationID,Attribute,Value,Unit,Time) Values($ledger_id,$(location_id(loc)),'$(string(typeof(attr)))',$(ustrip(val)),'$(string(unit(val)))','$(string(time))')""")
+    execute_db("""INSERT OR IGNORE INTO EnvironmentAttributes(LedgerID,LocationID,Attribute,Value,Unit,Time) Values($ledger_id,$(location_id(loc)),'$(string(typeof(attr)))',$(ustrip(val)),'$(string(unit(val)))',$upload_time)""")
     return nothing
 end 
 
 
 function upload_tag(comment::String,ledger_id::Integer=get_last_ledger_id();time::DateTime=Dates.now())
-    execute_db("INSERT INTO Tags(LedgerID,Comment,Time) Values($ledger_id,'$comment','$(string(time))')")
+    upload_time=db_time(time)
+    execute_db("INSERT INTO Tags(LedgerID,Comment,Time) Values($ledger_id,'$comment',$upload_time)")
     return nothing
 end 
 

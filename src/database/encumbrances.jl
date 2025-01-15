@@ -71,15 +71,16 @@ end
 
 
 function upload_experiment(name::AbstractString,user::String,is_public=false;time=Dates.now())
-
-    execute_db("""INSERT INTO Experiments(Name,User,IsPublic,Time) Values('$name','$user',$(Int(is_public)),'$(string(time))')""")
+    upload_time=db_time(time)
+    execute_db("""INSERT INTO Experiments(Name,User,IsPublic,Time) Values('$name','$user',$(Int(is_public)),$upload_time)""")
     ex_id=query_db("""SELECT Max(ID) FROM Experiments""")
     return ex_id[1,1]
 end 
 
-function upload_protocol(exp_id::Integer,name::AbstractString,estimate=Dates.Time(0)) 
+function upload_protocol(exp_id::Integer,name::AbstractString,estimate=Dates::Time=Dates.Time(0)) 
+    est_time=Dates.millisecond(estimate)
     execute_db("""
-    INSERT INTO Protocols(ExperimentID,Name,EstimatedTime) Values($exp_id,'$name','$(string(estimate))');
+    INSERT INTO Protocols(ExperimentID,Name,EstimatedTime) Values($exp_id,'$name',$est_time);
     """)
     x=query_db("""
     SELECT Max(ID) FROM Protocols""")
@@ -87,6 +88,7 @@ function upload_protocol(exp_id::Integer,name::AbstractString,estimate=Dates.Tim
 end 
 
 function upload_encumbrance(protocol_id::Integer, is_enforced::Bool=true;time=Dates.now())
+
     execute_db("""
     INSERT INTO Encumbrances(ProtocolID) Values ($protocol_id)""")
     e_id=query_db("""
@@ -96,8 +98,9 @@ function upload_encumbrance(protocol_id::Integer, is_enforced::Bool=true;time=Da
 end 
 
 function upload_encumbrance_enforcement(encumbrance_id::Integer,is_enforced::Bool;time=Dates.now())
+    upload_time=db_time(time)
     ledger_id=upload_ledger()
-    execute_db("""INSERT INTO EncumbranceEnforcement(LedgerID,EncumbranceID,IsEnforced,Time) Values($ledger_id,$encumbrance_id,$(Int64(is_enforced)),'$(string(time))')""")
+    execute_db("""INSERT INTO EncumbranceEnforcement(LedgerID,EncumbranceID,IsEnforced,Time) Values($ledger_id,$encumbrance_id,$(Int64(is_enforced)),$upload_time)""")
 end 
     
 

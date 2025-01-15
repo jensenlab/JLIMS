@@ -13,7 +13,7 @@ function create_db(path)
         Name Text, 
         User TEXT,
         IsPublic INTEGER,
-        Time TEXT
+        Time INTEGER
     );
     """
     
@@ -181,8 +181,8 @@ function create_db(path)
         Attribute TEXT,
         Value Real,
         Unit TEXT,
-        Time TEXT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT, 
+        Time Integer,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT, 
         FOREIGN KEY(Attribute) REFERENCES Attributes(Attribute) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY (LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT 
     );
@@ -208,11 +208,11 @@ function create_db(path)
         Destination INTEGER, 
         Quantity REAL,
         Unit TEXT,
-        Time TEXT,
+        Time Integer,
         Configuration TEXT, 
         FOREIGN KEY(Source) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(Destination) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT,
 
         CHECK (Source != Destination)
     );
@@ -227,10 +227,10 @@ function create_db(path)
         LedgerID INTEGER,
         Parent Integer,
         Child Integer,
-        Time TEXT, 
+        Time Integer, 
         FOREIGN KEY(Child) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(Parent) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT,
         CHECK (Parent != Child) 
     );
     """
@@ -241,9 +241,9 @@ function create_db(path)
         LedgerID INTEGER,
         LocationID INTEGER,
         IsLocked INTEGER,
-        Time TEXT,
+        Time Integer,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
 
@@ -257,10 +257,10 @@ function create_db(path)
         Type TEXT,
         Value REAL,
         Unit TEXT,
-        Time Text,
+        Time INTEGER,
         Configuration TEXT,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(Configuration) REFERENCES Configurations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
@@ -268,7 +268,8 @@ function create_db(path)
     create_Ledger="""
     CREATE TABLE Ledger(
         ID INTEGER PRIMARY KEY NOT NULL ,
-        Time TEXT
+        SequenceID INTEGER,
+        Time INTEGER
     );
     """
 
@@ -286,8 +287,8 @@ function create_db(path)
         ID INTEGER PRIMARY KEY NOT NULL ,
         LedgerID INTEGER,
         Comment TEXT,
-        Time TEXT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        Time INTEGER,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
 
@@ -297,8 +298,8 @@ function create_db(path)
         LedgerID INTEGER,
         LocationID INTEGER,
         IsActive INTEGER,
-        Time TEXT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        Time INTEGER,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
@@ -329,9 +330,9 @@ function create_db(path)
         LedgerID INTEGER,
         EncumbranceID INTEGER,
         IsEnforced INTEGER,
-        Time TEXT,
+        Time INTEGER,
         FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
 

@@ -1,10 +1,10 @@
 
 # recursively find the ledger ids at which we need to start reconstructing all of the locations we need for the entire transfer reconstruction
-function build_location_ledger_map(ll_map::Dict{T,T},transfers::DataFrame,head::T;kwargs...) where T <: Integer
+function build_location_ledger_map(ll_map::Dict{T,T},transfers::DataFrame,head::T,time::DateTime;kwargs...) where T <: Integer
     startmap=deepcopy(ll_map)
     ids=collect(keys(ll_map))
     for loc_id in ids
-        ledger,cache_set_id=fetch_cache_ledger(loc_id,ll_map[loc_id])
+        ledger,cache_set_id=fetch_cache_ledger(loc_id,ll_map[loc_id],time;kwargs...)
         if ledger < ll_map[loc_id]
             ll_map[loc_id]=T(ledger)
         end
@@ -23,26 +23,26 @@ function build_location_ledger_map(ll_map::Dict{T,T},transfers::DataFrame,head::
     foot=minimum(collect(values(ll_map)))
    
     if startmap != ll_map 
-        tfs=get_transfers(ids,foot,head;kwargs...)# get the intervening transfers 
+        tfs=get_transfers(ids,foot,head,time;kwargs...)# get the intervening transfers 
         for row in reverse(eachrow(tfs))
-            ledger_id=row["LedgerID"]
+            sequence_id=row["Max(SequenceID)"]
             src=row["Source"]
-            if (ledger_id-1) < ll_map[src] 
-                ll_map[T(src)]=T(ledger_id-1)
+            if (sequence_id-1) < ll_map[src] 
+                ll_map[T(src)]=T(sequence_id-1)
             end
         end 
-        mvts=get_movements_as_child(query_join_vector(ids),foot,head;kwargs...)
+        mvts=get_movements_as_child(query_join_vector(ids),foot,head,time;kwargs...)
         for row in reverse(eachrow(mvts))
-            ledger_id=row["Max(LedgerID)"]
+            sequence_id=row["Max(SequenceID)"]
             prt=row["Parent"]
             if !ismissing(prt)
-                if !haskey(ll_map,prt) || (ledger_id-1) < ll_map[prt] 
-                    ll_map[T(prt)]=T(ledger_id-1)
+                if !haskey(ll_map,prt) || (sequence_id-1) < ll_map[prt] 
+                    ll_map[T(prt)]=T(sequence_id-1)
                 end
             end 
         end 
 
-        return build_location_ledger_map(ll_map,unique!(append!(tfs,transfers)),head;kwargs...) # re-build the location-ledger map after moving the foot back
+        return build_location_ledger_map(ll_map,unique!(append!(tfs,transfers)),head,time;kwargs...) # re-build the location-ledger map after moving the foot back
     else
         return ll_map, transfers
     end 
@@ -83,28 +83,41 @@ function get_location_info(id::Integer)
     return string(out["Name"]), eval(Symbol(out["Type"]))
 end 
 
-function get_cache(loc_id::Integer,ledger_id::Integer,encumbrances::Bool)
+function get_cache(loc_id::Integer,sequence_id::Integer,time::DateTime,encumbrances::Bool)
+    ledger_time=db_time(time)
     if encumbrances
-        return query_db("WITH y (ID,LocationID,CacheSetID,LedgerID)
+        return query_db("
+        WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            )
+        
+        WITH y (ID,LocationID,CacheSetID,LedgerID)
         AS(SELECT v.ID, v.LocationID, v.CacheSetID, e.LedgerID
-            FROM (Select Max(ID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement WHERE LedgerID <= $ledger_id GROUP BY EncumbranceID)  e INNER JOIN EncumberedCaches v ON e.EncumbranceID = v.EncumbranceID WHERE IsEnforced = 1
+            FROM (Select ID, Max(SequenceID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement INNER JOIN ledger_subset ON EncumbranceEnforcement.LedgerID = ledger_subset.ID  GROUP BY EncumbranceID)  e INNER JOIN EncumberedCaches v ON e.EncumbranceID = v.EncumbranceID WHERE IsEnforced = 1
         UNION ALL 
             SELECT c.ID, c.LocationID,c.CacheSetID,c.LedgerID
             FROM Caches c) 
-            SELECT ID, LocationID, CacheSetID, Max(LedgerID) FROM y WHERE LocationID = $loc_id AND LedgerID <= $ledger_id")[1,:]
+            SELECT ID, LocationID, CacheSetID, LedgerID, Max(SequenceID) FROM y INNER JOIN ledger_subset ON y.LedgerID = ledger_subset.ID WHERE LocationID = $loc_id")[1,:]
     else
-        return query_db("SELECT ID, LocationID, CacheSetID, Max(LedgerID) FROM Caches WHERE LocationID = $loc_id AND LedgerID <= $ledger_id")[1,:]
+        return query_db("
+            WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ) 
+        
+        SELECT ID, LocationID, CacheSetID, LedgerID, Max(SequenceID) FROM Caches INNER JOIN ledger_subset ON Caches.LedgerID = ledger_subset.ID WHERE LocationID = $loc_id")[1,:]
     end 
 end
 
 
 
-function fetch_cache(loc_id::Integer, ledger_id::Integer;encumbrances=false)
+function fetch_cache(loc_id::Integer, sequence_id::Integer,time::DateTime=Dates.now();encumbrances=false)
     n,t=get_location_info(loc_id)
     loc= t(loc_id,n)
     cache_info=DataFrame()
    
-    cache_info=get_cache(loc_id,ledger_id,encumbrances)
+    cache_info=get_cache(loc_id,sequence_id,time,encumbrances)
     
     cache_set_id=cache_info["CacheSetID"]
     if !ismissing(cache_set_id) # cache_id is a DataFrame with either 0 or 1 rows. 0 rows means no cache is stored anywhere in the database. 1 row  means there are caches we can start from 
@@ -181,25 +194,25 @@ function fetch_cache(loc_id::Integer, ledger_id::Integer;encumbrances=false)
     end 
 end
 
-function fetch_cache_ledger(id::Integer,ledger_id::Integer;encumbrances=false)
+function fetch_cache_ledger(id::Integer,sequence_id::Integer,time::DateTime=Dates.now();encumbrances=false)
     start =1
-    cache_info=get_cache(id,ledger_id,encumbrances)
+    cache_info=get_cache(id,sequence_id,time,encumbrances)
     cache_set_id=cache_info["CacheSetID"]
     if !ismissing(cache_set_id) # cache_id is a DataFrame with either 0 or 1 rows. 0 rows means no cache is stored anywhere in the database. 1 row  means there are caches we can start from 
-        start =cache_info["Max(LedgerID)"]
+        start =cache_info["Max(SequenceID)"]
     end 
     return start ,cache_set_id
 end 
 
-function reconstruct_location(ids::Vector{<:Integer},ledger_id::Integer=get_last_ledger_id();encumbrances=false,cache_results=false)
+function reconstruct_location(ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false,cache_results=false)
 
-    ll_map=Dict(ids .=> (ledger_id,))
-    ll_map, transfers= build_location_ledger_map(ll_map,DataFrame(),ledger_id;encumbrances=encumbrances)
+    ll_map=Dict(ids .=> (sequence_id,))
+    ll_map, transfers= build_location_ledger_map(ll_map,DataFrame(),sequence_id,time;encumbrances=encumbrances)
     foot=minimum(collect(values(ll_map)))
     all_locs=Dict{Integer,Location}()
     tracked_locs=collect(keys(ll_map))
     for loc_id in tracked_locs
-        loc,ledger=fetch_cache(loc_id,ll_map[loc_id])
+        loc,ledger=fetch_cache(loc_id,ll_map[loc_id],time)
   
         all_locs[loc_id]=loc
     end 
@@ -231,7 +244,7 @@ function reconstruct_location(ids::Vector{<:Integer},ledger_id::Integer=get_last
         end
     end 
 
-    movements=get_movements(tracked_locs,current_children,foot,ledger_id;encumbrances=encumbrances)
+    movements=get_movements(tracked_locs,current_children,foot,sequence_id,time;encumbrances=encumbrances)
     for row in eachrow(movements) 
         if row.Child in tracked_locs
             all_locs[row.Child].parent = all_locs[row.Parent]
@@ -246,7 +259,7 @@ function reconstruct_location(ids::Vector{<:Integer},ledger_id::Integer=get_last
         end 
     end 
 
-    environments=get_environments(tracked_locs,foot,ledger_id;encumbrances=encumbrances)
+    environments=get_environments(tracked_locs,foot,sequence_id,time;encumbrances=encumbrances)
 
     for row in eachrow(environments)
         attr=get_attribute(row.Attribute)
@@ -259,7 +272,7 @@ function reconstruct_location(ids::Vector{<:Integer},ledger_id::Integer=get_last
     end 
 
     if cache_results && !encumbrances # encumbrances would invalidate the caches 
-        cache.(out_locs,(ledger_id,))
+        cache.(out_locs,(sequence_id,))
     elseif cache_results 
         @warn "Results not cached because they include encumbrances"
     end 
@@ -269,8 +282,8 @@ end
 
 
 
-function reconstruct_location(id::Integer,ledger_id::Integer=get_last_ledger_id();encumbrances=false)
-    return reconstruct_location([id],ledger_id;encumbrances=encumbrances)[1]
+function reconstruct_location(id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false,cache_results=false)
+    return reconstruct_location([id],sequence_id,time;encumbrances=encumbrances,cache_results=cache_results)[1]
 end
 
 
@@ -279,45 +292,65 @@ end
 
 
 
-function get_movements_as_parent(entry::AbstractString,starting::Integer=0,ending::Integer=get_last_ledger_id();encumbrances=false)  # find all movements for a set of locations betweeen `starting` and `ending` ledger ids
+function get_movements_as_parent(entry::AbstractString,starting::Integer=0,ending::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)  # find all movements for a set of locations betweeen `starting` and `ending` ledger ids
+    ledger_time = db_time(time)
     x=""
     if encumbrances 
         x=
         """
+            WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ) 
+
         WITH y (LedgerID,Parent,Child)
         AS(SELECT e.LedgerID, v.Parent,v.Child
-            FROM (Select Max(ID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement WHERE LedgerID BETWEEN $starting AND $ending GROUP BY EncumbranceID)  e INNER JOIN EncumberedMovements v ON e.EncumbranceID = v.EncumbranceID WHERE IsEnforced = 1
+            FROM (Select ID, Max(SequenceID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement INNER JOIN ledger_subset ON EncumbranceEnforcement.LedgerID = ledger_subset.ID  GROUP BY EncumbranceID)  e INNER JOIN EncumberedMovements v ON e.EncumbranceID = v.EncumbranceID WHERE IsEnforced = 1
         UNION ALL 
             SELECT c.LedgerID,c.Parent,c.Child
             FROM Movements c) 
-        SELECT  Max(LedgerID),Parent,Child FROM y WHERE  Parent in $entry  AND LedgerID BETWEEN $starting AND $ending GROUP BY Child ORDER BY LedgerID
+        SELECT  LedgerID, Max(SequenceID),Parent,Child FROM y INNER JOIN ledger_subset ON y.LedgerID = ledger_subset.ID WHERE  Parent in $entry GROUP BY Child ORDER BY SequenceID
         """
     else
         x=
         """
-        SELECT  Max(LedgerID),Parent,Child FROM Movements WHERE  Parent in $entry  AND LedgerID BETWEEN $starting AND $ending GROUP BY Child ORDER BY LedgerID
+            WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ) 
+        SELECT  LedgerID, Max(SequenceID),Parent,Child FROM Movements INNER JOIN ledger_subset ON Movements.LedgerID = ledger_subset.ID WHERE  Parent in $entry GROUP BY Child ORDER BY SequenceID
         """
     end
     return query_db(x)
 end 
 
-function get_movements_as_child(entry::AbstractString,starting::Integer=0,ending::Integer=get_last_ledger_id();encumbrances=false)
+function get_movements_as_child(entry::AbstractString,starting::Integer=0,ending::Integer=get_last_sequence_id()time::DateTime=Dates.now();encumbrances=false)
+    ledger_time=db_time(time)
     x=""
     if encumbrances 
         x=
         """
+            WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ) 
         WITH y (LedgerID,Parent,Child)
         AS(SELECT e.LedgerID, v.Parent,v.Child
-            FROM (Select Max(ID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement WHERE LedgerID BETWEEN $starting AND $ending GROUP BY EncumbranceID)  e INNER JOIN EncumberedMovements v ON e.EncumbranceID = v.EncumbranceID WHERE IsEnforced = 1
+            FROM (Select ID, Max(SequenceID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement INNER JOIN ledger_subset ON EncumbranceEnforcement.LedgerID = ledger_subset.ID  GROUP BY EncumbranceID)  e INNER JOIN EncumberedMovements v ON e.EncumbranceID = v.EncumbranceID WHERE IsEnforced = 1
         UNION ALL 
             SELECT c.LedgerID,c.Parent,c.Child
             FROM Movements c) 
-        SELECT  Max(LedgerID),Parent,Child FROM y WHERE  Child in $entry  AND LedgerID BETWEEN $starting AND $ending GROUP BY Child  ORDER BY LedgerID
+        SELECT  LedgerID,Max(SequenceID),Parent,Child FROM yINNER JOIN ledger_subset ON y.LedgerID = ledger_subset.ID WHERE  Child in $entry  GROUP BY Child  ORDER BY SequenceIDD
         """
     else
         x=
         """
-        SELECT  Max(LedgerID),Parent,Child FROM Movements WHERE  Child in $entry  AND LedgerID BETWEEN $starting AND $ending GROUP BY Child  ORDER BY LedgerID
+            WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ) 
+
+        SELECT  LedgerID,Max(SequenceID),Parent,Child FROM Movements INNER JOIN ledger_subset ON Movements.LedgerID = ledger_subset.ID WHERE  Child in $entry  GROUP BY Child  ORDER BY SequenceID
         """
     end
     return query_db(x)
@@ -325,15 +358,15 @@ end
 
 
 
-function get_movements(locs::Vector{<:Integer},current_children::Dict{Integer,Integer},starting::Integer=0,ending::Integer=get_last_ledger_id();encumbrances=false)
-
+function get_movements(locs::Vector{<:Integer},current_children::Dict{Integer,Integer},starting::Integer=0,ending::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+    ledger_time= db_time(time)
     loc_vec=query_join_vector(locs)
     loc_plus_children=query_join_vector(unique(vcat(locs,collect(keys(current_children)))))
     a=get_movements_as_child(loc_plus_children,starting,ending;encumbrances=encumbrances)
     b=get_movements_as_parent(loc_vec,starting,ending;encumbrances=encumbrances)
     b_child=filter(x->!ismissing(x),b.Child)
-    c=DataFrame(LedgerID=Int[],Parent=Int[],Child=Int[])
-    rename!(c, :LedgerID => :("Max(LedgerID)"))
+    c=DataFrame(SequenceID=Int[],Parent=Int[],Child=Int[])
+    rename!(c, :SequenceID => :("Max(SequenceID)"))
     if length(b_child) > 0 
         c=get_movements_as_child(query_join_vector(b_child),starting,ending;encumbrances=encumbrances)
     end
@@ -351,22 +384,28 @@ function get_movements(locs::Vector{<:Integer},current_children::Dict{Integer,In
 
     
     final_movements=vcat(final_movements,new_children)
-    rename!(final_movements , :("Max(LedgerID)") => :LedgerID)
-    sort!(final_movements,:LedgerID)
+    rename!(final_movements , :("Max(SequenceID)") => :SequenceID)
+    sort!(final_movements,:SequenceID)
     
     return final_movements
 end
 
 
-function get_transfers(locs::Vector{<:Integer},starting::Integer=0,ending::Integer=get_last_ledger_id();encumbrances=false)  # find all transfers for a set of locations betweeen `starting` and `ending` ledger ids
+function get_transfers(locs::Vector{<:Integer},starting::Integer=0,ending::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)  # find all transfers for a set of locations betweeen `starting` and `ending` ledger ids
+    ledger_time= db_time(time)
     entry=query_join_vector(locs)
     x=""
     if encumbrances 
         x= 
         """
+                    WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ) 
+
         WITH RECURSIVE y (LedgerID,Source,Destination,Quantity,Unit)
         AS(SELECT e.LedgerID, c.Source,c.Destination,c.Quantity,c.Unit
-            FROM (Select Max(ID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement WHERE LedgerID BETWEEN $starting AND $ending GROUP BY EncumbranceID)  e INNER JOIN EncumberedTransfers c ON e.EncumbranceID = c.EncumbranceID WHERE IsEnforced = 1
+            FROM (Select ID, Max(SequenceID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement INNER JOIN ledger_subset ON EncumbranceEnforcement.LedgerID = ledger_subset.ID  GROUP BY EncumbranceID)  e INNER JOIN EncumberedTransfers c ON e.EncumbranceID = c.EncumbranceID WHERE IsEnforced = 1
         UNION ALL 
             SELECT t.LedgerID, t.Source, t.Destination, t.Quantity, t.Unit 
             FROM Transfers t) ,
@@ -380,11 +419,16 @@ function get_transfers(locs::Vector{<:Integer},starting::Integer=0,ending::Integ
             FROM y  ,x
             WHERE x.Source = y.Destination
         )
-        SELECT DISTINCT  * FROM x WHERE  LedgerID BETWEEN $starting AND $ending ORDER BY LedgerID
+        SELECT DISTINCT  * FROM x INNER JOIN ledger_subset ON x.LedgerID = ledger_subset.ID  ORDER BY SequenceID
         """
     else 
         x=
         """
+            WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ) 
+
         WITH RECURSIVE x (LedgerID,Source,Destination,Quantity,Unit)
         AS(
         SELECT Transfers.LedgerID, Source,Destination,Transfers.Quantity,Transfers.Unit
@@ -395,7 +439,7 @@ function get_transfers(locs::Vector{<:Integer},starting::Integer=0,ending::Integ
             FROM Transfers t  ,x
             WHERE x.Source = t.Destination
         )
-        SELECT DISTINCT  * FROM x WHERE  LedgerID BETWEEN $starting AND $ending ORDER BY LedgerID
+        SELECT DISTINCT  * FROM x INNER JOIN ledger_subset ON x.LedgerID = ledger_subset.ID  ORDER BY SequenceID
         """
 
     end 
@@ -403,24 +447,37 @@ return query_db(x)
 end 
 
 
-function get_environments(locs::Vector{<:Integer},starting::Integer=0,ending::Integer=get_last_ledger_id();encumbrances=false)
+function get_environments(locs::Vector{<:Integer},starting::Integer=0,ending::Integer=get_last_sequence_id(), time::DateTime=Dates.now();encumbrances=false)
+    ledger_time= db_time(time)
     entry=query_join_vector(locs)
     x=""
     if encumbrances 
         x=
         """
-        WITH y (LedgerID,LocationID,Attribute,Value,Unit)
+        WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ), 
+        
+        y (LedgerID,LocationID,Attribute,Value,Unit)
         AS(SELECT e.LedgerID, v.LocationID,v.Attribute,v.Value,v.Unit
-            FROM (Select Max(ID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement WHERE LedgerID BETWEEN $starting AND $ending GROUP BY EncumbranceID)  e INNER JOIN EncumberedEnvironments v ON e.EncumbranceID = v.EncumbranceID WHERE IsEnforced = 1
+            FROM (Select ID, Max(SequenceID), LedgerID, EncumbranceID, IsEnforced FROM EncumbranceEnforcement INNER JOIN ledger_subset ON EncumbranceEnforcement.LedgerID = ledger_subset.ID  GROUP BY EncumbranceID)  e INNER JOIN EncumberedEnvironments v ON e.EncumbranceID = v.EncumbranceID WHERE IsEnforced = 1
         UNION ALL 
             SELECT c.LedgerID,c.LocationID,c.Attribute,c.Value,c.Unit
             FROM EnvironmentAttributes c) 
-        SELECT  Max(LedgerID),LocationID,Attribute,Value,Unit FROM y WHERE  LocationID in $entry AND LedgerID BETWEEN $starting AND $ending GROUP BY LocationID, Attribute ORDER BY LedgerID
+            
+
+
+        SELECT  LedgerID,Max(SequenceID),LocationID,Attribute,Value,Unit FROM y INNER JOIN ledger_subset ON y.LedgerID = ledger_subset.ID WHERE  LocationID in $entry  GROUP BY LocationID, Attribute ORDER BY SequenceID
         """
     else
         x=
         """
-        SELECT  Max(LedgerID),LocationID,Attribute,Value,Unit FROM EnvironmentAttributes WHERE  LocationID in $entry AND LedgerID BETWEEN $starting AND $ending GROUP BY LocationID, Attribute ORDER BY LedgerID
+        WITH ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            ) 
+        SELECT  LedgerID,Max(SequenceID),LocationID,Attribute,Value,Unit FROM EnvironmentAttributes INNER JOIN ledger_subset ON EnvironmentAttributes.LedgerID = ledger_subset.ID WHERE  LocationID in $entry  GROUP BY LocationID, Attribute ORDER BY SequenceID
         """
     end
     return query_db(x)
