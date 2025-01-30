@@ -10,7 +10,7 @@ using
     JSON, # chemical parsing only 
     UUIDs, # used for generating labware name
     Dates
-import Base: +,-,*,/,convert, show ,sort , promote_rule,round , in, ==,empty,empty!, hash # all overloaded by this package
+import Base: +,-,*,/,convert, show ,sort , promote_rule,round , in, ==,empty,empty!, hash, isapprox # all overloaded by this package
 import AbstractTrees: children,parent,nodevalue
 
 include("./Units/JensenLabUnits.jl")
@@ -39,11 +39,14 @@ include("./operations/mixing.jl")
 include("./database/database.jl")
 include("./database/db_utils.jl")
 include("./database/caching.jl")
-include("./database/reconstructing.jl")
+#include("./database/reconstructing.jl")
 include("./database/uploads.jl")
 include("./database/generate_location.jl")
 include("./database/queries.jl")
 include("./database/encumbrances.jl")
+
+include("./database/reconstruction/reconstruction_utils.jl")
+include("./database/reconstruction/reconstruct_contents.jl")
 
 
 #include("./csv_uploads.jl")
@@ -79,11 +82,11 @@ export @connect_SQLite, execute_db, query_db
 #uploads 
 export @upload , upload_tag, upload_barcode, update_barcode 
 #queries
-export get_last_ledger_id
+export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_protocol_id
 #generate_location
 export generate_location
 #caching and fetching 
-export cache , fetch_cache, get_location_info, @get_location, reconstruct_location, build_location_ledger_map
+export cache , fetch_cache, get_location_info, @get_location, reconstruct_contents, build_location_ledger_map
 #barcodes
 export Barcode, assign_barcode!,assign_barcode
 export @protocol ,upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache

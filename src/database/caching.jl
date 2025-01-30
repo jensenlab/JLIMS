@@ -1,26 +1,97 @@
 function cache(loc::Location,sequence_id=get_last_sequence_id())
-    parent_id=location_id(parent(loc))
-    if isnothing(parent_id)
-        parent_id="NULL"
-    end
-    children_id=cache_children(children(loc))
-    stock_id=cache(stock(loc))
-    attr_id=cache(attributes(loc))
-    locked=Int(is_locked(loc))
-    active=Int(is_active(loc))
-    id=query_db("SELECT ID FROM CacheSets WHERE ParentID = $parent_id AND ChildSetID = $children_id AND AttributeSetID = $attr_id AND StockID = $stock_id AND IsLocked = $locked AND IsActive =$active")
-    if nrow(id)==0 
-        execute_db("INSERT INTO CacheSets(ParentID,ChildSetID,AttributeSetID, StockID,IsLocked,IsActive) Values($parent_id,$children_id,$attr_id,$stock_id,$locked,$active)")
-        id=query_db("SELECT Max(ID) FROM CacheSets")[1,1]
-    else
-        id=id[1,1]
-    end
-    loc_id=location_id(loc)
-    ledger_id= upload_ledger(sequence_id)
-    execute_db("INSERT INTO Caches(LocationID,CacheSetID,LedgerID) Values($loc_id,$id,$ledger_id)")
+    ledger_id=get_last_ledger_id(sequence_id)
+    cache_parent(loc,ledger_id)
+    cache_children(loc,ledger_id)
+    cache_environment(loc,ledger_id)
+    cache_lock_activity(loc,ledger_id)
+    if typeof(loc) <: JLIMS.Well
+        cache_contents(loc,ledger_id)
+    end 
     return nothing
 end 
 
+
+function cache_parent(loc::Location,ledger_id::Integer)
+    parent_id=location_id(parent(loc))
+    if isnothing(parent_id)
+        parent_id="NULL"
+    end 
+    execute_db("INSERT INTO CachedAncestors(LocationID,ParentID,LedgerID) Values($(location_id(loc)),$parent_id,$ledger_id)")
+    return nothing 
+end 
+
+function cache_children(loc::Location,ledger_id::Integer)
+    child_set_id=cache_children_helper(children(loc))
+
+    execute_db("INSERT INTO CachedDescendents(LocationID,ChildSetID,LedgerID) Values($(location_id(loc)),$child_set_id,$ledger_id)")
+    return nothing 
+end 
+
+
+
+
+
+function get_child_set_id(c)
+    ids=location_id.(c)
+    id=query_db("SELECT ID FROM CachedChildSets WHERE ChildSetHash = $(hash(ids))") # search to see if attribute set is in the database
+    if nrow(id)==1 
+        return id[1,1]
+    else 
+        return nothing 
+    
+    end
+end 
+
+
+
+function cache_children_helper(c::Matrix{Union{LocationRef,T}}) where T<:Well 
+    loc_ids=location_id.(c)
+id=get_child_set_id(c)
+if isnothing(id)
+    execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(loc_ids)))")
+    id=get_child_set_id(c)
+    rows,cols=size(c)
+    for col in 1:cols
+        for row in 1:rows
+            execute_db("INSERT OR IGNORE INTO CachedChildren(CachedChildSetID,ChildID,RowIdx,ColIdx) Values($id,$(location_id(c[row,col])), $row,$col)")
+        end
+    end 
+end
+return id 
+end 
+
+function cache_children_helper(c::Vector{<:Union{LocationRef,Location}})
+    loc_ids=location_id.(c)
+    id=get_child_set_id(c)
+    if isnothing(id)
+        execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(loc_ids)))")
+        id=get_child_set_id(c)
+        for child in c 
+            execute_db("INSERT OR IGNORE INTO CachedChildren(CachedChildSetID,ChildID) Values($id,$(location_id(child)))")
+        end
+    end
+    return id 
+end 
+
+function cache_children_helper(c::Tuple{})
+    loc_ids=location_id.(c)
+    id=get_child_set_id(c)
+    if isnothing(id)
+        execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(loc_ids)))")
+        id=get_child_set_id(c)
+        for child in c 
+            execute_db("INSERT OR IGNORE INTO CachedChildren(CachedhildSetID,ChildID) Values($id,$(location_id(child)))")
+        end
+    end
+    return id 
+end 
+
+
+function cache_contents(loc::Well,ledger_id::Integer)
+    stock_id=cache(stock(loc))
+    execute_db("INSERT OR IGNORE INTO CachedContents(LocationID,StockID,LedgerID,Cost) Values($(location_id(loc)),$stock_id,$ledger_id,$(cost(loc)))")
+    return nothing 
+end 
 
 
 
@@ -74,6 +145,14 @@ function cache(s::Stock)
 
 end 
 
+function cache_environment(loc::Location,ledger_id::Integer)
+    attr_set_id=cache(attributes(loc))
+    execute_db("INSERT INTO CachedEnvironments(LocationID,AttributeSetID,LedgerID) Values($(location_id(loc)),$attr_set_id,$ledger_id)")
+    return nothing 
+end 
+
+
+
 function get_attribute_set_id(a::AttributeDict)
     id=query_db("SELECT ID FROM CachedAttributeSets WHERE AttributeSetHash = $(hash(a))") # search to see if attribute set is in the database
     if nrow(id)==1 
@@ -103,60 +182,7 @@ function cache(a::AttributeDict)
 end 
 
 
-function get_child_set_id(c)
-    ids=location_id.(c)
-    id=query_db("SELECT ID FROM CachedChildSets WHERE ChildSetHash = $(hash(ids))") # search to see if attribute set is in the database
-    if nrow(id)==1 
-        return id[1,1]
-    else 
-        return nothing 
-    
-    end
+function cache_lock_activity(loc::Location,ledger_id::Integer)
+    execute_db("INSERT INTO CachedLockActivity(LocationID,IsLocked,IsActive,LedgerID) Values($(location_id(loc)),$(is_locked(loc)),$(is_active(loc)),$ledger_id)")
+    return nothing 
 end 
-
-
-function cache_children(c::Matrix{Union{LocationRef,T}}) where T<:Well 
-    loc_ids=location_id.(c)
-id=get_child_set_id(c)
-if isnothing(id)
-    execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(loc_ids)))")
-    id=get_child_set_id(c)
-    rows,cols=size(c)
-    for col in 1:cols
-        for row in 1:rows
-            execute_db("INSERT OR IGNORE INTO CachedChildren(CachedChildSetID,ChildID,RowIdx,ColIdx) Values($id,$(location_id(c[row,col])), $row,$col)")
-        end
-    end 
-end
-return id 
-end 
-
-function cache_children(c::Vector{<:Union{LocationRef,Location}})
-    loc_ids=location_id.(c)
-    id=get_child_set_id(c)
-    if isnothing(id)
-        execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(loc_ids)))")
-        id=get_child_set_id(c)
-        for child in c 
-            execute_db("INSERT OR IGNORE INTO CachedChildren(CachedChildSetID,ChildID) Values($id,$(location_id(child)))")
-        end
-    end
-    return id 
-end 
-
-function cache_children(c::Tuple{})
-    loc_ids=location_id.(c)
-    id=get_child_set_id(c)
-    if isnothing(id)
-        execute_db("INSERT OR IGNORE INTO CachedChildSets(ChildSetHash) Values($(hash(loc_ids)))")
-        id=get_child_set_id(c)
-        for child in c 
-            execute_db("INSERT OR IGNORE INTO CachedChildren(CachedhildSetID,ChildID) Values($id,$(location_id(child)))")
-        end
-    end
-    return id 
-end 
-
-
-
-

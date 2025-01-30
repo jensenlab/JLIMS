@@ -11,11 +11,24 @@ function get_last_ledger_id(time::DateTime=Dates.now())
     return current_id[1,1]
 end 
 
+function get_last_ledger_id(sequence_id::Integer,time::DateTime=Dates.now())
+    ledger_time=db_time(time)
+    x="SELECT Max(ID) FROM LEDGER WHERE SequenceID = $sequence_id AND TIME <= $ledger_time"
+    current_id=query_db(x)
+    return current_id[1,1]
+end 
+
 function get_last_sequence_id(time::DateTime=Dates.now())
     ledger_time = db_time(time)
     x= "SELECT Max(SequenceID) FROM Ledger WHERE Time <= $ledger_time "
     current_id = query_db(x)
     return current_id[1,1]
+end 
+
+
+function get_sequence_id(ledger_id::Integer) 
+    x="SELECT SequenceID FROM Ledger WHERE Id = $ledger_id"
+    return query_db(x)[1,1]
 end 
 #=
 function get_component(id::Integer)

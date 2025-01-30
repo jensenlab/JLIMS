@@ -153,13 +153,14 @@ w1=children(b1)[1,1]
 
 w2=children(b2)[1,1]
 
-deposit!(w2,50u"g"*Paba)
-deposit!(w1,500u"mL"*Water)
-deposit!(w1,Empty()+SMU_UA159)
+deposit!(w2,50u"g"*Paba, 20)
+deposit!(w1,500u"mL"*Water,3)
+deposit!(w1,Empty()+SMU_UA159,0)
 cache(w1)
 cache(w2)
 
 @upload transfer!(w2,w1,5u"g")
+@upload transfer!(w1,children(plate1)[1,1],100u"µL")
 
 
 upload_tag("test_comment")
@@ -181,7 +182,7 @@ p_id=upload_protocol(exp_id,"test_protocol")
 
 @encumber p_id move_into!(l1,plate1)
 @encumber p_id move_into!(main_room,plate1)
-@encumber p_id transfer!(w2,w1,2u"g")
+@encumber p_id transfer!(w2,w1,20u"g")
 @encumber p_id set_attribute!(jensen_lab,Humidity(43u"percent"))
 @encumber p_id JLIMS.lock!(plate1)
 @encumber p_id JLIMS.unlock!(plate1)
@@ -189,9 +190,9 @@ p_id=upload_protocol(exp_id,"test_protocol")
 @encumber p_id toggle_activity!(plate1)
 @encumber p_id set_attribute!(jensen_lab,Humidity(40u"percent"))
 @encumber p_id move_into!(jensen_lab,b1)
-encumber_cache(upload_encumbrance(p_id),plate1)
+encumber_cache(get_last_encumbrance_id(p_id),plate1)
 
-reconstruct_location(collect(25:30))
+#reconstruct_location(collect(25:30))
 #=
 @time reconstruct_location(collect(25:30))
 

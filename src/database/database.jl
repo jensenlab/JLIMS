@@ -63,35 +63,33 @@ function create_db(path)
         );
         """
 
-    create_CacheSets="""
-    CREATE TABLE CacheSets(
-        ID INTEGER PRIMARY KEY NOT NULL,
-        ParentID INTEGER,
-        ChildSetID INTEGER,
-        AttributeSetID INTEGER,
-        StockID INTEGER,
-        IsLocked INTEGER,
-        IsActive INTEGER,
-        FOREIGN KEY(ChildSetID) REFERENCES CachedChildSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(ParentID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(AttributeSetID) REFERENCES CachedAttributeSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(StockID) REFERENCES CachedStocks(ID) ON UPDATE CASCADE ON DELETE RESTRICT
-    );
-"""
 
-    create_Caches="""
-    Create Table Caches(
+    create_CachedDescendents="""
+    CREATE TABLE CachedDescendents(
         ID INTEGER PRIMARY KEY NOT NULL,
         LocationID INTEGER,
-        CacheSetID INTEGER,
+        ChildSetID INTEGER,
+        LedgerID INTEGER,
+         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(ChildSetID) REFERENCES CachedChildSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        );
+    """
+
+    create_CachedAncestors="""
+    CREATE TABLE CachedAncestors(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        LocationID INTEGER,
+        ParentID INTEGER,
         LedgerID INTEGER,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(CacheSetID) REFERENCES CacheSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(ParentID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
-
     );
+    """
 
-"""
+
+
 
     create_CachedChildSets="""
     CREATE TABLE CachedChildSets(
@@ -112,6 +110,21 @@ function create_db(path)
     );
     """
 
+    create_CachedEnvironments="""
+    CREATE TABLE CachedEnvironments(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        LocationID INTEGER,
+        AttributeSetID INTEGER,
+        LedgerID INTEGER,
+        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(AttributeSetID) REFERENCES CachedAttributeSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+    );
+"""
+
+
+
+
     create_CachedAttributeSets="""
     CREATE TABLE CachedAttributeSets(
         ID INTEGER PRIMARY KEY NOT NULL,
@@ -130,6 +143,21 @@ function create_db(path)
         FOREIGN KEY(AttributeID) REFERENCES Attributes(Attribute) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
+
+
+    create_CachedContents="""
+    CREATE TABLE CachedContents(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        LocationID INTEGER,
+        StockID INTEGER, 
+        LedgerID INTEGER,
+        Cost REAL,
+        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(StockID) REFERENCES CachedStocks(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        );
+    """
+
 
     create_CachedStocks="""
     CREATE TABLE CachedStocks(
@@ -150,6 +178,17 @@ function create_db(path)
     );
 """
 
+    create_CachedLockActivity="""
+    CREATE TABLE CachedLockActivity(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        LocationID INTEGER,
+        IsLocked INTEGER,
+        IsActive INTEGER,
+        LedgerID INTEGER,
+        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+    );
+    """
 
 
     create_LocationTypes="""
@@ -310,9 +349,22 @@ function create_db(path)
         ID INTEGER PRIMARY KEY NOT NULL, 
         ExperimentID INTEGER,
         Name Text,
+        SequenceIDCreatedAt INTEGER,
         EstimatedTime Real,
         FOREIGN KEY (ExperimentID) REFERENCES Experiments(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         Unique(ExperimentID,Name)
+    );
+    """
+
+    create_ProtocolEnforcement="""
+    CREATE TABLE ProtocolEnforcement(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        ProtocolID INTEGER, 
+        LedgerID INTEGER,
+        IsEnforced INTEGER,
+        Time INTEGER,
+        FOREIGN KEY (ProtocolID) REFERENCES Protocols(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
 
@@ -324,13 +376,11 @@ function create_db(path)
     );
     """
 
-    create_EncumbranceEnforcement="""
-    CREATE TABLE EncumbranceEnforcement(
+    create_EncumbranceCompletion="""
+    CREATE TABLE EncumbranceCompletion(
         ID INTEGER PRIMARY KEY NOT NULL ,
         LedgerID INTEGER,
         EncumbranceID INTEGER,
-        IsEnforced INTEGER,
-        Time INTEGER,
         FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT
     );
@@ -338,21 +388,64 @@ function create_db(path)
 
 
 
-    create_EncumberedCaches="""
-    CREATE TABLE EncumberedCaches(
+    create_EncumberedCachedContents="""
+    CREATE TABLE EncumberedCachedContents(
         ID INTEGER PRIMARY KEY NOT NULL,
         EncumbranceID INTEGER,
         LocationID INTEGER,
-        CacheSetID INTEGER,
-        FOREIGN KEY(CacheSetID) REFERENCES CacheSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT
-        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        StockID INTEGER,
+        Cost REAL,
+        FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(StockID) REFERENCES CachedStocks(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
+    """
+
+
+    create_EncumberedCachedEnvironments="""
+    CREATE TABLE EncumberedCachedEnvironments(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        EncumbranceID INTEGER,
+        LocationID INTEGER,
+        AttributeSetID INTEGER,
+        FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(AttributeSetID) REFERENCES CachedAttributeSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+    );
+    """
+    create_EncumberedCachedAncestors="""
+    CREATE TABLE EncumberedCachedAncestors(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        EncumbranceID INTEGER,
+        LocationID INTEGER,
+        ParentID INTEGER,
+        FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(ParentID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+    );
+    """
+    create_EncumberedCachedDescendents="""
+    CREATE TABLE EncumberedCachedDescendents(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        EncumbranceID INTEGER,
+        LocationID INTEGER,
+        ChildSetID INTEGER,
+        FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(ChildSetID) REFERENCES CachedChildSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+    );
+    """
+    create_EncumberedCachedLockActivity="""
+    CREATE TABLE EncumberedCachedLockActivity(
+        ID INTEGER PRIMARY KEY NOT NULL,
+        EncumbranceID INTEGER, 
+        LocationID INTEGER,
+        IsLocked INTEGER,
+        IsActive INTEGER,
+        FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        );
         """
-
-
-
-
 
 
 
@@ -449,24 +542,35 @@ function create_db(path)
     DBInterface.execute(db,create_CachedAttributes)
     DBInterface.execute(db,create_CachedStocks)
     DBInterface.execute(db,create_CachedComponents)
-    DBInterface.execute(db,create_CacheSets)
-    DBInterface.execute(db,create_Caches)
+    DBInterface.execute(db,create_CachedContents)
+    DBInterface.execute(db,create_CachedDescendents)
+    DBInterface.execute(db,create_CachedEnvironments)
+    DBInterface.execute(db,create_CachedAncestors)
+    DBInterface.execute(db,create_CachedLockActivity)
 
     # experiments and encumbrances
     DBInterface.execute(db, create_Experiments)
     DBInterface.execute(db, create_Runs)
     DBInterface.execute(db,create_Protocols)
+    DBInterface.execute(db,create_ProtocolEnforcement)
     DBInterface.execute(db,create_Encumbrances)
+    DBInterface.execute(db,create_EncumbranceCompletion)
     DBInterface.execute(db,create_EncumberedTransfers)
-    DBInterface.execute(db,create_EncumberedCaches)
     DBInterface.execute(db,create_EncumberedLocks)
     DBInterface.execute(db,create_EncumberedMovements)
     DBInterface.execute(db,create_EncumberedEnvironments)
     DBInterface.execute(db,create_EncumberedActivity)
-    DBInterface.execute(db,create_EncumbranceEnforcement)
+    DBInterface.execute(db, create_EncumberedCachedContents)
+    DBInterface.execute(db, create_EncumberedCachedAncestors)
+    DBInterface.execute(db, create_EncumberedCachedDescendents)
+    DBInterface.execute(db,create_EncumberedCachedEnvironments)
+    DBInterface.execute(db,create_EncumberedCachedLockActivity)
 
-    DBInterface.execute(db,"""INSERT INTO Ledger(Time) Values('$(string(Dates.now()))')""")
-    DBInterface.execute(db,"""INSERT INTO Tags(LedgerID,Comment,Time) Values(1,'Big Bang','$(string(Dates.now()))')""")
+
+
+    init_time=db_time(Dates.now())
+    DBInterface.execute(db,"""INSERT INTO Ledger(SequenceID, Time) Values(1,$init_time)""")
+    DBInterface.execute(db,"""INSERT INTO Tags(LedgerID,Comment,Time) Values(1,'Big Bang',$init_time)""")
 end
 #=
 file="./src/database/test_create_db.db"

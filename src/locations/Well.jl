@@ -30,6 +30,13 @@ is_locked(::Well)=true
 
 is_active(x::Well)=is_active(AbstractTrees.parent(x)) # wells inherit the activity of their parent.
 
+""" 
+    cost(::Well)
+
+Access the cost property of a well
+
+"""
+cost(x::Well) = x.cost
 """
     @well name capacity
 
@@ -57,9 +64,10 @@ macro well(name,capacity)
         parent::Union{JLIMS.Labware,Nothing,JLIMS.LocationRef}
         stock::JLIMS.Stock
         attributes::AttributeDict
-        function ($n)(id::Base.Integer,name::Base.String,parent=nothing,stock=Empty(),attributes=AttributeDict()) 
+        cost::Real
+        function ($n)(id::Base.Integer,name::Base.String,parent=nothing,stock=Empty(),attributes=AttributeDict(),cost::Real=0) 
             (JLIMS.volume_estimate(stock) <= $cap) || throw(WellCapacityError(JLIMS.volume_estimate(stock),$cap))
-            new(id,name,parent,stock,attributes) 
+            new(id,name,parent,stock,attributes,cost) 
         end 
     end 
     AbstractTrees.ParentLinks(::Type{<:$(n)})=StoredParents()
@@ -178,17 +186,20 @@ function withdraw!(donor::Well,quant::Union{Unitful.Volume,Unitful.Mass})
     st=stock(donor)
     q_tot=quantity(st) 
     Unitful.dimension(q_tot) == Unitful.dimension(quant) || error("the withdrawl quantity dimension must be the same as the well's stock dimension")
-    factor=quant/q_tot
+    factor=Unitful.uconvert(NoUnits,quant/q_tot)
     st_out= factor*st
-    donor.stock=st-st_out  
-    return st_out
+    donor.stock=st-st_out 
+    transfer_cost=factor*cost(donor)
+    donor.cost -= transfer_cost 
+    return st_out, transfer_cost
 end 
 
-function deposit!(recipient::Well,trf_stock::Stock)
+function deposit!(recipient::Well,trf_stock::Stock,trf_cost::Real)
     st=stock(recipient)
     new_stock=st+trf_stock
     check_capacity(new_stock,recipient)
     recipient.stock=new_stock
+    recipient.cost += trf_cost
     nothing
 end 
 
@@ -202,8 +213,8 @@ Remove `quantity` from `donor` and move it to `recipient`
 See also: [`transfer`](@ref)
 """
 function transfer!(donor::Well,recipient::Well,quantity::Union{Unitful.Volume,Unitful.Mass},configuration::String="")
-    trf_stock=withdraw!(donor,quantity)
-    deposit!(recipient,trf_stock) 
+    trf_stock,trf_cost=withdraw!(donor,quantity)
+    deposit!(recipient,trf_stock,trf_cost) 
     nothing
 end 
 

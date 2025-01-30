@@ -204,6 +204,8 @@ function toggle_activity(x::Location)
     return toggle_activity!(y)
 end 
 
+cost(::Location)=0 # refers to the cost of the contents of a location. cost is implemented for Well but needs to be defined for all locations. 
+
 
 parent_cost(::Location)=0//1
 child_cost(::Location)=0//1

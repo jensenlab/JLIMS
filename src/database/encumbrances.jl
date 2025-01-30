@@ -66,8 +66,20 @@ macro protocol(experiment_id,name, expr)
 end 
 =#
 
+function get_last_encumbrance_id(protocol_id::Integer)
 
-    
+    e_id=query_db("""
+    SELECT Max(ID) FROM Encumbrances WHERE ProtocolID = $protocol_id""")[1,1]
+    return e_id 
+end 
+
+function get_last_protocol_id(experiment_id::Integer)
+    p_id = query_db("""
+    SELECT Max(ID) FROM Protocols WHERE ExperimentID = $experiment_id""")[1,1]
+    return p_id 
+end 
+
+
 
 
 function upload_experiment(name::AbstractString,user::String,is_public=false;time=Dates.now())
@@ -77,33 +89,39 @@ function upload_experiment(name::AbstractString,user::String,is_public=false;tim
     return ex_id[1,1]
 end 
 
-function upload_protocol(exp_id::Integer,name::AbstractString,estimate=Dates::Time=Dates.Time(0)) 
+function upload_protocol(exp_id::Integer,name::AbstractString,sequence_id_entered_at::Integer=get_last_sequence_id(), estimate::Dates.Time=Dates.Time(0);enforce=true) 
     est_time=Dates.millisecond(estimate)
     execute_db("""
-    INSERT INTO Protocols(ExperimentID,Name,EstimatedTime) Values($exp_id,'$name',$est_time);
+    INSERT INTO Protocols(ExperimentID,Name,SequenceIDCreatedAt,EstimatedTime) Values($exp_id,'$name',$sequence_id_entered_at,$est_time);
     """)
-    x=query_db("""
-    SELECT Max(ID) FROM Protocols""")
-    return x[1,1]
+    p_id=get_last_protocol_id(exp_id)
+    if enforce 
+        upload_protocol_enforcement(p_id,true)
+    end
+    return p_id
+end 
+
+function upload_protocol_enforcement(protocol_id::Integer,is_enforced::Bool;time=Dates.now())
+    upload_time=db_time(time)
+    ledger_id=upload_ledger()
+    execute_db("""INSERT INTO ProtocolEnforcement(ProtocolID,LedgerID,IsEnforced,Time) Values($protocol_id,$ledger_id,$(Int64(is_enforced)),$upload_time)""")
+    return nothing 
 end 
 
 function upload_encumbrance(protocol_id::Integer, is_enforced::Bool=true;time=Dates.now())
 
     execute_db("""
     INSERT INTO Encumbrances(ProtocolID) Values ($protocol_id)""")
-    e_id=query_db("""
-    SELECT Max(ID) FROM Encumbrances""")[1,1]
-    upload_encumbrance_enforcement(e_id,is_enforced;time=time)
+    e_id=get_last_encumbrance_id(protocol_id)
     return e_id
 end 
 
-function upload_encumbrance_enforcement(encumbrance_id::Integer,is_enforced::Bool;time=Dates.now())
-    upload_time=db_time(time)
-    ledger_id=upload_ledger()
-    execute_db("""INSERT INTO EncumbranceEnforcement(LedgerID,EncumbranceID,IsEnforced,Time) Values($ledger_id,$encumbrance_id,$(Int64(is_enforced)),$upload_time)""")
-end 
-    
 
+function upload_encumbrance_completion(encumbrance_id::Integer,ledger_id::Integer) # pair an encumbrance to a ledger operation 
+    execute_db("""
+    INSERT INTO EncumbranceCompletion(EncumbranceID,LedgerID) Values($encumbrance_id,$ledger_id)""")
+    return nothing     
+end 
 
 
 function encumber_transfer(encumberid::Integer, source::Well,destination::Well,quant::Union{Unitful.Mass,Unitful.Volume},configuration::AbstractString="")
@@ -144,25 +162,84 @@ end
 
 
 function encumber_cache(encumberid::Integer, loc::Location)
-    parent_id=location_id(parent(loc))
-    if isnothing(parent_id)
-        parent_id="NULL"
-    end
-    children_id=cache_children(children(loc))
-    stock_id=cache(stock(loc))
-    attr_id=cache(attributes(loc))
-    locked=Int(is_locked(loc))
-    active=Int(is_active(loc))
-    id=query_db("SELECT ID FROM CacheSets WHERE ParentID = $parent_id AND ChildSetID = $children_id AND AttributeSetID = $attr_id AND StockID = $stock_id AND IsLocked = $locked AND IsActive =$active")
-    if nrow(id)==0 
-        execute_db("INSERT INTO CacheSets(ParentID,ChildSetID,AttributeSetID, StockID,IsLocked,IsActive) Values($parent_id,$children_id,$attr_id,$stock_id,$locked,$active)")
-        id=query_db("SELECT Max(ID) FROM CacheSets")[1,1]
-    else
-        id=id[1,1]
-    end
-    loc_id=location_id(loc)
+    encumber_cache_parent(encumberid,loc)
 
-    execute_db("INSERT INTO EncumberedCaches(EncumbranceID,LocationID,CacheSetID) Values($encumberid,$loc_id,$id)")
+    encumber_cache_children(encumberid,loc)
+    
+    encumber_cache_environment(encumberid,loc)
+    encumber_cache_lock_activity(encumberid,loc)
+    if typeof(loc) <: JLIMS.Well
+        encumber_cache_contents(encumberid,loc)
+    end 
     return nothing
 end 
 
+
+function encumber_cache_contents(encumberid::Integer,loc::Well)
+    stock_id=cache(stock(loc))
+    execute_db("INSERT INTO EncumberedCachedContents(EncumbranceID,LocationID,StockID,Cost) Values($encumberid,$(location_id(loc)),$stock_id,$(cost(loc)))")
+    return nothing
+end
+
+function encumber_cache_parent(encumberid::Integer,loc::Location)
+    parent_id=location_id(parent(loc))
+    if isnothing(parent_id)
+        parent_id="NULL"
+    end 
+    execute_db("INSERT INTO EncumberedCachedAncestors(EncumbranceID,LocationID,ParentID) Values($encumberid,$(location_id(loc)),$parent_id)")
+    return nothing 
+end 
+
+
+function encumber_cache_children(encumberid::Integer,loc::Location)
+    child_set_id=cache_children_helper(children(loc))
+
+    execute_db("INSERT INTO EncumberedCachedDescendents(EncumbranceID,LocationID,ChildSetID) Values($encumberid,$(location_id(loc)),$child_set_id)")
+    return nothing 
+end 
+
+function encumber_cache_environment(encumberid::Integer,loc::Location)
+
+    attr_set_id=cache(attributes(loc))
+    execute_db("INSERT INTO EncumberedCachedEnvironments(EncumbranceID,LocationID,AttributeSetID) Values($encumberid,$(location_id(loc)),$attr_set_id)")
+    return nothing 
+end
+
+function encumber_cache_lock_activity(encumberid::Integer,loc::Location)
+    execute_db("INSERT INTO EncumberedCachedLockActivity(EncumbranceID,LocationID,IsLocked,IsActive) Values($encumberid,$(location_id(loc)),$(is_locked(loc)),$(is_active(loc)))")
+    return nothing 
+end 
+
+
+
+function get_all_encumbrances(protocol_id::Integer) 
+    out=query_db("""SELECT ID FROM Encumbrances WHERE ProtocolID = $protocol_id ORDER BY ID""")
+    return out[:,"ID"]
+end 
+
+
+function get_encumbrance_completion(encumbrance_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now())
+    ledger_time=db_time(time)
+    entry =query_join_vector(encumbrance_ids) 
+    out=query_db("""    WITH ledger_subset (ID,SequenceID,Time)
+    AS(
+        SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID <= $sequence_id GROUP BY SequenceID
+        ) 
+
+        SELECT EncumbranceID,LedgerID FROM EncumbranceCompletion e INNER JOIN ledger_subset l ON e.LedgerID = l.ID WHERE EncumbranceID in $entry
+        """
+    )
+    out_ledger= Union{Integer,Missing}[]
+    complete=Bool[]
+    for e in encumbrance_ids 
+        idx= findfirst(x->x==e,out[:,"EncumbranceID"])
+        if isnothing(idx)
+            push!(out_ledger,missing)
+            push!(complete,false)
+        else
+            push!(out_ledger,out[:,"LedgerID"][idx])
+            push!(complete,true)
+        end 
+    end 
+    return DataFrame(EncumbranceID=encumbrance_ids,LedgerID=out_ledger,IsComplete=complete)
+end 
