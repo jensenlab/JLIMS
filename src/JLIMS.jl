@@ -47,6 +47,7 @@ include("./database/encumbrances.jl")
 
 include("./database/reconstruction/reconstruction_utils.jl")
 include("./database/reconstruction/reconstruct_contents.jl")
+include("./database/reconstruction/reconstruct_parent.jl")
 
 
 #include("./csv_uploads.jl")
@@ -87,6 +88,10 @@ export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_
 export generate_location
 #caching and fetching 
 export cache , fetch_cache, get_location_info, @get_location, reconstruct_contents, build_location_ledger_map
+#reconstruct_contents.jl
+export reconstruct_contents
+#reconstruct_parent.jl
+export reconstruct_parent 
 #barcodes
 export Barcode, assign_barcode!,assign_barcode
 export @protocol ,upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache

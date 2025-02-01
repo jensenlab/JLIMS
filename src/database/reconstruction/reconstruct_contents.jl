@@ -70,8 +70,8 @@ function get_content_caches(location_id::Integer, starting::Integer=0, ending::I
         AS(
             SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
             ) ,
-        y (LedgerID,SequenceID, LocationID,StockID,Cost)
-        AS( SELECT Max(c.LedgerID),l.SequenceID, c.LocationID,c.StockID,c.Cost FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
+        y (LedgerID,SequenceID, EncumbranceID,LocationID,StockID,Cost)
+        AS( SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.StockID,c.Cost FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
         SELECT * from y
         " )
         
@@ -103,7 +103,7 @@ function get_transfer_ancestors(locs::Vector{<:Integer},starting::Integer=0,endi
         ),
 
          y (LedgerID,SequenceID,EncumbranceID,Source,Destination,Quantity,Unit)
-        AS(SELECT 0,0, c.EncumbranceID, c.Source,c.Destination,c.Quantity,c.Unit
+        AS(SELECT 0,$(get_last_sequence_id())+c.EncumbranceID, c.EncumbranceID, c.Source,c.Destination,c.Quantity,c.Unit
             FROM encumbrance_subset e INNER JOIN EncumberedTransfers c ON e.EncumbranceID = c.EncumbranceID
         UNION ALL 
             SELECT t.LedgerID,l.SequenceID,0,t.Source, t.Destination, t.Quantity, t.Unit
@@ -118,7 +118,7 @@ function get_transfer_ancestors(locs::Vector{<:Integer},starting::Integer=0,endi
             FROM y  ,x
             WHERE x.Source = y.Destination
         )
-        SELECT DISTINCT  * FROM x ORDER BY EncumbranceID,SequenceID
+        SELECT DISTINCT  * FROM x ORDER BY SequenceID
         """
     else 
         x=
@@ -164,7 +164,7 @@ function get_transfer_descendents(locs::Vector{<:Integer},starting::Integer=0,en
         ),
 
          y (LedgerID,SequenceID,EncumbranceID,Source,Destination,Quantity,Unit)
-        AS(SELECT 0,0, c.EncumbranceID, c.Source,c.Destination,c.Quantity,c.Unit
+        AS(SELECT 0,$(get_last_sequence_id())+c.EncumbranceID, c.EncumbranceID, c.Source,c.Destination,c.Quantity,c.Unit
             FROM encumbrance_subset e INNER JOIN EncumberedTransfers c ON e.EncumbranceID = c.EncumbranceID
         UNION ALL 
             SELECT t.LedgerID,l.SequenceID,0,t.Source, t.Destination, t.Quantity, t.Unit
@@ -179,7 +179,7 @@ function get_transfer_descendents(locs::Vector{<:Integer},starting::Integer=0,en
             FROM y  ,x
             WHERE y.Source = x.Destination
         )
-        SELECT DISTINCT  * FROM x ORDER BY EncumbranceID,SequenceID
+        SELECT DISTINCT  * FROM x ORDER BY SequenceID
         """
     else 
         x=
@@ -226,30 +226,6 @@ end
 
 
 
-function find_most_recent_location(set::DataFrame,location_id::Integer,sequence_id::Integer)
-    x=set[(set.LocationID .== location_id) .& (set.SequenceID .<= sequence_id) ,:  ]
-    if nrow(x) > 0 
-        sort!(x,:SequenceID)
-
-        return x[end,"Location"]
-    else 
-        return nothing
-    end
-end
-
-function find_most_recent_location(set::DataFrame,location_id::Integer)
-    x=set[(set.LocationID .== location_id) ,:  ]
-    if nrow(x) > 0 
-        sort!(x,:SequenceID)
-
-        return x[end,"Location"]
-    else 
-        return nothing
-    end
-end
-
-const location_reconstruction_df=DataFrame(LocationID=Integer[],SequenceID=Integer[],Location=Location[])
-
 
 function fetch_content_cache(location_id::Integer,starting::Integer,ending::Integer,time=DateTime=Dates.now();encumbrances=false)
     caches=get_content_caches(location_id,starting,ending,time;encumbrances=encumbrances) 
@@ -262,7 +238,7 @@ function fetch_content_cache(location_id::Integer,starting::Integer,ending::Inte
         foot=row.SequenceID
         cost=row.Cost
     else
-        return Empty() ,0 ,0
+        return Empty() ,0 ,0,0
     
     end 
     
@@ -287,7 +263,9 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
             continue 
         end 
         stock,cost,cache_foot = fetch_content_cache(loc_id,0,sequence_id,time;encumbrances=encumbrances)
-
+        if !isnothing(stock)
+            deposit!(loc,stock,cost)
+        end
 
         push!(all_locs,(JLIMS.location_id(loc),cache_foot,loc))
         push!(cache_feet,cache_foot)
@@ -297,18 +275,15 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
     foot = minimum(cache_feet)
     transfers=get_transfer_ancestors(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
 
-    for tf in eachrow(transfers)
-        if tf.SequenceID == 0 
-            tf.SequenceID = sequence_id + tf.EncumbranceID 
-        end 
-    end 
 
 
     # grab the sequence id of each location we need to complete this set of transfers
     cache_dict=Dict{Integer,Integer}()
     for row in reverse(eachrow(transfers))
 
-        seq_id=row.SequenceID-1
+        seq_id=min(row.SequenceID-1,sequence_id)
+        # set it back to the sequence id we are looking at if the transfer is encumbered
+    
 
         cache_dict[row.Source]=seq_id
         cache_dict[row.Destination]=seq_id
