@@ -17,9 +17,9 @@ end
 
 
 """
-    generate_location(lw_type::Type{<:Labware},current_idx::Integer,name=string(UUIDs.uuid4()))
+    generate_labware(type::Type{<:Labware},name::String=string(UUIDs.uuid4()))
 
-Generate a a `lw_type` object and fill it with empty wells. 
+Generate a a `type` Labware and fill it with empty wells. 
 """
 function generate_labware(type::Type{<:Labware},name::String=string(UUIDs.uuid4()))
     upload_location_type(type)
