@@ -23,7 +23,7 @@ end
 function cache_children(loc::Location,ledger_id::Integer)
     child_set_id=cache_children_helper(children(loc))
 
-    execute_db("INSERT INTO CachedDescendents(LocationID,ChildSetID,LedgerID) Values($(location_id(loc)),$child_set_id,$ledger_id)")
+    execute_db("INSERT INTO CachedDescendants(LocationID,ChildSetID,LedgerID) Values($(location_id(loc)),$child_set_id,$ledger_id)")
     return nothing 
 end 
 

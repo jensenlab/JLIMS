@@ -53,6 +53,12 @@ function add_to!(parent::Location,child::LocationRef)
     return nothing 
 end 
 
+function add_to!(parent::Nothing,child::Location)
+    child.parent=nothing 
+    return nothing 
+end 
+
+
 
 """
     move_into!(parent::Location,child::Location,lock::Bool=false)
@@ -61,9 +67,9 @@ Move `child` into `parent`, if allowed.
 
 if `lock=true`, then also lock the child after the movement. 
 """
-function move_into!(parent::Location,child::Location,lock::Bool=false)
-    add_to!(parent,child)
+function move_into!(parent::Union{Location,Nothing},child::Location,lock::Bool=false)
     oldparent=child.parent
+    add_to!(parent,child)
     if !isnothing(oldparent)
         remove!(oldparent,child)
     end
@@ -73,8 +79,7 @@ function move_into!(parent::Location,child::Location,lock::Bool=false)
 end 
 
 
-
-function move_into(parent::Location,child::Location,lock::Bool=false)
+function move_into(parent::Union{Location,Nothing},child::Location,lock::Bool=false)
     p=deepcopy(parent)
     c=deepcopy(child)
     move_into!(p,c,lock)

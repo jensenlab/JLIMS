@@ -1,37 +1,59 @@
 function reconstruct_parent(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    all_locs=deepcopy(location_reconstruction_df) # constant defined in reconstruction_utils.jl Columns are location id, sequence id, location
+    all_locs=Dict{Integer,Location}() # constant defined in reconstruction_utils.jl Columns are location id, sequence id, location
     cache_feet=[]
     for loc_id in location_ids
         n,t=get_location_info(loc_id) 
         loc=t(loc_id,n) 
-        parent_ref,cache_foot = fetch_parent_cache(loc_id,0,sequence_id,time;encumbrances=encumbrances)
-        loc.parent=parent_ref
-
-        push!(all_locs,(JLIMS.location_id(loc),cache_foot,loc))
+        prt,cache_foot = fetch_parent_cache(loc_id,0,sequence_id,time;encumbrances=encumbrances)
+        if loc isa JLIMS.Well
+            loc.parent=prt
+        elseif prt isa JLIMS.Location 
+            move_into!(prt,loc)
+        end
+        all_locs[JLIMS.location_id(loc)]=loc
         push!(cache_feet,cache_foot)
 
 
     end 
     foot = min(minimum(cache_feet),sequence_id)
-    mvts=get_movements_as_child(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
+    mvts=get_last_movement_as_child(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
     for row in eachrow(mvts) 
         loc_id=row.Child 
-        loc=find_most_recent_location(all_locs,loc_id)
-        n,t=get_location_info(row.Parent)
-
-        loc.parent=LocationRef(row.Parent,n,t)
-        push!(all_locs,(loc_id,row.SequenceID,loc))
+        if ismissing(row.Parent)
+            move_into!(nothing,all_locs[loc_id])
+        else
+            n,t=get_location_info(row.Parent)
+            prt = t(row.Parent,n)
+            move_into!(prt,all_locs[loc_id])
+        end 
     end
 
-    out_locs=find_most_recent_location.((all_locs,),location_ids,(sequence_id,))
-
-    return out_locs 
+    return map(x->all_locs[x],location_ids)
 
 end 
 
 function reconstruct_parent(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
     return reconstruct_parent([location_id],sequence_id,time;encumbrances=encumbrances)[1]
 end
+
+
+function reconstruct_parent!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+    parallel_locs=reconstruct_parent(location_id.(locations),sequence_id,time;encumbrances=encumbrances)
+
+    for i in eachindex(locations)
+        locations[i].parent = JLIMS.parent(parallel_locs[i])
+    end 
+    return nothing 
+end 
+
+function reconstruct_parent!(location::Location,sequence_id=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+    parallel_loc=reconstrut_parent(location_id(location),sequence_id,time,encumbrances=encumbrances)
+    location.parent=JLIMS.parent(parallel_loc)
+    return nothing 
+end
+
+
+
 
 function fetch_parent_cache(location_id::Integer,starting::Integer=0,ending::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
 
@@ -45,7 +67,7 @@ function fetch_parent_cache(location_id::Integer,starting::Integer=0,ending::Int
         if !ismissing(last.ParentID)
 
             n,t=get_location_info(last.ParentID)
-            p=LocationRef(last.ParentID,n,t)
+            p=t(last.ParentID,n)
         else
             foot=last.SequenceID
         end
@@ -95,7 +117,7 @@ function get_parent_caches(location_id::Integer,starting::Integer=0,ending::Inte
 end
 
 
-function get_movements_as_child(locs::Vector{<:Integer},starting::Integer=0,ending::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+function get_last_movement_as_child(locs::Vector{<:Integer},starting::Integer=0,ending::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
     entry=query_join_vector(locs)
     ledger_time=db_time(time)
     x=""

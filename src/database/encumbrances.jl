@@ -194,7 +194,7 @@ end
 function encumber_cache_children(encumberid::Integer,loc::Location)
     child_set_id=cache_children_helper(children(loc))
 
-    execute_db("INSERT INTO EncumberedCachedDescendents(EncumbranceID,LocationID,ChildSetID) Values($encumberid,$(location_id(loc)),$child_set_id)")
+    execute_db("INSERT INTO EncumberedCachedDescendants(EncumbranceID,LocationID,ChildSetID) Values($encumberid,$(location_id(loc)),$child_set_id)")
     return nothing 
 end 
 

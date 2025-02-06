@@ -64,8 +64,8 @@ function create_db(path)
         """
 
 
-    create_CachedDescendents="""
-    CREATE TABLE CachedDescendents(
+    create_CachedDescendants="""
+    CREATE TABLE CachedDescendants(
         ID INTEGER PRIMARY KEY NOT NULL,
         LocationID INTEGER,
         ChildSetID INTEGER,
@@ -424,8 +424,8 @@ function create_db(path)
         FOREIGN KEY(ParentID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
-    create_EncumberedCachedDescendents="""
-    CREATE TABLE EncumberedCachedDescendents(
+    create_EncumberedCachedDescendants="""
+    CREATE TABLE EncumberedCachedDescendants(
         ID INTEGER PRIMARY KEY NOT NULL,
         EncumbranceID INTEGER,
         LocationID INTEGER,
@@ -543,7 +543,7 @@ function create_db(path)
     DBInterface.execute(db,create_CachedStocks)
     DBInterface.execute(db,create_CachedComponents)
     DBInterface.execute(db,create_CachedContents)
-    DBInterface.execute(db,create_CachedDescendents)
+    DBInterface.execute(db,create_CachedDescendants)
     DBInterface.execute(db,create_CachedEnvironments)
     DBInterface.execute(db,create_CachedAncestors)
     DBInterface.execute(db,create_CachedLockActivity)
@@ -562,7 +562,7 @@ function create_db(path)
     DBInterface.execute(db,create_EncumberedActivity)
     DBInterface.execute(db, create_EncumberedCachedContents)
     DBInterface.execute(db, create_EncumberedCachedAncestors)
-    DBInterface.execute(db, create_EncumberedCachedDescendents)
+    DBInterface.execute(db, create_EncumberedCachedDescendants)
     DBInterface.execute(db,create_EncumberedCachedEnvironments)
     DBInterface.execute(db,create_EncumberedCachedLockActivity)
 

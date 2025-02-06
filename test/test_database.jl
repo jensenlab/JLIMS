@@ -1,4 +1,4 @@
-using JLIMS, Test, Unitful, AbstractTrees,UUIDs, SQLite, DataFrames
+using JLIMS, Test, Unitful, AbstractTrees,UUIDs, SQLite, DataFrames,Dates
 
 file="./test/test_db.db"
 rm(file)

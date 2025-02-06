@@ -48,7 +48,10 @@ include("./database/encumbrances.jl")
 include("./database/reconstruction/reconstruction_utils.jl")
 include("./database/reconstruction/reconstruct_contents.jl")
 include("./database/reconstruction/reconstruct_parent.jl")
-
+include("./database/reconstruction/reconstruct_children.jl")
+include("./database/reconstruction/reconstruct_attributes.jl")
+include("./database/reconstruction/reconstruct_environment.jl")
+include("./database/reconstruction/reconstruct_location.jl")
 
 #include("./csv_uploads.jl")
 
@@ -75,7 +78,7 @@ export can_move_into, move_into!,move_into
 #labware
 export shape, vendor, catalog, wells
 #wells
-export capacity, stock, sterilize!,sterilize,transfer!,transfer, drain!,drain,deposit!,deposit,withdraw!,withdraw
+export capacity, stock, cost,  sterilize!,sterilize,transfer!,transfer, drain!,drain,deposit!,deposit,withdraw!,withdraw
 #database
 export create_db
 #db_utils 
@@ -87,11 +90,19 @@ export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_
 #generate_location
 export generate_location
 #caching and fetching 
-export cache , fetch_cache, get_location_info, @get_location, reconstruct_contents, build_location_ledger_map
+export cache , fetch_cache, get_location_info, @get_location
+#reconstruct_location.jl
+export reconstruct_location,reconstruct_location!
 #reconstruct_contents.jl
-export reconstruct_contents
+export reconstruct_contents, reconstruct_contents!
 #reconstruct_parent.jl
-export reconstruct_parent 
+export reconstruct_parent , reconstruct_parent!
+#reconstruct_children.jl
+export reconstruct_children,reconstruct_children!
+#reconstruct_attributes.jl
+export reconstruct_attributes,reconstruct_attributes!
+#reconstruct_environment 
+export reconstruct_environment,reconstruct_environment!
 #barcodes
 export Barcode, assign_barcode!,assign_barcode
 export @protocol ,upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache

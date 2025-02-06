@@ -272,7 +272,11 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
 
 
     end 
-    foot = minimum(cache_feet)
+    if length(cache_feet)==0 
+        foot =0 
+    else 
+        foot = minimum(cache_feet)
+    end
     transfers=get_transfer_ancestors(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
 
 
@@ -333,6 +337,30 @@ end
     
 
 
+function reconstruct_contents!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),loc_df::DataFrame=location_reconstruction_df;encumbrances=false)
+
+
+    parallel_locs=reconstruct_contents(location_id.(locations),sequence_id,time,loc_df,encumbrances=encumbrances)
+
+    for i in eachindex(locations)
+        if locations[i] isa JLIMS.Well
+            locations[i].stock=JLIMS.stock(parallel_locs[i])
+            locations[i].cost=JLIMS.cost(parallel_locs[i])
+        else
+            continue 
+        end 
+    end 
+    return nothing
+end 
+
+function reconstruct_contents!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),loc_df::DataFrame=location_reconstruction_df;encumbrances=false)
+    parallel_loc=reconstruct_contents(location_id(location),sequence_id,time,loc_df,encumbrances=encumbrances)
+    if location isa JLIMS.Well
+        location.stock=JLIMS.stock(parallel_loc)
+        location.cost=JLIMS.cost(parallel_loc)
+    end 
+    return nothing 
+end 
 
     
 
