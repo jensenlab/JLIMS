@@ -12,7 +12,10 @@ function reconstruct_attributes(location_ids::Vector{<:Integer},sequence_id::Int
             push!(cache_feet,cache_foot)
         end 
     
-        foot = min(minimum(cache_feet),sequence_id)
+        foot=0
+        if length(cache_feet)>0 
+            foot = min(minimum(cache_feet),sequence_id)
+        end
         attrs=get_environment_attributes(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
         for row in eachrow(attrs) 
             loc_id=row.LocationID 

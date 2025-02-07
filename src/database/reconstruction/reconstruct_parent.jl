@@ -15,7 +15,10 @@ function reconstruct_parent(location_ids::Vector{<:Integer},sequence_id::Integer
 
 
     end 
-    foot = min(minimum(cache_feet),sequence_id)
+    foot=0
+    if length(cache_feet)>0 
+        foot = min(minimum(cache_feet),sequence_id)
+    end
     mvts=get_last_movement_as_child(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
     for row in eachrow(mvts) 
         loc_id=row.Child 

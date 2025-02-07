@@ -51,6 +51,8 @@ include("./database/reconstruction/reconstruct_parent.jl")
 include("./database/reconstruction/reconstruct_children.jl")
 include("./database/reconstruction/reconstruct_attributes.jl")
 include("./database/reconstruction/reconstruct_environment.jl")
+include("./database/reconstruction/reconstruct_lock.jl")
+include("./database/reconstruction/reconstruct_activity.jl")
 include("./database/reconstruction/reconstruct_location.jl")
 
 #include("./csv_uploads.jl")
@@ -103,6 +105,10 @@ export reconstruct_children,reconstruct_children!
 export reconstruct_attributes,reconstruct_attributes!
 #reconstruct_environment 
 export reconstruct_environment,reconstruct_environment!
+#reconstruct_lock.jl
+export reconstruct_lock,reconstruct_lock!
+#reconstruct_activity.jl
+export reconstruct_activity,reconstruct_activity!
 #barcodes
 export Barcode, assign_barcode!,assign_barcode
 export @protocol ,upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache

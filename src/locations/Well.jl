@@ -28,7 +28,6 @@ stock(x::Well)=x.stock
 # all wells are always locked
 is_locked(::Well)=true
 
-is_active(x::Well)=is_active(AbstractTrees.parent(x)) # wells inherit the activity of their parent.
 
 """ 
     cost(::Well)
@@ -65,9 +64,10 @@ macro well(name,capacity)
         stock::JLIMS.Stock
         attributes::AttributeDict
         cost::Real
-        function ($n)(id::Base.Integer,name::Base.String,parent=nothing,stock=Empty(),attributes=AttributeDict(),cost::Real=0) 
+        is_active::Bool
+        function ($n)(id::Base.Integer,name::Base.String,parent=nothing,stock=Empty(),attributes=AttributeDict(),cost::Real=0,is_active::Bool=true) 
             (JLIMS.volume_estimate(stock) <= $cap) || throw(WellCapacityError(JLIMS.volume_estimate(stock),$cap))
-            new(id,name,parent,stock,attributes,cost) 
+            new(id,name,parent,stock,attributes,cost,is_active) 
         end 
     end 
     AbstractTrees.ParentLinks(::Type{<:$(n)})=StoredParents()
@@ -90,6 +90,18 @@ end
 function Base.show(io::IO,w::Well)
     print(io,name(w))
 end 
+
+function lock!(::Well)
+end 
+
+function unlock!(::Well)
+end
+
+function toggle_lock!(::Well)
+end
+
+
+
 
 """
     empty!(x::Well)

@@ -14,7 +14,10 @@ function reconstruct_children(location_ids::Vector{<:Integer},sequence_id::Integ
         end
     end 
 
-    foot = min(minimum(cache_feet),sequence_id)
+    foot=0
+    if length(cache_feet)>0 
+        foot = min(minimum(cache_feet),sequence_id)
+    end
     mvmts=get_child_movements(location_ids,current_children,foot,sequence_id,time;encumbrances=encumbrances)
     for row in eachrow(mvmts) 
         if row.Parent in location_ids 
@@ -56,6 +59,11 @@ function reconstruct_children!(location::Location,sequence_id::Integer=get_last_
     parallel_loc=reconstruct_children(location_id(location),sequence_id,time;encumbrances=encumbrances)
     if location isa JLIMS.Well 
         return nothing 
+    elseif location isa JLIMS.Labware 
+        for i in eachindex(children(location))
+            location.children[i]=children(parallel_loc)[i]
+        end
+
     else 
         location.children = children(parallel_loc)
     end 

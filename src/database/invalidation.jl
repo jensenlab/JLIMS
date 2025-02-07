@@ -7,22 +7,22 @@ end
 function transfer_touches(ledger_id::Integer)
 
     x=" SELECT  Source, Destination FROM Transfers WHERE LedgerID = $ledger_id"
-    out=query_db(x)[1,:]
-    return out["Source"],out["Destination"]
+    out=query_db(x)
+    return out
 end 
 
 
 function movement_touches(ledger_id::Integer)
     x=" SELECT Parent, Child FROM Movements WHERE LedgerID = $ledger_id"
 
-    out=query_db(x)[1,:]
-    return out["Parent"],out["Child"]
+    out=query_db(x)
+    return out
 end 
 
-function environment_touches(ledger_id::Integer)
+function attribute_touches(ledger_id::Integer)
     x= "SELECT LocationID FROM EnvironmentAttributes WHERE LedgerID = $ledger_id"
-    out=query_db(x)[1,:]
-    return out["LocationID"]
+    out=query_db(x)
+    return out
 end 
 
 

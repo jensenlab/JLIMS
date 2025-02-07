@@ -272,10 +272,9 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
 
 
     end 
-    if length(cache_feet)==0 
-        foot =0 
-    else 
-        foot = minimum(cache_feet)
+    foot=0
+    if length(cache_feet)>0 
+        foot = min(minimum(cache_feet),sequence_id)
     end
     transfers=get_transfer_ancestors(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
 
