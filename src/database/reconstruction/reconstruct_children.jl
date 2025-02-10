@@ -1,7 +1,7 @@
 
 
 function reconstruct_children(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    all_locs=Dict{Integer,Location}() # constant defined in reconstruction_utils.jl Columns are location id, sequence id, location
+    all_locs=Dict{Integer,Location}() 
     cache_feet=[]
     current_children=Dict{Integer,Integer}() # dict mapping child_id to parent_id
     for loc_id in location_ids
@@ -98,6 +98,8 @@ function fetch_child_cache(location_id::Integer,starting::Integer=0,ending::Inte
                 move_into!(loc,t(child_id,n))
             end
         end 
+    elseif nrow(caches)==0 && loc isa JLIMS.Labware
+        error("No child cache found for this labware . Labware must have a valid child cache for reconstructon. Either make a cache or change the query parameters. \\ QUERY PARAMETERS \\ Sequence ID: $starting -- $ending \\ Time: $time. ") 
     end 
     return loc,foot
 end 

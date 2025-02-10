@@ -1,9 +1,11 @@
 using JLIMS, Test, Unitful, AbstractTrees,UUIDs, SQLite, DataFrames,Dates
 
-file="./test/test_db.db"
-rm(file)
+file="./test_db.db"
+if isfile(file)
+    rm(file)
+end
 create_db(file)
-@connect_SQLite "./test/test_db.db" 
+@connect_SQLite file
 
 
 #### set up a test lab
