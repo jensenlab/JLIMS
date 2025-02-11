@@ -6,7 +6,7 @@ Wells are special [`Location`](@ref) subtypes that contain a single [`Stock`](@r
 
 Wells are only allowed to be located in [`Labware`] objects and cannot be moved from the labware. They are physically tied to a Labware. 
 """
-abstract type Well<: Location  end 
+abstract type Well <: Location  end 
 
 AbstractTrees.children(::Well) = ()
 """
@@ -29,6 +29,13 @@ stock(x::Well)=x.stock
 is_locked(::Well)=true
 
 
+""" 
+    cost(::Well)
+
+Access the cost property of a well
+
+"""
+cost(x::Well) = x.cost
 """
     @well name capacity
 
@@ -53,12 +60,14 @@ macro well(name,capacity)
     mutable struct $n <: (JLIMS.Well)
         const location_id::Base.Integer
         const name::Base.String
-        parent::Union{JLIMS.Labware,Nothing}
+        parent::Union{JLIMS.Labware,Nothing,JLIMS.LocationRef}
         stock::JLIMS.Stock
         attributes::AttributeDict
-        function ($n)(id::Base.Integer,name::Base.String,parent::Union{JLIMS.Labware,Nothing}=nothing,stock::JLIMS.Stock=Empty(),attributes::AttributeDict=AttributeDict()) 
+        cost::Real
+        is_active::Bool
+        function ($n)(id::Base.Integer,name::Base.String,parent=nothing,stock=Empty(),attributes=AttributeDict(),cost::Real=0,is_active::Bool=true) 
             (JLIMS.volume_estimate(stock) <= $cap) || throw(WellCapacityError(JLIMS.volume_estimate(stock),$cap))
-            new(id,name,parent,stock,attributes) 
+            new(id,name,parent,stock,attributes,cost,is_active) 
         end 
     end 
     AbstractTrees.ParentLinks(::Type{<:$(n)})=StoredParents()
@@ -81,6 +90,18 @@ end
 function Base.show(io::IO,w::Well)
     print(io,name(w))
 end 
+
+function lock!(::Well)
+end 
+
+function unlock!(::Well)
+end
+
+function toggle_lock!(::Well)
+end
+
+
+
 
 """
     empty!(x::Well)
@@ -177,17 +198,20 @@ function withdraw!(donor::Well,quant::Union{Unitful.Volume,Unitful.Mass})
     st=stock(donor)
     q_tot=quantity(st) 
     Unitful.dimension(q_tot) == Unitful.dimension(quant) || error("the withdrawl quantity dimension must be the same as the well's stock dimension")
-    factor=quant/q_tot
+    factor=Unitful.uconvert(NoUnits,quant/q_tot)
     st_out= factor*st
-    donor.stock=st-st_out  
-    return st_out
+    donor.stock=st-st_out 
+    transfer_cost=factor*cost(donor)
+    donor.cost -= transfer_cost 
+    return st_out, transfer_cost
 end 
 
-function deposit!(recipient::Well,trf_stock::Stock)
+function deposit!(recipient::Well,trf_stock::Stock,trf_cost::Real)
     st=stock(recipient)
     new_stock=st+trf_stock
     check_capacity(new_stock,recipient)
     recipient.stock=new_stock
+    recipient.cost += trf_cost
     nothing
 end 
 
@@ -200,9 +224,9 @@ Remove `quantity` from `donor` and move it to `recipient`
 
 See also: [`transfer`](@ref)
 """
-function transfer!(donor::Well,recipient::Well,quantity::Union{Unitful.Volume,Unitful.Mass})
-    trf_stock=withdraw!(donor,quantity)
-    deposit!(recipient,trf_stock) 
+function transfer!(donor::Well,recipient::Well,quantity::Union{Unitful.Volume,Unitful.Mass},configuration::String="")
+    trf_stock,trf_cost=withdraw!(donor,quantity)
+    deposit!(recipient,trf_stock,trf_cost) 
     nothing
 end 
 
@@ -215,10 +239,10 @@ Remove `quantity` from `donor` and move it to `recipient`
 
 See also: [`transfer!`](@ref)
 """
-function transfer(donor,recipient,quantity)
+function transfer(donor,recipient,quantity,configuration::String="")
     d=deepcopy(donor)
     r=deepcopy(recipient)
-    transfer!(d,r,quantity)
+    transfer!(d,r,quantity,configuration)
     return d,r
 end 
 #=

@@ -56,7 +56,9 @@ function ==(x::Attribute,y::Attribute)
     return typeof(x)==typeof(y) && value(x)==value(y)
 end 
 
-
+function Base.hash(a::Attribute,h::UInt)
+    hash(typeof(a),hash(value(a),h))
+end 
 
 const AttributeDict=Dict{Type{<:Attribute},Attribute}
 

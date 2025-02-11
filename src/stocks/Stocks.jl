@@ -225,11 +225,11 @@ end
 
 
 """
-    *(num::Number,stock::Stock)
+    *(num::Real,stock::Stock)
 
 Overload the `*` operator to multiply the chemicals of a Stock by a scalar. Returns a new Stock with all chemical quantities scaled by a factor of `num`. 
 """
-function *(num::Number,stock::Stock)
+function *(num::Real,stock::Stock)
     new_solids=Dict{Solid,Unitful.Mass}()
     new_liquids=Dict{Liquid,Unitful.Volume}()
     for solid in chemicals(solids(stock))
@@ -241,14 +241,14 @@ function *(num::Number,stock::Stock)
     return Stock(organisms(stock),new_solids,new_liquids)
 end 
 
-*(stock::Stock,num::Number) = *(num,stock)
+*(stock::Stock,num::Real) = *(num,stock)
 
 """
-    /(stock::Stock,num::Number)
+    /(stock::Stock,num::Real)
 
 Overload the `/` operator to divide a Stock by a scalar. Returns a new Stock with all chemical quantities scaled by a factor of `num` 
 """
-/(stock::Stock,num::Number) = *(1/num,stock)
+/(stock::Stock,num::Real) = *(1/num,stock)
 
 
 
@@ -438,6 +438,11 @@ function ==(a::Stock,b::Stock)
 end 
 
 
+function Base.hash(s::Stock, h::UInt)
+    hash(organisms(s),hash(solids(s),hash(liquids(s),h)))
+end 
+
+
 function Base.in(str::Strain,stock::Stock)
     return str in organisms(stock)
 end 
@@ -449,3 +454,41 @@ end
 function Base.in(liq::Liquid,stock::Stock)
     return liq in chemicals(liquids(stock))
 end 
+
+
+
+function isapprox(a::Stock,b::Stock;kwargs...)
+    if keys(solids(a)) != keys(solids(b))
+        return false 
+    end 
+    if keys(liquids(a)) != keys(liquids(b))
+        return false 
+    end 
+    if organisms(a) != organisms(b)
+        return false 
+    end 
+    for solid in chemicals(solids(a)) 
+        if !isapprox(solids(a)[solid],solids(b)[solid];kwargs...)
+            return false 
+        end 
+    end 
+    for liquid in chemicals(liquids(a))
+        if !isapprox(liquids(a)[liquid],liquids(b)[liquid];kwargs...)
+            return false 
+        end 
+    end 
+    return true 
+end 
+
+
+function is_similar(a::Stock,b::Stock) 
+    factor = 0 
+    try 
+        factor = (quantity(a) + quantity(b))/quantity(a)
+    catch 
+        return false 
+    end 
+    
+    return isapprox(factor*a,a+b)
+end 
+
