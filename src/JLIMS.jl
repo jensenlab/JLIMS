@@ -92,7 +92,7 @@ export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_
 #generate_location
 export generate_location
 #caching and fetching 
-export cache , fetch_cache, get_location_info, @get_location
+export cache , fetch_cache, get_location_info
 #reconstruct_location.jl
 export reconstruct_location,reconstruct_location!
 #reconstruct_contents.jl

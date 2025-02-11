@@ -34,7 +34,8 @@ function upload_operation(fun::Function)
         toggle_lock! => upload_lock,
         move_into! => upload_movement,
         transfer! => upload_transfer,
-        set_attribute! => upload_environment_attribute
+        set_attribute! => upload_environment_attribute,
+        assign_barcode! => update_barcode
     )
     return opfun_dict[fun]
 end 
@@ -174,10 +175,12 @@ function upload_barcode(bc::Barcode)
     execute_db("INSERT OR IGNORE INTO Barcodes(Barcode,LocationID,Name) Values('$(string(barcode(bc)))',$loc_id,'$(name(bc))')")
 end 
 
-function update_barcode(bc::Barcode)
+function update_barcode(bc::Barcode,loc::Location;kwargs...)
     loc_id=location_id(bc)
     if ismissing(loc_id)
         loc_id="NULL"
+    elseif loc_id != location_id(loc) 
+        error("barcode location id does not match the supplied location")
     end 
     execute_db("UPDATE Barcodes SET LocationID = $loc_id WHERE Barcode = '$(string(barcode(bc)))'")
     return nothing 

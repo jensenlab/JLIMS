@@ -1,7 +1,9 @@
 """
     abstract type Labware <: Location end 
 
-Labware are [`Location`] subtypes that can only contain `Well` objects as children.
+Labware are Indexed [`Location`] subtypes that can only contain specific location types as children.
+
+Labware are immutable in the sense that they have a set number of children 
 
 See also [`@labware`](@ref)
 """
@@ -9,15 +11,15 @@ abstract type Labware <: Location end
 
 
 """
-    @labware name type welltype plate_shape vendor catalog 
+    @labware name supertype loctype shape vendor catalog 
 
 Define a new labware Type `name` and overload methods to make `name` a JLIMS compatible labware. 
 """
-macro labware(name, type, welltype, plate_shape,vendor,catalog)
+macro labware(name, supertype, loctype, shape,vendor,catalog)
     n=Symbol(name)
-    t=Symbol(type)
-    wt=Symbol(welltype)
-    ps::Tuple{Integer,Integer}=eval(plate_shape)
+    t=Symbol(supertype)
+    wt=Symbol(loctype)
+    ps::Tuple{Integer,Integer}=eval(shape)
     v::String=string(vendor)
     c::String=string(catalog)
     if isdefined(__module__,n) || isdefined(JLIMS,n)

@@ -48,6 +48,7 @@ abstract type Reservior <:Labware end
 @location BioSpa true false 
 @location BioSpaDrawer true true 
 @location BioSpaSlot true true 
+@location AltemisSlot true true 
 
 @occupancy_cost BioSpa BioSpaDrawer 1//4
 @occupancy_cost BioSpaDrawer BioSpaSlot 1//2
@@ -60,6 +61,7 @@ abstract type Reservior <:Labware end
 @well Well1L 1u"L"
 @well Well10mL  10u"mL"
 @well Well50mL 50u"mL"
+@well Well1mL 1u"mL"
 
 @labware WP96 Plate Well200µL (8,12) Thermo 123456
 @labware WP384 Plate Well80µL (16,24) Thermo 123457
@@ -67,6 +69,13 @@ abstract type Reservior <:Labware end
 @labware IronNitrateBottle ReagentBottle Well1L (1,1) Sigma 111
 @labware LBBottle ReagentBottle Well1L (1,1) Sigma 123 
 @labware PabaBottle ReagentBottle Well50mL (1,1) Sigma 234
+
+@labware AltemisTube Tube Well1mL (1,1) Altemis 1234 
+
+@occupancy_cost AltemisSlot AltemisTube 1//1 
+
+@labware AltemisBox Plate AltemisSlot (8,12) Altemis 4321 
+
 
 
 
@@ -103,7 +112,7 @@ r4=generate_location(BioSpaSlot,"Right")
 b1=generate_location(Bottle1L)
 b2=generate_location(PabaBottle,"Paba")
 plate1=generate_location(WP96)
-
+box1=generate_location(AltemisBox,"Freezer Box 1")
 
 
 @upload set_attribute!(jensen_lab,Temperature(25u"°C"))
@@ -122,7 +131,6 @@ cache(jensen_lab)
 @upload activate!(main_room)
 @upload deactivate!(main_room)
 @upload toggle_activity!(main_room)
-
 
 
 @upload move_into!(jensen_lab,main_room)
@@ -151,6 +159,9 @@ cache(jensen_lab)
 @upload move_into!(main_room,plate1)
 
 
+
+
+
 w1=children(b1)[1,1]
 
 w2=children(b2)[1,1]
@@ -173,8 +184,8 @@ upload_barcode(bc)
 bc2=Barcode(UUIDs.uuid4(),"nasty_green_baboon")
 upload_barcode(bc2)
 
-assign_barcode!(bc2,plate1)
-update_barcode(bc2)
+@upload assign_barcode!(bc2,plate1)
+
 
 
 exp_id =upload_experiment("test_experiment","Ben")

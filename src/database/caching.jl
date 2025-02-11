@@ -44,7 +44,7 @@ end
 
 
 
-function cache_children_helper(c::Matrix{Union{LocationRef,T}}) where T<:Well 
+function cache_children_helper(c::Matrix{Union{LocationRef,T}}) where T<:Location 
     loc_ids=location_id.(c)
 id=get_child_set_id(c)
 if isnothing(id)
