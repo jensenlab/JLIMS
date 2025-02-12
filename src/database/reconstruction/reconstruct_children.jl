@@ -1,11 +1,11 @@
 
 
-function reconstruct_children(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+function reconstruct_children(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
     all_locs=Dict{Integer,Location}() 
     cache_feet=[]
     current_children=Dict{Integer,Integer}() # dict mapping child_id to parent_id
     for loc_id in location_ids
-        loc,cache_foot = fetch_child_cache(loc_id,0,sequence_id,time;encumbrances=encumbrances)
+        loc,cache_foot = fetch_child_cache(loc_id,0,max_cache,time;encumbrances=encumbrances)
         all_locs[loc_id]=loc
         push!(cache_feet,cache_foot)
         for child in children(loc)
@@ -38,12 +38,12 @@ function reconstruct_children(location_ids::Vector{<:Integer},sequence_id::Integ
 end 
 
 
-function reconstruct_children(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    return reconstruct_children([location_id],sequence_id,time;encumbrances=encumbrances)[1]
+function reconstruct_children(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    return reconstruct_children([location_id],sequence_id,time,max_cache;encumbrances=encumbrances)[1]
 end 
 
-function reconstruct_children!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    parallel_locs=reconstruct_children(locations,sequence_id,time;encumbrances=encumbrances)
+function reconstruct_children!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    parallel_locs=reconstruct_children(locations,sequence_id,time,max_cache;encumbrances=encumbrances)
     for i in eachindex(locations)
         if locations[i] isa JLIMS.Well
             continue 
@@ -55,8 +55,8 @@ function reconstruct_children!(locations::Vector{<:Location},sequence_id::Intege
     return nothing 
 end 
 
-function reconstruct_children!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    parallel_loc=reconstruct_children(location_id(location),sequence_id,time;encumbrances=encumbrances)
+function reconstruct_children!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    parallel_loc=reconstruct_children(location_id(location),sequence_id,time,max_cache;encumbrances=encumbrances)
     if location isa JLIMS.Well 
         return nothing 
     elseif location isa JLIMS.Labware 

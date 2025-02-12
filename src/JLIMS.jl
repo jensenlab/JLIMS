@@ -55,6 +55,9 @@ include("./database/reconstruction/reconstruct_lock.jl")
 include("./database/reconstruction/reconstruct_activity.jl")
 include("./database/reconstruction/reconstruct_location.jl")
 
+#include("./database/cache_repair/repair_utils.jl")
+#include("./database/cache_repair/repair_contents.jl")
+
 #include("./csv_uploads.jl")
 
 export WellCapacityError, MixingError, LockedLocationError, AlreadyLocatedInError,OccupancyError #exceptions
@@ -109,6 +112,8 @@ export reconstruct_environment,reconstruct_environment!
 export reconstruct_lock,reconstruct_lock!
 #reconstruct_activity.jl
 export reconstruct_activity,reconstruct_activity!
+
+export repair_content_caches
 #barcodes
 export Barcode, assign_barcode!,assign_barcode
 export @protocol ,upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache

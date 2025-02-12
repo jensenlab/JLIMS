@@ -70,6 +70,7 @@ function create_db(path)
         LocationID INTEGER,
         ChildSetID INTEGER,
         LedgerID INTEGER,
+        Time INTEGER,
          FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(ChildSetID) REFERENCES CachedChildSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -82,6 +83,7 @@ function create_db(path)
         LocationID INTEGER,
         ParentID INTEGER,
         LedgerID INTEGER,
+        Time Integer,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(ParentID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -116,6 +118,7 @@ function create_db(path)
         LocationID INTEGER,
         AttributeSetID INTEGER,
         LedgerID INTEGER,
+        Time Integer,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(AttributeSetID) REFERENCES CachedAttributeSets(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -152,6 +155,7 @@ function create_db(path)
         StockID INTEGER, 
         LedgerID INTEGER,
         Cost REAL,
+        Time INTEGER,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(StockID) REFERENCES CachedStocks(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -185,6 +189,7 @@ function create_db(path)
         IsLocked INTEGER,
         IsActive INTEGER,
         LedgerID INTEGER,
+        Time INTEGER,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
         FOREIGN KEY(LedgerID) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
