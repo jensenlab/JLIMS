@@ -19,12 +19,12 @@ function repair_content_caches(ledger_id::Integer)
         for cache in eachrow(caches)
 
             cache_seq_id=cache.SequenceID
-            old_loc=fetch_content_cache(loc_id,0,cache_seq_id)
+            old_stock,a,b=fetch_content_cache(loc_id,0,cache_seq_id)
             new_loc=reconstruct_contents(loc_id,cache_seq_id,Dates.now(),cache_seq_id-1) # reconstruct but only use caches from before the one we are testing
 
-            if stock(old_loc) != stock(new_loc) # cache has been invalidated --replace the cache 
+            if old_stock != stock(new_loc) # cache has been invalidated --replace the cache 
                 cache_ledger_id=get_last_ledger_id(cache_seq_id)
-                cache(new_loc,cache_seq_id)
+                JLIMS.cache_contents(new_loc,cache_ledger_id)
                 cache_update_counter +=1 
             end 
         end

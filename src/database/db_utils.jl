@@ -21,9 +21,24 @@ macro connect_SQLite(DB_PATH)
             db = SQLite.DB($DB_PATH)
             DBInterface.execute(db, "PRAGMA foreign_keys = ON;") # when you open a connection, it defaults to turning foreign key constraints off.
             results = DataFrame(DBInterface.execute(db, query))
-            SQLite.close(db)
+            #SQLite.close(db)
             return results
         end
+
+        function sql_transaction(f::Function)
+            db=SQLite.DB($DB_PATH)
+            SQLite.transaction(f,db)
+        end
+
+        function sql_commit(name::String)
+            db=SQLite.DB($DB_PATH)
+            SQLite.commit(db,name)
+        end
+
+        function sql_rollback(name::String)
+            db=SQLite.DB($DB_PATH)
+            SQLite.rollback(db,name)
+        end 
 
         function get_location_info(id::Integer)
             loc_info=query_db("SELECT * FROM Locations WHERE ID =$id")
@@ -48,6 +63,18 @@ end
 function query_db(query::String)
     return error("use @connect_SQLite to connect to a database")
 end 
+
+function sql_transaction(f::Function)
+    return error("use @connect_SQLite to connect to a database")
+end 
+function sql_commit(name::String)
+    return error("use @connect_SQLite to connect to a database")
+end 
+function sql_rollback(name::String)
+    return error("use @connect_SQLite to connect to a database")
+end 
+
+
 
 function query_join_vector(entry::Vector{<:Number})
     return string("(",join(entry,","),")")

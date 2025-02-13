@@ -62,7 +62,7 @@ function get_content_caches(location_id::Integer, starting::Integer=0, ending::I
             FROM encumbrance_subset e INNER JOIN EncumberedCachedContents v ON e.EncumbranceID = v.EncumbranceID 
         UNION ALL 
             SELECT c.LedgerID,l.SequenceID,0,Max(c.Time),c.LocationID,c.StockID,c.Cost
-            FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID Group By l.LedgerID) 
+            FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID Group By l.SequenceID) 
             SELECT * FROM y WHERE LocationID=$location_id ORDER BY EncumbranceID,SequenceID ")
     else
         return query_db("
@@ -238,7 +238,7 @@ function fetch_content_cache(location_id::Integer,starting::Integer,ending::Inte
         foot=row.SequenceID
         cost=row.Cost
     else
-        return Empty() ,0 ,0,0
+        return Empty() ,0 ,0
     
     end 
     
@@ -276,7 +276,7 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
     if length(cache_feet)>0 
         foot = min(minimum(cache_feet),sequence_id)
     end
-    transfers=get_transfer_ancestors(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
+    transfers=get_transfer_ancestors(location_ids,foot+1,sequence_id,time;encumbrances=encumbrances)
 
 
 
@@ -305,7 +305,7 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
         end 
     end
     if length(reconstructions_needed) > 0 
-        locs=reconstruct_contents(collect(reconstructions_needed),foot,time,all_locs)
+        locs=reconstruct_contents(collect(reconstructions_needed),foot,time,max_cache,all_locs)
         for loc in locs 
             push!(all_locs,(JLIMS.location_id(loc),foot,loc))
         end 

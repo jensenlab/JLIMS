@@ -1,5 +1,3 @@
-using SQLite , DBInterface 
-
 
 function create_db(path)
     # Create database connection

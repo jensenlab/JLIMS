@@ -10,11 +10,11 @@ function repair_environment_attribute_caches(ledger_id::Integer)
     for cache in eachrow(caches)
 
         cache_seq_id=cache.SequenceID
-        old_loc=fetch_attribute_cache(loc_id,0,cache_seq_id)
+        old_loc,foot=fetch_attribute_cache(loc_id,0,cache_seq_id)
         new_loc=reconstruct_attributes(loc_id,cache_seq_id,Dates.now(),cache_seq_id-1) # reconstruct but only use caches from before the one we are testing
         if attributes(old_loc) != attributes(new_loc) # cache has been invalidated --replace the cache 
             cache_ledger_id=get_last_ledger_id(cache_seq_id)
-            cache_environment(new_loc,cache_seq_id)
+            cache_environment(new_loc,cache_ledger_id)
             cache_update_counter +=1 
         end 
     end

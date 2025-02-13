@@ -1,10 +1,10 @@
 
 
-function reconstruct_activity(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+function reconstruct_activity(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
     all_locs=Dict{Integer,Location}() # constant defined in reconstruction_utils.jl Columns are location id, sequence id, location
     cache_feet=[]
     for loc_id in location_ids
-        loc,cache_foot = fetch_activity_cache(loc_id,0,sequence_id,time;encumbrances=encumbrances)
+        loc,cache_foot = fetch_activity_cache(loc_id,0,max_cache,time;encumbrances=encumbrances)
         all_locs[JLIMS.location_id(loc)]=loc
         push!(cache_feet,cache_foot)
     end 
@@ -30,22 +30,22 @@ function reconstruct_activity(location_ids::Vector{<:Integer},sequence_id::Integ
 
 end 
 
-function reconstruct_activity(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    return reconstruct_activity([location_id],sequence_id,time;encumbrances=encumbrances)[1]
+function reconstruct_activity(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    return reconstruct_activity([location_id],sequence_id,time,max_cache;encumbrances=encumbrances)[1]
 end
 
 
-function reconstruct_activity!(locations::Vector{Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+function reconstruct_activity!(locations::Vector{Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
 
-    parallel_locs=reconstruct_activity(location_id.(locations),sequence_id,time;encumbrances=encumbrances)
+    parallel_locs=reconstruct_activity(location_id.(locations),sequence_id,time,max_cache;encumbrances=encumbrances)
     for i in eachindex(locations)
             locations[i].is_active= is_active(parallel_locs[i])
     end 
     return nothing 
 end 
 
-function reconstruct_activity!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    parallel_loc=reconstruct_activity(location_id(location),sequence_id,time;encumbrances=encumbrances)
+function reconstruct_activity!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    parallel_loc=reconstruct_activity(location_id(location),sequence_id,time,max_cache;encumbrances=encumbrances)
     location.is_active= is_active(parallel_loc) 
     return nothing 
 end 

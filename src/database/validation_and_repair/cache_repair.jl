@@ -1,4 +1,4 @@
-function operation_type(ledger_id::Integer)
+function repair_operation_type(ledger_id::Integer)
     if isa_transfer(ledger_id)
         return repair_content_caches
     elseif isa_movement(ledger_id)
@@ -31,8 +31,8 @@ The old cache will still be utilized for reconstrutions triggered at a time befo
 """
 function cache_repair(ledger_id::Integer)
 
-    operation=operation_type(ledger_id)
+    repair=repair_operation_type(ledger_id)
 
-    operation(ledger_id)
+    repair(ledger_id)
 
 end
