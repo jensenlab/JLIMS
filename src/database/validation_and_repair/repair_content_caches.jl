@@ -3,9 +3,9 @@ function repair_content_caches(ledger_id::Integer)
 
     sequence_id=get_sequence_id(ledger_id)
 
-    source,destination=get_transfer_participants(ledger_id)
-
-    trfs=get_transfer_descendents([source,destination],sequence_id)
+    participants=get_participants(get_transfer_participants,sequence_id)
+    locs=unique(vcat(collect.(participants)...))
+    trfs=get_transfer_descendents(locs,sequence_id)
     
     srcs=trfs.Source
     dests=trfs.Destination
@@ -39,7 +39,7 @@ end
 
 
 
-function get_transfer_participants(ledger_id)
+function get_transfer_participants(ledger_id::Integer)
     x="SELECT LedgerID,Source,Destination,Quantity,Unit FROM Transfers WHERE LedgerID = $ledger_id"
     out=query_db(x) 
     if nrow(out)==1 

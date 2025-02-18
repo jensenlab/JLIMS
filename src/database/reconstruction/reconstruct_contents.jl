@@ -62,7 +62,7 @@ function get_content_caches(location_id::Integer, starting::Integer=0, ending::I
             FROM encumbrance_subset e INNER JOIN EncumberedCachedContents v ON e.EncumbranceID = v.EncumbranceID 
         UNION ALL 
             SELECT c.LedgerID,l.SequenceID,0,Max(c.Time),c.LocationID,c.StockID,c.Cost
-            FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID Group By l.SequenceID) 
+            FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.Time <= $ledger_time Group By l.SequenceID) 
             SELECT * FROM y WHERE LocationID=$location_id ORDER BY EncumbranceID,SequenceID ")
     else
         return query_db("
@@ -71,7 +71,7 @@ function get_content_caches(location_id::Integer, starting::Integer=0, ending::I
             SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
             ) ,
         y (LedgerID,SequenceID, EncumbranceID,Time,LocationID,StockID,Cost)
-        AS( SELECT c.LedgerID,l.SequenceID,0,Max(c.Time), c.LocationID,c.StockID,c.Cost FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By LedgerID ORDER BY SequenceID ) 
+        AS( SELECT c.LedgerID,l.SequenceID,0,Max(c.Time), c.LocationID,c.StockID,c.Cost FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id AND c.Time <= $ledger_time Group By LedgerID ORDER BY SequenceID ) 
         SELECT * from y
         " )
         

@@ -36,3 +36,12 @@ function cache_repair(ledger_id::Integer)
     repair(ledger_id)
 
 end
+
+
+# see get_transfer_participants, get_movement_participants,get_activity_participants, etc... 
+function get_participants(fun::Function,sequence_id::Integer)
+
+    ls=get_all_ledger_ids(sequence_id)
+
+    return fun.(ls)
+end 

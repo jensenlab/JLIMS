@@ -53,7 +53,7 @@ end
 
 function get_last_ledger_id(sequence_id::Integer,time::DateTime=Dates.now())
     ledger_time=db_time(time)
-    x="SELECT Max(ID) FROM LEDGER WHERE SequenceID <= $sequence_id AND TIME <= $ledger_time"
+    x="SELECT Max(ID) FROM LEDGER WHERE SequenceID = $sequence_id AND TIME <= $ledger_time"
     current_id=query_db(x)
     return current_id[1,1]
 end 
@@ -80,6 +80,10 @@ function get_all_ledger_ids(sequence_id::Integer,time::DateTime=Dates.now())
 end 
 
 
+function get_ledger_time(ledger_Id::Integer)
+    x="SELECT Time FROM Ledger WHERE ID=$ledger_id"
+    return julia_time(query_db(x)[1,1])
+end
 
 
 

@@ -96,7 +96,7 @@ export create_db
 #ledger.jl
 export append_ledger,insert_ledger,update_ledger
 #db_utils 
-export @connect_SQLite, execute_db, query_db,sql_transaction,sql_commit,sql_rollback
+export @connect_SQLite, execute_db, query_db,sql_transaction,sql_commit,sql_rollback,julia_time,db_time
 #uploads 
 export @upload ,@update, upload_tag, upload_barcode, update_barcode , process_update
 #queries
