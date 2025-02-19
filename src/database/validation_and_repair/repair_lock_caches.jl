@@ -1,27 +1,27 @@
 function repair_lock_caches(ledger_id::Integer)
     sequence_id=get_sequence_id(ledger_id)
 
-    loc_id=get_lock_participant(ledger_id)
+    participants=get_participants(get_lock_particpant,sequence_id)
     cache_update_counter=0
 
+    for loc_id in participants 
+        caches=get_lock_caches(loc_id,sequence_id)
+        
+        for cache in eachrow(caches)
 
-    caches=get_lock_caches(prt,sequence_id)
+            cache_seq_id=cache.SequenceID
+            old_loc,foot=fetch_lock_cache(loc_id,0,cache_seq_id)
+            new_loc=reconstruct_lock(loc_id,cache_seq_id,Dates.now(),cache_seq_id-1) # reconstruct but only use caches from before the one we are testing
+            if cache_seq_id == sequence_id || is_locked(old_loc) != is_locked(new_loc) # cache has been invalidated --replace the cache 
+                cache_ledger_id=get_last_ledger_id(cache_seq_id)
+                new_loc=reconstruct_activity!(new_loc,cache_seq_id,Dates.now(),cache_seq_id-1) # also need to reconstruct the activity state to cache, even though presumably it hasn't changed.
+                cache_lock_activity(new_loc,cache_ledger_id)
+                cache_update_counter +=1 
+            end 
+        end
     
-    for cache in eachrow(caches)
-
-        cache_seq_id=cache.SequenceID
-        old_loc,foot=fetch_lock_cache(loc_id,0,cache_seq_id)
-        new_loc=reconstruct_lock(loc_id,cache_seq_id,Dates.now(),cache_seq_id-1) # reconstruct but only use caches from before the one we are testing
-        if is_locked(old_loc) != is_locked(new_loc) # cache has been invalidated --replace the cache 
-            cache_ledger_id=get_last_ledger_id(cache_seq_id)
-            new_loc=reconstruct_activity!(new_loc,cache_seq_id,Dates.now(),cache_seq_id-1) # also need to reconstruct the activity state to cache, even though presumably it hasn't changed.
-            cache_lock_activity(new_loc,cache_ledger_id)
-            cache_update_counter +=1 
-        end 
     end
-   
-
-    println("caches repaired: $cache_update_counter")
+    println("caches updated: $cache_update_counter")
 
 
 

@@ -21,16 +21,15 @@ function repair_content_caches(ledger_id::Integer)
             cache_seq_id=cache.SequenceID
             old_stock,a,b=fetch_content_cache(loc_id,0,cache_seq_id)
             new_loc=reconstruct_contents(loc_id,cache_seq_id,Dates.now(),cache_seq_id-1) # reconstruct but only use caches from before the one we are testing
-
-            if old_stock != stock(new_loc) # cache has been invalidated --replace the cache 
-                cache_ledger_id=get_last_ledger_id(cache_seq_id)
-                JLIMS.cache_contents(new_loc,cache_ledger_id)
-                cache_update_counter +=1 
+            if cache_seq_id == sequence_id || old_stock != stock(new_loc) 
+            cache_ledger_id=get_last_ledger_id(cache_seq_id)
+            JLIMS.cache_contents(new_loc,cache_ledger_id)
+            cache_update_counter +=1 
             end 
         end
     end 
 
-    println("caches repaired: $cache_update_counter")
+    println("caches updated: $cache_update_counter")
 end 
 
 
