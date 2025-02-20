@@ -26,13 +26,15 @@ end
 macro upload(expr,time=Dates.now()) 
     fun=eval(expr.args[1])
     upload_op=upload_operation(fun)
-    return esc(quote 
+    return esc(quote
+        function upload_transaction()
+
         $expr
         $upload_op(eval.($(expr.args[2:end]))...;time=$time)
+        end
+        sql_transaction(upload_transaction)
     end )
 end 
-
-
 
 
 

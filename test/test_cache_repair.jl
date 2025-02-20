@@ -41,7 +41,6 @@ c=reconstruct_location(3,15)
 
 @update deactivate!(a) insert_ledger(41) 
 @update activate!(a) update_ledger(41)
-
 x=reconstruct_location(9) 
 cache(x)
 @update set_attribute!(a,Temperature(42u"°C")) insert_ledger(10)
