@@ -14,8 +14,18 @@ abstract type Attribute end
 Access the `value` property of an [`Attribute`](@ref)
 """
 value(x::Attribute)=x.value
+"""
+    unit(x::Attribute)
 
+Access the `unit` property of an [`Attribute`](@ref)
+"""
+attribute_unit(x::Attribute)=x.unit
+"""
+    quantity(x::Attribute)
 
+Return the quantity of an [`Attribute`](@ref)
+"""
+quantity(x::Attribute) = value(x) *attribute_unit(x)
 
 """
     @attribute name valuetype 
@@ -32,7 +42,7 @@ julia> Temperature(10u"°C")
 ```
 See also: [`Attribute`](@ref)
 """
-macro attribute(name, valuetype)
+macro attribute(name, unit)
     n=Symbol(name)
 
     if isdefined(__module__,n) || isdefined(JLIMS,n)
@@ -41,23 +51,29 @@ macro attribute(name, valuetype)
 
     return esc(quote
     export $n
+    un_type=typeof($unit)
     mutable struct $n <: (JLIMS.Attribute)
-        value::($valuetype) 
-    end 
-    end 
+        value::Real 
+        const unit::un_type
+        function ($n)(value::Unitful.Quantity)
+            val=Unitful.ustrip(Unitful.uconvert($unit,value))
+            new(val,$unit)
+        end 
+    end
+    end
     )
 end
 
 
 
-Base.show(io::IO,x::Attribute) = print(io,value(x))
+Base.show(io::IO,x::Attribute;digits=2) = print(io,round(quantity(x),digits=digits))
 
 function ==(x::Attribute,y::Attribute)
-    return typeof(x)==typeof(y) && value(x)==value(y)
+    return typeof(x)==typeof(y) && quantity(x)==quantity(y)
 end 
 
 function Base.hash(a::Attribute,h::UInt)
-    hash(typeof(a),hash(value(a),h))
+    hash(typeof(a),hash(quantity(a),h))
 end 
 
 const AttributeDict=Dict{Type{<:Attribute},Attribute}
