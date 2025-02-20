@@ -103,7 +103,7 @@ end
 
 function upload_protocol_enforcement(protocol_id::Integer,is_enforced::Bool;time=Dates.now())
     upload_time=db_time(time)
-    ledger_id=upload_ledger()
+    ledger_id=append_ledger()
     execute_db("""INSERT INTO ProtocolEnforcement(ProtocolID,LedgerID,IsEnforced,Time) Values($protocol_id,$ledger_id,$(Int64(is_enforced)),$upload_time)""")
     return nothing 
 end 

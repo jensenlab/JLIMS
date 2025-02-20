@@ -1,29 +1,30 @@
-function cache(loc::Location,sequence_id=get_last_sequence_id())
+function cache(loc::Location,sequence_id=get_last_sequence_id(),time::DateTime=Dates.now())
     ledger_id=get_last_ledger_id(sequence_id)
-    cache_parent(loc,ledger_id)
-    cache_children(loc,ledger_id)
-    cache_environment(loc,ledger_id)
-    cache_lock_activity(loc,ledger_id)
+    cache_parent(loc,ledger_id,time)
+    cache_children(loc,ledger_id,time)
+    cache_environment(loc,ledger_id,time)
+    cache_lock_activity(loc,ledger_id,time)
     if typeof(loc) <: JLIMS.Well
-        cache_contents(loc,ledger_id)
+        cache_contents(loc,ledger_id,time)
     end 
     return nothing
 end 
 
 
-function cache_parent(loc::Location,ledger_id::Integer)
+function cache_parent(loc::Location,ledger_id::Integer,time::DateTime=Dates.now())
+    upload_time=db_time(time)
     parent_id=location_id(parent(loc))
     if isnothing(parent_id)
         parent_id="NULL"
     end 
-    execute_db("INSERT INTO CachedAncestors(LocationID,ParentID,LedgerID) Values($(location_id(loc)),$parent_id,$ledger_id)")
+    execute_db("INSERT INTO CachedAncestors(LocationID,ParentID,LedgerID,Time) Values($(location_id(loc)),$parent_id,$ledger_id,$upload_time)")
     return nothing 
 end 
 
-function cache_children(loc::Location,ledger_id::Integer)
+function cache_children(loc::Location,ledger_id::Integer,time::DateTime=Dates.now())
     child_set_id=cache_children_helper(children(loc))
-
-    execute_db("INSERT INTO CachedDescendants(LocationID,ChildSetID,LedgerID) Values($(location_id(loc)),$child_set_id,$ledger_id)")
+    upload_time=db_time(time)
+    execute_db("INSERT INTO CachedDescendants(LocationID,ChildSetID,LedgerID,Time) Values($(location_id(loc)),$child_set_id,$ledger_id,$upload_time)")
     return nothing 
 end 
 
@@ -87,9 +88,10 @@ function cache_children_helper(c::Tuple{})
 end 
 
 
-function cache_contents(loc::Well,ledger_id::Integer)
+function cache_contents(loc::Well,ledger_id::Integer,time::DateTime=Dates.now())
     stock_id=cache(stock(loc))
-    execute_db("INSERT OR IGNORE INTO CachedContents(LocationID,StockID,LedgerID,Cost) Values($(location_id(loc)),$stock_id,$ledger_id,$(cost(loc)))")
+    upload_time=db_time(time)
+    execute_db("INSERT OR IGNORE INTO CachedContents(LocationID,StockID,LedgerID,Cost,Time) Values($(location_id(loc)),$stock_id,$ledger_id,$(cost(loc)),$upload_time)")
     return nothing 
 end 
 
@@ -145,9 +147,10 @@ function cache(s::Stock)
 
 end 
 
-function cache_environment(loc::Location,ledger_id::Integer)
+function cache_environment(loc::Location,ledger_id::Integer,time::DateTime=Dates.now())
     attr_set_id=cache(attributes(loc))
-    execute_db("INSERT INTO CachedEnvironments(LocationID,AttributeSetID,LedgerID) Values($(location_id(loc)),$attr_set_id,$ledger_id)")
+    upload_time=db_time(time)
+    execute_db("INSERT INTO CachedEnvironments(LocationID,AttributeSetID,LedgerID,Time) Values($(location_id(loc)),$attr_set_id,$ledger_id,$upload_time)")
     return nothing 
 end 
 
@@ -182,7 +185,8 @@ function cache(a::AttributeDict)
 end 
 
 
-function cache_lock_activity(loc::Location,ledger_id::Integer)
-    execute_db("INSERT INTO CachedLockActivity(LocationID,IsLocked,IsActive,LedgerID) Values($(location_id(loc)),$(is_locked(loc)),$(is_active(loc)),$ledger_id)")
+function cache_lock_activity(loc::Location,ledger_id::Integer,time::DateTime=Dates.now())
+    upload_time=db_time(time)
+    execute_db("INSERT INTO CachedLockActivity(LocationID,IsLocked,IsActive,LedgerID,Time) Values($(location_id(loc)),$(is_locked(loc)),$(is_active(loc)),$ledger_id,$upload_time)")
     return nothing 
 end 

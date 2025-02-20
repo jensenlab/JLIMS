@@ -48,7 +48,7 @@ function get_content_caches(location_id::Integer, starting::Integer=0, ending::I
         return query_db("
         WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ),
 
                     encumbrance_subset (EncumbranceID)
@@ -57,21 +57,21 @@ function get_content_caches(location_id::Integer, starting::Integer=0, ending::I
 
         ),
         
-            y (LedgerID,SequenceID,EncumbranceID,LocationID,StockID,Cost)
-        AS(SELECT 0,0,e.EncumbranceID, v.LocationID, v.StockID,v.Cost
+            y (ID,LedgerID,SequenceID,EncumbranceID,LocationID,StockID,Cost)
+        AS(SELECT e.ID,0,0,e.EncumbranceID,v.LocationID, v.StockID,v.Cost
             FROM encumbrance_subset e INNER JOIN EncumberedCachedContents v ON e.EncumbranceID = v.EncumbranceID 
         UNION ALL 
-            SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.StockID,c.Cost
-            FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID Group By l.SequenceID) 
+            SELECT Max(c.ID),c.LedgerID,l.SequenceID,0,c.LocationID,c.StockID,c.Cost
+            FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.Time <= $ledger_time Group By l.SequenceID) 
             SELECT * FROM y WHERE LocationID=$location_id ORDER BY EncumbranceID,SequenceID ")
     else
         return query_db("
             WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
             ) ,
-        y (LedgerID,SequenceID, EncumbranceID,LocationID,StockID,Cost)
-        AS( SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.StockID,c.Cost FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
+        y (ID,LedgerID,SequenceID, EncumbranceID,LocationID,StockID,Cost)
+        AS( SELECT Max(c.ID),c.LedgerID,l.SequenceID,0, c.LocationID,c.StockID,c.Cost FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id AND c.Time <= $ledger_time Group By LedgerID ORDER BY SequenceID ) 
         SELECT * from y
         " )
         
@@ -93,7 +93,7 @@ function get_transfer_ancestors(locs::Vector{<:Integer},starting::Integer=0,endi
         """
                     WITH RECURSIVE ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
         encumbrance_subset (EncumbranceID)
@@ -125,7 +125,7 @@ function get_transfer_ancestors(locs::Vector{<:Integer},starting::Integer=0,endi
         """
             WITH RECURSIVE ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
          x (LedgerID,Source,Destination,Quantity,Unit)
@@ -154,7 +154,7 @@ function get_transfer_descendents(locs::Vector{<:Integer},starting::Integer=0,en
         """
                     WITH RECURSIVE ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
         encumbrance_subset (EncumbranceID)
@@ -186,7 +186,7 @@ function get_transfer_descendents(locs::Vector{<:Integer},starting::Integer=0,en
         """
             WITH RECURSIVE ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
          x (LedgerID,EncumbranceID,Source,Destination,Quantity,Unit)
@@ -238,7 +238,7 @@ function fetch_content_cache(location_id::Integer,starting::Integer,ending::Inte
         foot=row.SequenceID
         cost=row.Cost
     else
-        return Empty() ,0 ,0,0
+        return Empty() ,0 ,0
     
     end 
     
@@ -252,7 +252,7 @@ end
 
 
 
-function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(), loc_df::DataFrame = location_reconstruction_df;encumbrances=false)
+function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(), max_cache::Integer=sequence_id, loc_df::DataFrame = location_reconstruction_df;encumbrances=false)
     all_locs=deepcopy(loc_df)
     cache_feet=[]
     for loc_id in location_ids
@@ -262,7 +262,7 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
             push!(all_locs,(loc_id,0,loc))
             continue 
         end 
-        stock,cost,cache_foot = fetch_content_cache(loc_id,0,sequence_id,time;encumbrances=encumbrances)
+        stock,cost,cache_foot = fetch_content_cache(loc_id,0,max_cache,time;encumbrances=encumbrances)
         if !isnothing(stock)
             deposit!(loc,stock,cost)
         end
@@ -276,7 +276,7 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
     if length(cache_feet)>0 
         foot = min(minimum(cache_feet),sequence_id)
     end
-    transfers=get_transfer_ancestors(location_ids,foot,sequence_id,time;encumbrances=encumbrances)
+    transfers=get_transfer_ancestors(location_ids,foot+1,sequence_id,time;encumbrances=encumbrances)
 
 
 
@@ -305,7 +305,7 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
         end 
     end
     if length(reconstructions_needed) > 0 
-        locs=reconstruct_contents(collect(reconstructions_needed),foot,time,all_locs)
+        locs=reconstruct_contents(collect(reconstructions_needed),foot,time,max_cache,all_locs)
         for loc in locs 
             push!(all_locs,(JLIMS.location_id(loc),foot,loc))
         end 
@@ -330,16 +330,16 @@ function reconstruct_contents(location_ids::Vector{<:Integer}, sequence_id::Inte
     return final_out
 end 
 
-function reconstruct_contents(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),loc_df::DataFrame=location_reconstruction_df;encumbrances=false)
-    return reconstruct_contents([location_id],sequence_id,time,loc_df;encumbrances=encumbrances)[1]
+function reconstruct_contents(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id,loc_df::DataFrame=location_reconstruction_df;encumbrances=false)
+    return reconstruct_contents([location_id],sequence_id,time,max_cache,loc_df;encumbrances=encumbrances)[1]
 end 
     
 
 
-function reconstruct_contents!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),loc_df::DataFrame=location_reconstruction_df;encumbrances=false)
+function reconstruct_contents!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id,loc_df::DataFrame=location_reconstruction_df;encumbrances=false)
 
 
-    parallel_locs=reconstruct_contents(location_id.(locations),sequence_id,time,loc_df,encumbrances=encumbrances)
+    parallel_locs=reconstruct_contents(location_id.(locations),sequence_id,time,max_cache,loc_df,encumbrances=encumbrances)
 
     for i in eachindex(locations)
         if locations[i] isa JLIMS.Well
@@ -352,8 +352,8 @@ function reconstruct_contents!(locations::Vector{<:Location},sequence_id::Intege
     return nothing
 end 
 
-function reconstruct_contents!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),loc_df::DataFrame=location_reconstruction_df;encumbrances=false)
-    parallel_loc=reconstruct_contents(location_id(location),sequence_id,time,loc_df,encumbrances=encumbrances)
+function reconstruct_contents!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id,loc_df::DataFrame=location_reconstruction_df;encumbrances=false)
+    parallel_loc=reconstruct_contents(location_id(location),sequence_id,time,max_cache,loc_df,encumbrances=encumbrances)
     if location isa JLIMS.Well
         location.stock=JLIMS.stock(parallel_loc)
         location.cost=JLIMS.cost(parallel_loc)

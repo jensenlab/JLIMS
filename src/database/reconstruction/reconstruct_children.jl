@@ -1,11 +1,11 @@
 
 
-function reconstruct_children(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+function reconstruct_children(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
     all_locs=Dict{Integer,Location}() 
     cache_feet=[]
     current_children=Dict{Integer,Integer}() # dict mapping child_id to parent_id
     for loc_id in location_ids
-        loc,cache_foot = fetch_child_cache(loc_id,0,sequence_id,time;encumbrances=encumbrances)
+        loc,cache_foot = fetch_child_cache(loc_id,0,max_cache,time;encumbrances=encumbrances)
         all_locs[loc_id]=loc
         push!(cache_feet,cache_foot)
         for child in children(loc)
@@ -38,12 +38,12 @@ function reconstruct_children(location_ids::Vector{<:Integer},sequence_id::Integ
 end 
 
 
-function reconstruct_children(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    return reconstruct_children([location_id],sequence_id,time;encumbrances=encumbrances)[1]
+function reconstruct_children(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    return reconstruct_children([location_id],sequence_id,time,max_cache;encumbrances=encumbrances)[1]
 end 
 
-function reconstruct_children!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    parallel_locs=reconstruct_children(locations,sequence_id,time;encumbrances=encumbrances)
+function reconstruct_children!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    parallel_locs=reconstruct_children(locations,sequence_id,time,max_cache;encumbrances=encumbrances)
     for i in eachindex(locations)
         if locations[i] isa JLIMS.Well
             continue 
@@ -55,8 +55,8 @@ function reconstruct_children!(locations::Vector{<:Location},sequence_id::Intege
     return nothing 
 end 
 
-function reconstruct_children!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    parallel_loc=reconstruct_children(location_id(location),sequence_id,time;encumbrances=encumbrances)
+function reconstruct_children!(location::Location,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    parallel_loc=reconstruct_children(location_id(location),sequence_id,time,max_cache;encumbrances=encumbrances)
     if location isa JLIMS.Well 
         return nothing 
     elseif location isa JLIMS.Labware 
@@ -113,7 +113,7 @@ function get_child_caches(location_id::Integer,starting::Integer=0,ending::Integ
         return query_db("
         WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ),
 
                     encumbrance_subset (EncumbranceID)
@@ -122,21 +122,21 @@ function get_child_caches(location_id::Integer,starting::Integer=0,ending::Integ
 
         ),
         
-            y (LedgerID,SequenceID,EncumbranceID,LocationID,ChildSetID)
-        AS(SELECT 0,$(get_last_sequence_id())+e.EncumbranceID,e.EncumbranceID, v.LocationID,v.ChildSetID
+            y (ID, LedgerID,SequenceID,EncumbranceID,LocationID,ChildSetID)
+        AS(SELECT e.ID,0,$(get_last_sequence_id())+e.EncumbranceID,e.EncumbranceID, v.LocationID,v.ChildSetID
             FROM encumbrance_subset e INNER JOIN EncumberedCachedDescendants v ON e.EncumbranceID = v.EncumbranceID 
         UNION ALL 
-            SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.ChildSetID
+            SELECT Max(c.ID),c.LedgerID,l.SequenceID,0, c.LocationID,c.ChildSetID
             FROM CachedDescendants c INNER JOIN ledger_subset l ON c.LedgerID = l.ID Group By l.SequenceID) 
             SELECT * FROM y WHERE LocationID=$location_id ORDER BY EncumbranceID,SequenceID ")
     else
         return query_db("
             WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
             ) ,
-        y (LedgerID,SequenceID,EncumbranceID, LocationID, ChildSetID)
-        AS( SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.ChildSetID FROM CachedDescendants c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
+        y (ID,LedgerID,SequenceID,EncumbranceID, LocationID, ChildSetID)
+        AS( SELECT c.ID,c.LedgerID,l.SequenceID,0, c.LocationID,c.ChildSetID FROM CachedDescendants c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
         SELECT * from y
         " )
         
@@ -156,7 +156,7 @@ function get_last_movements_as_parent(locs::Vector{<:Integer},starting::Integer=
         """
         WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ),
 
                     encumbrance_subset (EncumbranceID)
@@ -180,7 +180,7 @@ function get_last_movements_as_parent(locs::Vector{<:Integer},starting::Integer=
         """
             WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
              y(LedgerID, SequenceID,EncumbranceID,Parent,Child) 
              AS( 

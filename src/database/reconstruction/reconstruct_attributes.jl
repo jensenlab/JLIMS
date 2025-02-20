@@ -1,12 +1,12 @@
 
 
 
-function reconstruct_attributes(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+function reconstruct_attributes(location_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
         all_locs=Dict{Integer,Location}() # constant defined in reconstruction_utils.jl Columns are location id, sequence id, location
         cache_feet=[]
         for loc_id in location_ids
  
-            loc,cache_foot = fetch_attribute_cache(loc_id,0,sequence_id,time;encumbrances=encumbrances)
+            loc,cache_foot = fetch_attribute_cache(loc_id,0,max_cache,time;encumbrances=encumbrances)
 
             all_locs[JLIMS.location_id(loc)]=loc
             push!(cache_feet,cache_foot)
@@ -29,22 +29,22 @@ function reconstruct_attributes(location_ids::Vector{<:Integer},sequence_id::Int
     
 end 
 
-function reconstruct_attributes(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    return reconstruct_attributes([location_id],sequence_id,time;encumbrances=encumbrances)[1]
+function reconstruct_attributes(location_id::Integer,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    return reconstruct_attributes([location_id],sequence_id,time,max_cache;encumbrances=encumbrances)[1]
 end 
 
 
-function reconstruct_attributes!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
+function reconstruct_attributes!(locations::Vector{<:Location},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
 
-    parallel_locs=reconstruct_attributes(location_id.(locations),sequence_id,time;encumbrances=encumbrances)
+    parallel_locs=reconstruct_attributes(location_id.(locations),sequence_id,time,max_cache;encumbrances=encumbrances)
     for i in eachindex(locations)
         locations[i].attributes = JLIMS.attributes(parallel_locs[i])
     end 
     return nothing 
 end 
 
-function reconstruct_attributes!(location::Location ,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();encumbrances=false)
-    parallel_loc=reconstruct_attributes(locaton_id(location),sequence_id,time;encumbrances=encumbrances)
+function reconstruct_attributes!(location::Location ,sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now(),max_cache::Integer=sequence_id;encumbrances=false)
+    parallel_loc=reconstruct_attributes(locaton_id(location),sequence_id,time,max_cache;encumbrances=encumbrances)
     location.attributes=JLIMS.attributes(parallel_loc)
     return nothing 
 end 
@@ -88,7 +88,7 @@ function get_attribute_caches(location_id::Integer,starting::Integer=0,ending::I
             return query_db("
             WITH ledger_subset (ID,SequenceID,Time)
             AS(
-                SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+                SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
                 ),
     
                         encumbrance_subset (EncumbranceID)
@@ -97,21 +97,21 @@ function get_attribute_caches(location_id::Integer,starting::Integer=0,ending::I
     
             ),
             
-                y (LedgerID,SequenceID,EncumbranceID,LocationID,AttributeSetID)
-            AS(SELECT 0,$(get_last_sequence_id())+e.EncumbranceID,e.EncumbranceID, v.LocationID,v.AttributeSetID
+                y (ID,LedgerID,SequenceID,EncumbranceID,LocationID,AttributeSetID)
+            AS(SELECT e.ID,0,$(get_last_sequence_id())+e.EncumbranceID,e.EncumbranceID, v.LocationID,v.AttributeSetID
                 FROM encumbrance_subset e INNER JOIN EncumberedCachedEnvironments v ON e.EncumbranceID = v.EncumbranceID 
             UNION ALL 
-                SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.AttributeSetID
+                SELECT Max(c.ID),c.LedgerID,l.SequenceID,0, c.LocationID,c.AttributeSetID
                 FROM CachedEnvironments c INNER JOIN ledger_subset l ON c.LedgerID = l.ID Group By l.SequenceID) 
                 SELECT * FROM y WHERE LocationID=$location_id ORDER BY EncumbranceID,SequenceID ")
         else
             return query_db("
                 WITH ledger_subset (ID,SequenceID,Time)
             AS(
-                SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
+                SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
                 ) ,
-            y (LedgerID,SequenceID,EncumbranceID, LocationID, AttributeSetID)
-            AS( SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.AttributeSetID FROM CachedEnvironments c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
+            y (ID,LedgerID,SequenceID,EncumbranceID, LocationID, AttributeSetID)
+            AS( SELECT Max(c.ID),c.LedgerID,l.SequenceID,0, c.LocationID,c.AttributeSetID FROM CachedEnvironments c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
             SELECT * from y
             " )
             
@@ -132,7 +132,7 @@ function get_environment_attributes(locs::Vector{<:Integer},starting::Integer=0,
         """
         WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ),
 
                     encumbrance_subset (EncumbranceID)
@@ -160,7 +160,7 @@ function get_environment_attributes(locs::Vector{<:Integer},starting::Integer=0,
         """
                     WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
             ) ,
         y (LedgerID,SequenceID,EncumbranceID, LocationID, Attribute, Value,Unit)
         AS( SELECT c.LedgerID,l.SequenceID,0, c.LocationID,c.Attribute,c.Value,c.Unit FROM EnvironmentAttributes c INNER JOIN ledger_subset l ON c.LedgerID = l.ID) ,
