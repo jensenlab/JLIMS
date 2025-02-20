@@ -94,3 +94,8 @@ end
 function julia_time(time::Float64)
     return Dates.unix2datetime(time)
 end 
+
+function get_all_attributes()
+    x="SELECT * FROM Attributes"
+    return query_db(x)
+end 
