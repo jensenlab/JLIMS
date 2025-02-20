@@ -208,7 +208,8 @@ function create_db(path)
 
     create_Attributes="""
     CREATE TABLE Attributes(
-        Attribute TEXT PRIMARY KEY
+        Attribute TEXT PRIMARY KEY,
+        BaseUnit TEXT
     );
     """
 

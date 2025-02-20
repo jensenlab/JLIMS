@@ -59,7 +59,7 @@ include("./database/reconstruction/reconstruct_location.jl")
 
 export WellCapacityError, MixingError, LockedLocationError, AlreadyLocatedInError,OccupancyError #exceptions
 export JensenLabUnits # custom units
-export Attribute, AttributeDict,set_attribute!,set_attribute ,value
+export Attribute, AttributeDict,set_attribute!,set_attribute ,attribute_unit
 export Chemical,Solid,Liquid,Gas # chemical types
 export Strain # strain type
 export Stock,Empty, Mixture, Solution, Culture # Stock types 
@@ -88,7 +88,7 @@ export @connect_SQLite, execute_db, query_db
 #uploads 
 export @upload , upload_tag, upload_barcode, update_barcode 
 #queries
-export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_protocol_id
+export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_protocol_id, get_all_attributes
 #generate_location
 export generate_location
 #caching and fetching 

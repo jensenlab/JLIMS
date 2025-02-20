@@ -72,8 +72,8 @@ function upload_activity(location::Location;time::DateTime=Dates.now())
     return nothing
 end 
 
-function upload_attribute(attribute::Type{<:Attribute})
-    execute_db("INSERT OR IGNORE INTO Attributes(Attribute) Values('$(string(attribute))')")
+function upload_attribute(attribute::Attribute)
+    execute_db("INSERT OR IGNORE INTO Attributes(Attribute,BaseUnit) Values('$(string(typeof(attribute)))','$(string(attribute_unit(attribute)))')")
     return nothing 
 end 
 #=
@@ -153,9 +153,8 @@ end
 function upload_environment_attribute(loc::Location,attr::Attribute;time::Dates.DateTime=now()) 
     ledger_id=upload_ledger()
     upload_time=db_time(time)
-    val=value(attr)
-    at=typeof(attr)
-    upload_attribute(at)
+    val=quantity(attr)
+    upload_attribute(attr)
     execute_db("""INSERT OR IGNORE INTO EnvironmentAttributes(LedgerID,LocationID,Attribute,Value,Unit,Time) Values($ledger_id,$(location_id(loc)),'$(string(typeof(attr)))',$(ustrip(val)),'$(string(unit(val)))',$upload_time)""")
     return nothing
 end 

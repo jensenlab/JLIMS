@@ -19,11 +19,11 @@ create_db(file)
 @strain SMU_UA159 Streptococcus mutans UA159 
 @strain SSA_SK36 Streptococcus sanguinis SK36 
 
-@attribute Temperature Unitful.Temperature
-@attribute Pressure Unitful.Pressure
-@attribute LinearShaking Unitful.Frequency
-@attribute Oxygen Unitful.DimensionlessQuantity
-@attribute Humidity Unitful.DimensionlessQuantity
+@attribute Temperature u"°C"
+@attribute Pressure u"atm"
+@attribute LinearShaking u"Hz"
+@attribute Oxygen u"percent"
+@attribute Humidity u"percent"
 
 
 abstract type Plate <: Labware end # Plates are designed on the SLAS Standard. See Dish for other non-SLAS plate types

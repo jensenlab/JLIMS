@@ -133,7 +133,7 @@ end
 
 
 function encumber_environment_attribute(encumberid::Integer,loc::Location,attr::Attribute)
-    upload_attribute(typeof(attr))
+    upload_attribute(attr)
     val=value(attr)
     execute_db("""INSERT INTO EncumberedEnvironments(EncumbranceID,LocationID,Attribute,Value,Unit) Values($encumberid,$(location_id(loc)),'$(string(typeof(attr)))',$(ustrip(val)),'$(string(unit(val)))')""")
     return nothing

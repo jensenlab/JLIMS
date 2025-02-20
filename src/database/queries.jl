@@ -30,6 +30,11 @@ function get_sequence_id(ledger_id::Integer)
     x="SELECT SequenceID FROM Ledger WHERE Id = $ledger_id"
     return query_db(x)[1,1]
 end 
+
+function get_all_attributes() 
+    x="SELECT * FROM Attributes"
+    return query_db(x)
+end 
 #=
 function get_component(id::Integer)
     comp=query_db("SELECT * FROM Components WHERE ID=$id")

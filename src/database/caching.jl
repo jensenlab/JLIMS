@@ -174,7 +174,7 @@ function cache(a::AttributeDict)
         attrs=collect(keys(a))
         for attr in attrs 
             val=value(a[attr])
-            upload_attribute(attr)
+            upload_attribute(a[attr])
             execute_db("INSERT OR IGNORE INTO CachedAttributes(AttributeSetID,AttributeID,Value,Unit) Values($id,'$(string(attr))',$(ustrip(val)),'$(string(unit(val)))')")
         end 
     end 
