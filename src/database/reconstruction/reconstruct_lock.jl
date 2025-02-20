@@ -41,7 +41,7 @@ function reconstruct_lock!(locations::Vector{Location},sequence_id::Integer=get_
         if locations[i] isa JLIMS.Well
             continue 
         else 
-            locatons[i].is_locked= is_locked(parallel_locs[i])
+            locations[i].is_locked = is_locked(parallel_locs[i])
         end 
     end 
     return nothing 
@@ -52,7 +52,7 @@ function reconstruct_lock!(location::Location,sequence_id::Integer=get_last_sequ
     if location isa JLIMS.Well
          
     else 
-        location.is_locked= is_locked(parallel_loc)
+        location.is_locked = is_locked(parallel_loc)
     end 
     return nothing 
 end 
@@ -88,7 +88,7 @@ function get_lock_caches(location_id::Integer,starting::Integer=0,ending::Intege
         return query_db("
         WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ),
 
                     encumbrance_subset (EncumbranceID)
@@ -97,21 +97,21 @@ function get_lock_caches(location_id::Integer,starting::Integer=0,ending::Intege
 
         ),
         
-            y (LedgerID,SequenceID,EncumbranceID,LocationID,IsLocked)
-        AS(SELECT 0,$(get_last_sequence_id())+e.EncumbranceID,e.EncumbranceID, v.LocationID,v.IsLocked
+            y (ID,LedgerID,SequenceID,EncumbranceID,LocationID,IsLocked)
+        AS(SELECT e.ID,0,$(get_last_sequence_id())+e.EncumbranceID,e.EncumbranceID, v.LocationID,v.IsLocked
             FROM encumbrance_subset e INNER JOIN EncumberedCachedLockActivity v ON e.EncumbranceID = v.EncumbranceID 
         UNION ALL 
-            SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.IsLocked
+            SELECT Max(c.ID),c.LedgerID,l.SequenceID,0, c.LocationID,c.IsLocked
             FROM CachedLockActivity c INNER JOIN ledger_subset l ON c.LedgerID = l.ID Group By l.SequenceID) 
             SELECT * FROM y WHERE LocationID=$location_id ORDER BY SequenceID ")
     else
         return query_db("
             WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
             ) ,
-        y (LedgerID,SequenceID,EncumbranceID, LocationID, IsLocked)
-        AS( SELECT Max(c.LedgerID),l.SequenceID,0, c.LocationID,c.IsLocked FROM CachedLockActivity c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
+        y (ID,LedgerID,SequenceID,EncumbranceID, LocationID, IsLocked)
+        AS( SELECT Max(c.ID),c.LedgerID,l.SequenceID,0, c.LocationID,c.IsLocked FROM CachedLockActivity c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id Group By SequenceID ORDER BY SequenceID ) 
         SELECT * from y
         " )
         
@@ -129,7 +129,7 @@ function get_locks(location_ids::Vector{<:Integer},starting::Integer=0,ending::I
         """
             WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
                     encumbrance_subset (EncumbranceID)
@@ -153,7 +153,7 @@ function get_locks(location_ids::Vector{<:Integer},starting::Integer=0,ending::I
         """
             WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
              y(LedgerID, SequenceID,EncumbranceID,LocationID,IsLocked) 
              AS( 

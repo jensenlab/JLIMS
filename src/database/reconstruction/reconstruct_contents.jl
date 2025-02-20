@@ -48,7 +48,7 @@ function get_content_caches(location_id::Integer, starting::Integer=0, ending::I
         return query_db("
         WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ),
 
                     encumbrance_subset (EncumbranceID)
@@ -57,21 +57,21 @@ function get_content_caches(location_id::Integer, starting::Integer=0, ending::I
 
         ),
         
-            y (LedgerID,SequenceID,EncumbranceID,Time,LocationID,StockID,Cost)
-        AS(SELECT 0,0,e.EncumbranceID,0, v.LocationID, v.StockID,v.Cost
+            y (ID,LedgerID,SequenceID,EncumbranceID,LocationID,StockID,Cost)
+        AS(SELECT e.ID,0,0,e.EncumbranceID,v.LocationID, v.StockID,v.Cost
             FROM encumbrance_subset e INNER JOIN EncumberedCachedContents v ON e.EncumbranceID = v.EncumbranceID 
         UNION ALL 
-            SELECT c.LedgerID,l.SequenceID,0,Max(c.Time),c.LocationID,c.StockID,c.Cost
+            SELECT Max(c.ID),c.LedgerID,l.SequenceID,0,c.LocationID,c.StockID,c.Cost
             FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.Time <= $ledger_time Group By l.SequenceID) 
             SELECT * FROM y WHERE LocationID=$location_id ORDER BY EncumbranceID,SequenceID ")
     else
         return query_db("
             WITH ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
+            SELECT Max(ID), SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID 
             ) ,
-        y (LedgerID,SequenceID, EncumbranceID,Time,LocationID,StockID,Cost)
-        AS( SELECT c.LedgerID,l.SequenceID,0,Max(c.Time), c.LocationID,c.StockID,c.Cost FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id AND c.Time <= $ledger_time Group By LedgerID ORDER BY SequenceID ) 
+        y (ID,LedgerID,SequenceID, EncumbranceID,LocationID,StockID,Cost)
+        AS( SELECT Max(c.ID),c.LedgerID,l.SequenceID,0, c.LocationID,c.StockID,c.Cost FROM CachedContents c INNER JOIN ledger_subset l ON c.LedgerID = l.ID WHERE c.LocationID =$location_id AND c.Time <= $ledger_time Group By LedgerID ORDER BY SequenceID ) 
         SELECT * from y
         " )
         
@@ -93,7 +93,7 @@ function get_transfer_ancestors(locs::Vector{<:Integer},starting::Integer=0,endi
         """
                     WITH RECURSIVE ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
         encumbrance_subset (EncumbranceID)
@@ -125,7 +125,7 @@ function get_transfer_ancestors(locs::Vector{<:Integer},starting::Integer=0,endi
         """
             WITH RECURSIVE ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
          x (LedgerID,Source,Destination,Quantity,Unit)
@@ -154,7 +154,7 @@ function get_transfer_descendents(locs::Vector{<:Integer},starting::Integer=0,en
         """
                     WITH RECURSIVE ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
         encumbrance_subset (EncumbranceID)
@@ -186,7 +186,7 @@ function get_transfer_descendents(locs::Vector{<:Integer},starting::Integer=0,en
         """
             WITH RECURSIVE ledger_subset (ID,SequenceID,Time)
         AS(
-            SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
+            SELECT Max(ID),SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending GROUP BY SequenceID
             ) ,
 
          x (LedgerID,EncumbranceID,Source,Destination,Quantity,Unit)

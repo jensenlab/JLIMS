@@ -6,7 +6,10 @@ include("build_test_database.jl")
 
 println("sample database complete.")
 
+println("testing cache repair tools...")
 
+include("test_cache_repair.jl")
+println("cache repair complete")
 # test new unit parsing 
 @testset "NewUnitParsing" begin
     @test uparse("OD",unit_context=[Unitful,JensenLabUnits])==u"OD"
