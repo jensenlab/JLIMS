@@ -97,10 +97,10 @@ function upload_component(chem::Chemical)
     return id
 end 
 
-function upload_component(str::Strain)
-    execute_db("INSERT OR IGNORE INTO Components(ComponentHash,Type) Values($(hash(str)),'Strain')")
+function upload_component(str::Organism)
+    execute_db("INSERT OR IGNORE INTO Components(ComponentHash,Type) Values($(hash(str)),'Organism')")
     id=get_component_id(str)
-    execute_db("INSERT OR IGNORE INTO Strains(ComponentID,Genus,Species,Strain) Values($(id),'$(genus(str))','$(species(str))','$(strain(str))')")
+    execute_db("INSERT OR IGNORE INTO Organisms(ComponentID,Genus,Species,Strain) Values($(id),'$(genus(str))','$(species(str))','$(strain(str))')")
     return id
 end 
 

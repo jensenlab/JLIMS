@@ -72,10 +72,10 @@ end
 """
     struct Culture <: Stock 
 
-`Culture` objects are stocks that contain at least one [`Strain`](@ref). Cultures may contain any number of [`Solid`](@ref) or [`Liquid`](@ref) components.
+`Culture` objects are stocks that contain at least one [`Organism`](@ref). Cultures may contain any number of [`Solid`](@ref) or [`Liquid`](@ref) components.
 """
 struct Culture <: Stock 
-    organisms::Set{Strain}
+    organisms::Set{Organism}
     solids::SolidDict
     liquids::LiquidDict
     function Culture(organisms,solids,liquids)  
@@ -150,9 +150,9 @@ end
 
 """
     organisms(::Stock) 
-return the `organisms` property of a Stock. If no organisms, are present, return Set{Strain}(). 
+return the `organisms` property of a Stock. If no organisms, are present, return Set{Organism}(). 
 """
-organisms(c::Stock)=Set{Strain}()
+organisms(c::Stock)=Set{Organism}()
 organisms(c::Culture)=c.organisms
 
 
@@ -443,7 +443,7 @@ function Base.hash(s::Stock, h::UInt)
 end 
 
 
-function Base.in(str::Strain,stock::Stock)
+function Base.in(str::Organism,stock::Stock)
     return str in organisms(stock)
 end 
 

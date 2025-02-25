@@ -21,6 +21,48 @@ include("./Units/JensenLabUnits.jl")
 
 Unitful.promote_unit(::S,::T) where {S<:Unitful.VolumeUnits,T<:Unitful.VolumeUnits} = u"mL"
 Unitful.promote_unit(::S,::T) where {S<:Unitful.MassUnits,T<:Unitful.MassUnits} = u"g" 
+
+
+const labmodules = Vector{Module}()
+
+function _chemprops(m::Module)
+    #A hidden symbol which will be automatically attached to any module defining chemicals, allowing JLIMS.register() to merge in the units from that module 
+    chemprops_name = Symbol("#JLIMS_chemmprops")
+    if isdefined(m,chemprops_name) 
+        getproperty(m,chemprops_name)
+    else
+        Core.eval(m,:(const $chemprops_name = Dict{Symbol,Tuple{Union{Unitful.MolarMass,Missing},Union{Unitful.Density,Missing},Union{Integer,Missing}}}()))
+    end 
+end 
+
+const chemprops = _chemprops(JLIMS) 
+
+function _orgprops(m::Module)
+    orgprops_name=Symbol("#JLIMS_orgprops")
+    if isdefined(m,orgprops_name)
+        getproperty(m,orgprops_name)
+    else
+        Core.eval(m , :(const $orgprops_name = Dict{Symbol, Tuple{String,String,String}}()))
+    end 
+end 
+
+const orgprops = _orgprops(JLIMS) 
+
+function register_lab(lab_module::Module)
+    push!(JLIMS.labmodules,lab_module) 
+    if lab_module !== JLIMS 
+        merge!(JLIMS.chemprops,_chemprops(lab_module))
+        merge!(JLIMS.orgprops,_orgprops(lab_module))
+    end 
+    
+
+end 
+
+
+
+
+
+
 include("./exceptions.jl")
 include("./environments/Attributes.jl")
 
@@ -28,7 +70,7 @@ include("./locations/Location.jl")
 include("./locations/LocationRef.jl")
 include("./locations/Labware.jl")
 include("./stocks/Chemicals.jl")
-include("./stocks/Strains.jl")
+include("./stocks/Organisms.jl")
 include("./stocks/Stocks.jl")
 include("./locations/Well.jl")
 include("./stocks/chemical_parsing.jl")
@@ -71,15 +113,15 @@ export WellCapacityError, MixingError, LockedLocationError, AlreadyLocatedInErro
 export JensenLabUnits # custom units
 export Attribute, AttributeDict,set_attribute!,set_attribute ,attribute_unit
 export Chemical,Solid,Liquid,Gas # chemical types
-export Strain # strain type
+export Organism # Organism type
 export Stock,Empty, Mixture, Solution, Culture # Stock types 
 export Location, Labware, Well #location types 
 export LocationRef
-export @labware, @location, @well, @occupancy_cost, @chemical, @strain , @attribute # macros for constants 
+export @labware, @location, @well, @occupancy_cost, @chemical, @organism , @attribute, @chem_str, @org_str # macros for constants 
 export get_mw_density
 # chemicals 
 export molecular_weight, density, pubchemid 
-# strains 
+# Organisms 
 export genus, species, strain 
 # Stocks 
 export solids, liquids, chemicals, organisms, volume_estimate, quantity, component_display

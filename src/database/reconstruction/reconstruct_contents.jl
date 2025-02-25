@@ -13,9 +13,9 @@ function get_component(id::Integer)
         typ=eval(Symbol(c["Type"]))
         return typ(c["Name"],c["MolecularWeight"]*u"g/mol",c["Density"]*u"g/mL",c["CID"])
 
-    elseif comp_type =="Strain"
-        c= query_db("SELECT Genus, Species, Strain FROM Strains WHERE ComponentID = $id")[1,:]
-        return Strain(c["Genus"],c["Species"],c["Strain"])
+    elseif comp_type =="Organism"
+        c= query_db("SELECT Genus, Species, Strain FROM Organisms WHERE ComponentID = $id")[1,:]
+        return Organism(c["Genus"],c["Species"],c["Strain"])
     else
         error("component $id not found in the database")
         return nothing

@@ -50,8 +50,8 @@ function create_db(path)
         );
         """
 
-    create_Strains="""
-        CREATE TABLE Strains(
+    create_Organisms="""
+        CREATE TABLE Organisms(
             ID INTEGER PRIMARY KEY NOT NULL,
             ComponentID INTEGER,
             Genus TEXT,
@@ -528,7 +528,7 @@ function create_db(path)
     DBInterface.execute(db,create_Locations)
     DBInterface.execute(db, create_Components)
     DBInterface.execute(db,create_Chemicals)
-    DBInterface.execute(db,create_Strains)
+    DBInterface.execute(db,create_Organisms)
     DBInterface.execute(db,create_Attributes)
     DBInterface.execute(db,create_EnvironmentAttributes)
     DBInterface.execute(db,create_Configurations)
