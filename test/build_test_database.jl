@@ -203,6 +203,9 @@ p_id=upload_protocol(exp_id,"test_protocol")
 @encumber p_id set_attribute!(jensen_lab,Humidity(40u"percent"))
 @encumber p_id move_into!(jensen_lab,b1)
 encumber_cache(get_last_encumbrance_id(p_id),plate1)
+
+JLIMS.upload_encumbrance_completion(1,get_last_ledger_id())
+
 #reconstruct_location(collect(25:30))
 #=
 @time reconstruct_location(collect(25:30))

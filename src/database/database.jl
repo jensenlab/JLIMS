@@ -353,9 +353,10 @@ function create_db(path)
         ID INTEGER PRIMARY KEY NOT NULL, 
         ExperimentID INTEGER,
         Name Text,
-        SequenceIDCreatedAt INTEGER,
+        LedgerIDCreatedAt INTEGER,
         EstimatedTime Real,
         FOREIGN KEY (ExperimentID) REFERENCES Experiments(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (LedgerIDCreatedAt) REFERENCES Ledger(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         Unique(ExperimentID,Name)
     );
     """
