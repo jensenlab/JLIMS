@@ -89,10 +89,10 @@ function upload_experiment(name::AbstractString,user::String,is_public=false;tim
     return ex_id[1,1]
 end 
 
-function upload_protocol(exp_id::Integer,name::AbstractString,sequence_id_entered_at::Integer=get_last_sequence_id(), estimate::Dates.Time=Dates.Time(0);enforce=true) 
+function upload_protocol(exp_id::Integer,name::AbstractString,ledger_id_entered_at::Integer=get_last_ledger_id(), estimate::Dates.Time=Dates.Time(0);enforce=true) 
     est_time=Dates.millisecond(estimate)
     execute_db("""
-    INSERT INTO Protocols(ExperimentID,Name,SequenceIDCreatedAt,EstimatedTime) Values($exp_id,'$name',$sequence_id_entered_at,$est_time);
+    INSERT INTO Protocols(ExperimentID,Name,LedgerIDCreatedAt,EstimatedTime) Values($exp_id,'$name',$ledger_id_entered_at,$est_time);
     """)
     p_id=get_last_protocol_id(exp_id)
     if enforce 
@@ -221,12 +221,12 @@ end
 function get_encumbrance_completion(encumbrance_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now())
     ledger_time=db_time(time)
     entry =query_join_vector(encumbrance_ids) 
-    out=query_db("""    WITH ledger_subset (ID,SequenceID,Time)
-    AS(
-        SELECT ID,SequenceID,Max(Time) FROM Ledger WHERE Time <= $ledger_time AND SequenceID <= $sequence_id GROUP BY SequenceID
-        ) 
+    out=query_db("""
+        WITH y (EncumbranceID, LedgerID) 
+        AS(
+        SELECT Max(EncumbranceID),LedgerID FROM EncumbranceCompletion e  WHERE EncumbranceID in $entry Group BY EncumbranceID) 
 
-        SELECT EncumbranceID,LedgerID FROM EncumbranceCompletion e INNER JOIN ledger_subset l ON e.LedgerID = l.ID WHERE EncumbranceID in $entry
+        SELECT * FROM y 
         """
     )
     out_ledger= Union{Integer,Missing}[]
@@ -243,3 +243,52 @@ function get_encumbrance_completion(encumbrance_ids::Vector{<:Integer},sequence_
     end 
     return DataFrame(EncumbranceID=encumbrance_ids,LedgerID=out_ledger,IsComplete=complete)
 end 
+
+
+function get_all_protocols(sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now();enforced_only=true)
+    starting=0 
+    ending = sequence_id
+    ledger_time=db_time(time)
+    out= query_db("""
+    With protocol_info(ExperimentID,ProtocolID,Name,UploadLedgerID,LedgerID,IsEnforced) AS( 
+    SELECT p.ExperimentID , p.ID, p.Name ,p.LedgerIDCreatedAt, e.LedgerID, e.IsEnforced FROM Protocols p INNER JOIN ProtocolEnforcement e ON p.ID = e.ProtocolID
+    ),
+    ledger_subset (ID,SequenceID,Time)
+        AS(
+            SELECT ID, SequenceID,Time FROM Ledger WHERE Time <= $ledger_time AND SequenceID BETWEEN $starting AND $ending
+            ),
+    y (ExperimentID, ProtocolID, Name, UploadLedgerID,LedgerID, IsEnforced) AS( 
+    
+    SELECT p.ExperimentID, p.ProtocolID, p.Name, p.UploadLedgerID,Max(p.LedgerID),p.IsEnforced FROM protocol_info p INNER JOIN ledger_subset l ON p.LedgerID = l.ID GROUP BY p.ProtocolID
+    ),
+    z (ExperimentID, ExperimentName,ProtocolID, Name, UploadLedgerID,IsEnforced) AS(
+    SELECT y.ExperimentID,Experiments.Name,y.ProtocolID,y.Name,y.UploadLedgerID,y.IsEnforced FROM y INNER JOIN Experiments ON y.ExperimentID =Experiments.ID 
+    )
+
+    SELECT * FROM z
+    """
+    )
+
+    if enforced_only
+        out = subset(out , :IsEnforced => x -> x .== 1)
+    end 
+    return out 
+end 
+
+
+
+
+function get_protocol_status(protocol_ids::Vector{<:Integer},sequence_id::Integer=get_last_sequence_id(),time::DateTime=Dates.now())
+    ledger_id =get_last_ledger_id(sequence_id,time)
+    entry =query_join_vector(protocol_ids)
+    out=query_db("""
+    
+    With Complete(ProtocolID,Complete,Total) AS( 
+    SELECT e.ProtocolID, Count(c.LedgerID<=$ledger_id),Count(e.ID) FROM Encumbrances e LEFT JOIN EncumbranceCompletion c ON c.EncumbranceID = e.ID  GROUP BY e.ProtocolID
+    )
+    SELECT * FROM Complete
+    """
+    )
+    return out 
+end 
+
