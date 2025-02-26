@@ -210,6 +210,7 @@ p_ud=upload_protocol(exp_id,"bufandisimo")
 
 @encumber p_id transfer!(w1,children(plate1)[4,8],100u"µL")
 @encumber p_id move_into!(culture_room,plate1)
+JLIMS.upload_encumbrance_completion(1,get_last_ledger_id())
 
 #reconstruct_location(collect(25:30))
 #=
