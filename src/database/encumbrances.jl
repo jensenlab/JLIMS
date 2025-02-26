@@ -294,4 +294,130 @@ end
 
 
 
+function get_encumbered_transfer(encumbrance_id::Integer) 
+    x="SELECT * FROM EncumberedTransfers WHERE EncumbranceID = $encumbrance_id"
+    return query_db(x)
+end 
+
+function get_encumbered_movement(encumbrance_id::Integer)
+    x="SELECT * FROM EncumberedMovements WHERE EncumbranceID = $encumbrance_id"
+    return query_db(x)
+end 
+
+function get_encumbered_environment_attribute(encumbrance_id::Integer)
+    x="SELECT * FROM EncumberedEnvironments WHERE EncumbranceID = $encumbrance_id"
+    return query_db(x)
+end 
+function get_encumbered_lock(encumbrance_id::Integer)
+    x="SELECT * FROM EncumberedLocks WHERE EncumbranceID = $encumbrance_id"
+    return query_db(x)
+end 
+function get_encumbered_activity(encumbrance_id::Integer)
+    x="SELECT * FROM EncumberedActivity WHERE EncumbranceID = $encumbrance_id"
+    return query_db(x)
+end 
+
+
+
+function get_encumbrance_operation(encumbrance_id::Integer)
+    if isa_encumbered_transfer(encumbrance_id)
+        return get_encumbered_transfer
+    elseif isa_encumbered_movement(encumbrance_id)
+        return get_encumbered_movement
+    elseif isa_encumbered_environment_attribute(encumbrance_id)
+        return get_encumbered_environment_attribute
+    elseif isa_encumbered_lock(encumbrance_id)
+        return get_encumbered_lock
+    elseif isa_encumbered_activity(encumbrance_id)
+        return get_encumbered_activity
+    else
+        error("encumbrance operation not supported")
+    end 
+
+end 
+
+
+
+
+
+
+function isa_encumbered_transfer(encumbrance_id::Integer)
+
+    x=" SELECT  EncumbranceID FROM EncumberedTransfers WHERE EncumbranceID = $encumbrance_id"
+    out=query_db(x)
+    if nrow(out) == 1 
+        return true 
+    else 
+        return false
+    end
+end 
+
+
+function isa_encumbered_movement(encumbrance_id::Integer)
+    x=" SELECT EncumbranceID FROM EncumberedMovements WHERE EncumbranceID = $encumbrance_id"
+    out=query_db(x)
+    if nrow(out) == 1 
+        return true 
+    else 
+        return false
+    end
+end 
+
+function isa_encumbered_environment_attribute(encumbrance_id::Integer)
+    x= "SELECT EncumbranceID FROM EncumberedEnvironments WHERE EncumbranceID = $encumbrance_id"
+    out=query_db(x)
+    if nrow(out) == 1 
+        return true 
+    else 
+        return false
+    end
+end 
+
+
+function isa_encumbered_lock(encumbrance_id::Integer)
+    x= "SELECT EncumbranceID FROM EncumberedLocks WHERE EncumbranceID = $encumbrance_id"
+    out=query_db(x)
+    if nrow(out) == 1 
+        return true 
+    else 
+        return false
+    end
+end 
+
+function isa_encumbered_activity(encumbrance_id::Integer)
+    x= "SELECT EncumbranceID FROM EncumberedActivity WHERE EncumbranceID = $encumbrance_id"
+    out=query_db(x)
+    if nrow(out) == 1 
+        return true 
+    else 
+        return false
+    end
+end 
+
+
+const encumbrance_operation_names=Dict(
+    get_encumbered_transfer => "Transfer",
+    get_encumbered_movement => "Movement",
+    get_encumbered_environment_attribute => "Environment Attribute",
+    get_encumbered_lock => "Lock",
+    get_encumbered_activity => "Activity",
+)
+
+
+
+
+
+
+function get_encumbrance_status(protocol_id::Integer,sequence_id=get_last_sequence_id(),time::DateTime=Dates.now())
+    encumbrances=get_all_encumbrances(protocol_id) 
+    operations = get_encumbrance_operation.(encumbrances)
+
+    names = map( x-> encumbrance_operation_names[x] , operations)
+    enc_df=DataFrame(EncumbranceID=encumbrances, Operation=names) 
+    completion=get_encumbrance_completion(encumbrances,sequence_id,time)
+    df = DataFrames.leftjoin(enc_df,completion, on = :EncumbranceID)
+
+    return df 
+end 
+
 
