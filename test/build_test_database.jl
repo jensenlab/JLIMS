@@ -206,7 +206,7 @@ encumber_cache(get_last_encumbrance_id(p_id),plate1)
 
 exp_id = upload_experiment("bufanda","Ben")
 
-p_ud=upload_protocol(exp_id,"bufandisimo")
+p_id=upload_protocol(exp_id,"bufandisimo")
 
 @encumber p_id transfer!(w1,children(plate1)[4,8],100u"µL")
 @encumber p_id move_into!(culture_room,plate1)
