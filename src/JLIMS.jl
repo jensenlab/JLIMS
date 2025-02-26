@@ -48,15 +48,7 @@ end
 
 const orgprops = _orgprops(JLIMS) 
 
-function register_lab(lab_module::Module)
-    push!(JLIMS.labmodules,lab_module) 
-    if lab_module !== JLIMS 
-        merge!(JLIMS.chemprops,_chemprops(lab_module))
-        merge!(JLIMS.orgprops,_orgprops(lab_module))
-    end 
-    
 
-end 
 
 
 
@@ -64,6 +56,7 @@ end
 
 
 include("./exceptions.jl")
+include("./user.jl")
 include("./environments/Attributes.jl")
 
 include("./locations/Location.jl")

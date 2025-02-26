@@ -98,12 +98,8 @@ There are three valid type parameters for chemicals:
 For a given chemical, its `type` parameter should be the phase in which it exists at STP. 
 
 
-
-We provide the optional argument for `pubchemid` to access the [PubChem](https://pubchem.ncbi.nlm.nih.gov) database. Attaching a pubchemid to a chemical triggers a call to the PUG REST API to query the molecular weight and density of the chemical. 
-If no `pubchemid` is provided, the chemical is defined with `missing` for the `molecular_weight` and `density` properties.
-
 Examples: 
-```jldoctest
+```julia
 julia> using Unitful
 
 julia> @chemical water "water" Liquid 18.015u"g/mol" 1.00u"g/mL" 962
@@ -111,12 +107,18 @@ water
 
 julia> molecular_weight(water)
 18.015 g mol⁻¹
+
+julia> @chemical mychemical "my madeup chemical" Solid missing missing missing # chemicals without defined properties can be created with the `missing` keyword 
+mychemical 
+
+julia> molecular_weight(mychemical) 
+missing
 ```
 
 Chemicals can also be defined manually with type constructors.
 
 Example:
-```jldoctest
+```julia
 julia> water=Liquid("water",18.015u"g/mol",1.00u"g/mL",962)
 water
 ```
@@ -138,6 +140,42 @@ macro chemical(labsymb,name,type,molecular_weight,density,pubchemid)
     esc(expr)
 end 
 
+
+
+
+
+""" 
+    @chem_str(chemical) 
+
+String macro to easily recall chemicals defined in lab modules that have been registered with [`JLIMS.register_lab`](@ref)
+
+If the symbol is defined for a [`JLIMS.Chemical`](@ref) in multiple modules, the symbol from the most recently registred module will be used. 
+
+Example: 
+
+```julia
+julia> chem"water"
+water
+```
+The [`@chem_str`](@ref) macro is most useful for constructing [`JLIMS.Stock`](@ref) objects: 
+
+```julia
+julia> 1u"mL" * chem"water"
+```
+
+"""
+macro chem_str(chemical)
+    ex = Meta.parse(chemical)
+    labmods = [JLIMS]
+    for m in JLIMS.labmodules
+        # Find registered lab extension modules which are also loaded by
+        # __module__ (required so that precompilation will work).
+        if isdefined(__module__, nameof(m)) && getfield(__module__, nameof(m)) === m
+            push!(labmods, m)
+        end
+    end
+    esc(lookup_chemicals(labmods, ex))
+end
 
 
 macro chemical_symbols(labsymb,name,type,molecular_weight,density,pubchemid)
@@ -181,18 +219,7 @@ end
 
 
 
-macro chem_str(chemical)
-    ex = Meta.parse(chemical)
-    labmods = [JLIMS]
-    for m in JLIMS.labmodules
-        # Find registered lab extension modules which are also loaded by
-        # __module__ (required so that precompilation will work).
-        if isdefined(__module__, nameof(m)) && getfield(__module__, nameof(m)) === m
-            push!(labmods, m)
-        end
-    end
-    esc(lookup_chemicals(labmods, ex))
-end
+
 
 
 function chemparse(str; chem_context=JLIMS)
