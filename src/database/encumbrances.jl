@@ -134,7 +134,7 @@ end
 
 function encumber_environment_attribute(encumberid::Integer,loc::Location,attr::Attribute)
     upload_attribute(attr)
-    val=value(attr)
+    val=quantity(attr)
     execute_db("""INSERT INTO EncumberedEnvironments(EncumbranceID,LocationID,Attribute,Value,Unit) Values($encumberid,$(location_id(loc)),'$(string(typeof(attr)))',$(ustrip(val)),'$(string(unit(val)))')""")
     return nothing
 end 
@@ -291,4 +291,7 @@ function get_protocol_status(protocol_ids::Vector{<:Integer},sequence_id::Intege
     )
     return out 
 end 
+
+
+
 
