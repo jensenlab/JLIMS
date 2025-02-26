@@ -203,6 +203,14 @@ p_id=upload_protocol(exp_id,"test_protocol")
 @encumber p_id set_attribute!(jensen_lab,Humidity(40u"percent"))
 @encumber p_id move_into!(jensen_lab,b1)
 encumber_cache(get_last_encumbrance_id(p_id),plate1)
+
+exp_id = upload_experiment("bufanda","Ben")
+
+p_ud=upload_protocol(exp_id,"bufandisimo")
+
+@encumber p_id transfer!(w1,children(plate1)[4,8],100u"µL")
+@encumber p_id move_into!(culture_room,plate1)
+
 #reconstruct_location(collect(25:30))
 #=
 @time reconstruct_location(collect(25:30))
