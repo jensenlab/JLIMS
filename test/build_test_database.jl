@@ -10,14 +10,14 @@ create_db(file)
 
 #### set up a test lab
 
-@chemical Water "water" Liquid 962
-@chemical Glycerol "glycerol" Liquid
-@chemical Paba "4-aminobenzoic acid" Solid 978
-@chemical IronNitrate "Iron Nitrate" Solid 9815404
-@chemical LB "LB Broth" Solid 
+@chemical Water "water" Liquid 18.015u"g/mol" 1.00u"g/mL" 962
+@chemical Glycerol "glycerol" Liquid missing missing missing 
+@chemical Paba "4-aminobenzoic acid" Solid 137.14u"g/mol" 1.35u"g/mL" 978 
+@chemical IronNitrate "Iron Nitrate" Solid 179.86u"g/mol" missing  9815404
+@chemical LB "LB Broth" Solid missing missing missing 
 
-@strain SMU_UA159 Streptococcus mutans UA159 
-@strain SSA_SK36 Streptococcus sanguinis SK36 
+@organism SMU_UA159 "Streptococcus" "mutans" "UA159" 
+@organism SSA_SK36 "Streptococcus" "sanguinis" "SK36" 
 
 @attribute Temperature u"°C"
 @attribute Pressure u"atm"

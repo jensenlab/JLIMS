@@ -107,7 +107,7 @@ function get_stock_id(s::Stock)
     end
 end 
 
-function get_component_id(comp::Union{Chemical,Strain})
+function get_component_id(comp::Union{Chemical,Organism})
     id=query_db("SELECT * FROM Components WHERE ComponentHash = $(hash(comp)) " ) 
     if nrow(id)==1
         return id[1,1] # return the id if it exists

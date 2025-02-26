@@ -85,8 +85,8 @@ end
 
 
 """
-    @chemical labname name type pubchemid
-    @chemical labname name type
+    @chemical labname name type molecular_weight density pubchemid
+
 
 Define a new chemical and import it into the workspace under `labname`. The `name` argument is the display name for the chemical, which can include a larger set of characters and formatting than the `labname`
     
@@ -98,71 +98,164 @@ There are three valid type parameters for chemicals:
 For a given chemical, its `type` parameter should be the phase in which it exists at STP. 
 
 
-
-We provide the optional argument for `pubchemid` to access the [PubChem](https://pubchem.ncbi.nlm.nih.gov) database. Attaching a pubchemid to a chemical triggers a call to the PUG REST API to query the molecular weight and density of the chemical. 
-If no `pubchemid` is provided, the chemical is defined with `missing` for the `molecular_weight` and `density` properties.
-
 Examples: 
-```jldoctest
+```julia
 julia> using Unitful
-julia> @chemical iron_nitrate "Iron (II) Nitrate" Solid
 
-julia> iron_nitrate isa Chemical && iron_nitrate isa Solid
-true
-
-julia> @chemical water "water" Liquid 962
+julia> @chemical water "water" Liquid 18.015u"g/mol" 1.00u"g/mL" 962
 water
 
 julia> molecular_weight(water)
 18.015 g mol⁻¹
+
+julia> @chemical mychemical "my madeup chemical" Solid missing missing missing # chemicals without defined properties can be created with the `missing` keyword 
+mychemical 
+
+julia> molecular_weight(mychemical) 
+missing
 ```
 
 Chemicals can also be defined manually with type constructors.
 
 Example:
-```jldoctest
+```julia
 julia> water=Liquid("water",18.015u"g/mol",1.00u"g/mL",962)
 water
 ```
 
 See also: [`Solid`](@ref), [`Liquid`](@ref), [`Gas`](@ref)
 """
-macro chemical(labname, name, type, pubchemid)
-    ln=Symbol(labname)
-    n=Base.string(name)
-    t=Symbol(type)
+macro chemical(labsymb,name,type,molecular_weight,density,pubchemid)
 
-    cid::Integer=eval(pubchemid)
-    if isdefined(__module__,ln) || isdefined(JLIMS,ln)
-        throw(ArgumentError("Chemical  $n already exists"))
-    end 
-    if !isdefined(__module__,t) && !isdefined(JLIMS,t)
-        throw(ArgumentError("abstract Chemical type $t does not exist."))
-    end
-    mw,d=JLIMS.get_mw_density(cid)
+    expr =Expr(:block)
+    push!(expr.args,quote 
+        Base.@__doc__ $JLIMS.@chemical_symbols $labsymb $name $type $molecular_weight $density $pubchemid 
+        end 
+    )
 
-    return esc(quote
-        const $ln = $t($n,$mw * u"g/mol",$d * u"g/mL",$cid)  
-    end)
+    push!(expr.args,quote
+        $labsymb
+    end )
+
+    esc(expr)
 end 
 
-macro chemical(labname,name, type)
-    ln=Symbol(labname)
-    n=Base.string(name)
-    t=Symbol(type)
-    if isdefined(__module__,ln) || isdefined(JLIMS,ln)
-        throw(ArgumentError("Chemical  $n already exists"))
-    end 
-    if !isdefined(__module__,t) && !isdefined(JLIMS,t)
-        throw(ArgumentError("abstract Chemical type $t does not exist."))
-    end
 
-    return esc(quote
-        const $ln = $t($n,missing,missing,missing)  
-    end)
+
+
+
+""" 
+    @chem_str(chemical) 
+
+String macro to easily recall chemicals defined in lab modules that have been registered with [`JLIMS.register_lab`](@ref)
+
+If the symbol is defined for a [`JLIMS.Chemical`](@ref) in multiple modules, the symbol from the most recently registred module will be used. 
+
+Example: 
+
+```julia
+julia> chem"water"
+water
+```
+The [`@chem_str`](@ref) macro is most useful for constructing [`JLIMS.Stock`](@ref) objects: 
+
+```julia
+julia> 1u"mL" * chem"water"
+```
+
+"""
+macro chem_str(chemical)
+    ex = Meta.parse(chemical)
+    labmods = [JLIMS]
+    for m in JLIMS.labmodules
+        # Find registered lab extension modules which are also loaded by
+        # __module__ (required so that precompilation will work).
+        if isdefined(__module__, nameof(m)) && getfield(__module__, nameof(m)) === m
+            push!(labmods, m)
+        end
+    end
+    esc(lookup_chemicals(labmods, ex))
 end
 
 
+macro chemical_symbols(labsymb,name,type,molecular_weight,density,pubchemid)
+    ls= Symbol(labsymb)
+    ln = Meta.quot(ls)
+    docstr= """
+            $labsymb
+
+        The $type chemical $name with [`PubChem ID`](https://pubchem.ncbi.nlm.nih.gov) $pubchemid  
+
+        Molecular Weight: $molecular_weight
+        Density: $density
+
+        See also: [`$type`](@ref)
+        """
+    cprops = :($molecular_weight,$density,$pubchemid)  
+    esc(quote
+
+        $(chemprops_expr(__module__,ln,cprops))
+        const global $ls = $type($name,$molecular_weight,$density,$pubchemid)
+        @doc $docstr $ls 
+    end)
+end 
+
+
+
+
+
+function chemprops_expr(m::Module,n,chemprops)
+    if m === JLIMS
+        :($(_chemprops(JLIMS))[$n]= $chemprops)
+    else
+        # We add the chemical properties to dictionaries in both JLIMS and the module `m` so that the factor is available in both
+        quote 
+            $(_chemprops(m))[$n]=$chemprops
+            $(_chemprops(JLIMS))[$n]=$chemprops
+        end 
+    end 
+end 
+
+
+
+
+
+
+
+function chemparse(str; chem_context=JLIMS)
+    ex = Meta.parse(str)
+    eval(lookup_chemicals(chem_context, ex))
+end
+function lookup_chemicals(labmods, sym::Symbol)
+    has_chemical = m->(isdefined(m,sym) && chemstr_check_bool(getfield(m, sym)))
+    inds = findall(has_chemical, labmods)
+    if isempty(inds)
+        # Check whether chemical exists in the global list to give an improved
+        # error message.
+        hintidx = findfirst(has_chemical, labmodules)
+        if hintidx !== nothing
+            hintmod = labmodules[hintidx]
+            throw(ArgumentError(
+                """Symbol `$sym` was found in the globally registered lab module $hintmod
+                   but was not in the provided list of lab modules $(join(labmods, ", ")).
+
+                   (Consider `using $hintmod` in your module if you are using `@chem_str`?)"""))
+        else
+            throw(ArgumentError("Symbol $sym could not be found in lab modules $labmods"))
+        end
+    end
+
+    m = labmods[inds[end]]
+    u = getfield(m, sym)
+
+    any(u != u1 for u1 in getfield.(labmods[inds[1:(end-1)]], sym)) &&
+        @warn """Symbol $sym was found in multiple registered lab modules.
+                 We will use the one from $m."""
+    return u
+end
+
+chemstr_check_bool(::Chemical) =true 
+chemstr_check_bool(::Any) =false
 
 
 

@@ -140,7 +140,7 @@ See also [`sterilise`](@ref)
 """
 function sterilize!(x::Well)
     st=stock(x);
-    st_new=Stock(Set{Strain}(),solids(st),liquids(st));
+    st_new=Stock(Set{Organism}(),solids(st),liquids(st));
     check_capacity(st_new,x)
     x.stock=st_new;
     nothing
@@ -165,7 +165,7 @@ end
 
 Remove all [`Chemical`](@ref) components from the [`Stock`](@ref) object contained in the well. 
 
-* `drain!` leaves behind any [`Strain`](@ref)s * 
+* `drain!` leaves behind any [`Organism`](@ref)s * 
 
 See also: [`drain`](@ref),[`sterilize!`](@ref),[`empty!`](@ref)
 """
@@ -182,7 +182,7 @@ end
 
 Create a copy of `well` x and Remove all [`Chemical`](@ref) components from the [`Stock`](@ref) object contained in the well. 
 
-* `drain` leaves behind any [`Strain`](@ref)s * 
+* `drain` leaves behind any [`Organism`](@ref)s * 
 
 See also: [`drain!`](@ref),[`sterilize`](@ref),[`empty`](@ref)
 """

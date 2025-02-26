@@ -57,9 +57,9 @@ function mix(a::LiquidDict,b::LiquidDict;operation=+)
     return new_liquids
 end 
 
-# internal addition operator for the strain math. strains can be added, but not removed independently. 
-+(a::Set{Strain},b::Set{Strain})=union(a,b)
--(a::Set{Strain},b::Set{Strain})=a 
+# internal addition operator for the Organism math. Organisms can be added, but not removed independently. 
++(a::Set{Organism},b::Set{Organism})=union(a,b)
+-(a::Set{Organism},b::Set{Organism})=a 
 
 
 
@@ -93,4 +93,4 @@ function -(c1::Stock,c2::Stock)
 end 
  
 
-+(st::Stock,b::Strain)=st + Stock(Set{Strain}([b]),SolidDict(),LiquidDict())
++(st::Stock,b::Organism)=st + Stock(Set{Organism}([b]),SolidDict(),LiquidDict())
