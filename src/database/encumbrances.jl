@@ -286,7 +286,7 @@ function get_protocol_status(protocol_ids::Vector{<:Integer},sequence_id::Intege
     With Complete(ProtocolID,Complete,Total) AS( 
     SELECT e.ProtocolID, Count(c.LedgerID<=$ledger_id),Count(e.ID) FROM Encumbrances e LEFT JOIN EncumbranceCompletion c ON c.EncumbranceID = e.ID  GROUP BY e.ProtocolID
     )
-    SELECT * FROM Complete
+    SELECT * FROM Complete WHERE ProtocolID in $entry
     """
     )
     return out 
