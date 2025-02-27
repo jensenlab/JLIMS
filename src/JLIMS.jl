@@ -10,9 +10,11 @@ using
     HTTP, # chemical parsing only
     JSON, # chemical parsing only 
     UUIDs, # used for generating default labware names
-    Dates #used for converting time objects. 
+    Dates, #used for converting time objects. 
+    StringDistances # used for computing chemical and organism hints 
 import Base: +,-,*,/,convert, show ,sort , promote_rule,round , in, ==,empty,empty!, hash, isapprox # all overloaded by this package
 import AbstractTrees: children,parent,nodevalue
+
 
 include("./Units/JensenLabUnits.jl")
 
@@ -125,7 +127,7 @@ export can_move_into, move_into!,move_into
 #labware
 export shape, vendor, catalog, wells
 #wells
-export capacity, stock, cost,  sterilize!,sterilize,transfer!,transfer, drain!,drain,deposit!,deposit,withdraw!,withdraw
+export capacity, stock, cost,  sterilize!,sterilize,transfer!,transfer, drain!,drain,deposit!,withdraw!
 #database
 export create_db
 #ledger.jl
@@ -139,7 +141,7 @@ export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_
 #generate_location
 export generate_location
 #caching and fetching 
-export cache , fetch_cache, get_location_info
+export cache , get_location_info
 #reconstruct_location.jl
 export reconstruct_location,reconstruct_location!
 #reconstruct_contents.jl
@@ -158,5 +160,5 @@ export reconstruct_lock,reconstruct_lock!
 export reconstruct_activity,reconstruct_activity!
 #barcodes
 export Barcode, assign_barcode!,assign_barcode
-export @protocol ,upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache
+export upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache
 end # module JLIMS

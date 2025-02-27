@@ -2,7 +2,7 @@
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "674663fa5b1f24c84b7aabe9322ae24b705f0ef3"
+project_hash = "8085407d279e4cb91c50777bb99049217e896471"
 
 [[deps.AbstractTrees]]
 git-tree-sha1 = "2d9c9a55f9c93e8887ad391fbae72f8ef55e1177"
@@ -84,6 +84,12 @@ version = "1.0.0"
 [[deps.Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
+[[deps.Distances]]
+deps = ["LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI"]
+git-tree-sha1 = "c7e3a542b999843086e2f29dac96a618c105be1d"
+uuid = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
+version = "0.10.12"
 
 [[deps.ExceptionUnwrapping]]
 deps = ["Test"]
@@ -315,6 +321,18 @@ uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[[deps.StatsAPI]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "1ff449ad350c9c4cbc756624d6f8a8c3ef56d3ed"
+uuid = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
+version = "1.7.0"
+
+[[deps.StringDistances]]
+deps = ["Distances", "StatsAPI"]
+git-tree-sha1 = "5b2ca70b099f91e54d98064d5caf5cc9b541ad06"
+uuid = "88034a9c-02f8-509d-84a9-84ec65e18404"
+version = "0.11.3"
 
 [[deps.StringManipulation]]
 deps = ["PrecompileTools"]
