@@ -186,7 +186,7 @@ macro chemical_symbols(labsymb,name,type,molecular_weight,density,pubchemid)
 
         The $type chemical $name with [`PubChem ID`](https://pubchem.ncbi.nlm.nih.gov) $pubchemid  
 
-        Molecular Weight: $molecular_weight
+        Molecular Weight: $molecular_weight\\
         Density: $density
 
         See also: [`$type`](@ref)
@@ -241,7 +241,22 @@ function lookup_chemicals(labmods, sym::Symbol)
 
                    (Consider `using $hintmod` in your module if you are using `@chem_str`?)"""))
         else
-            throw(ArgumentError("Symbol $sym could not be found in lab modules $labmods"))
+            all_chems = vcat(map(x->filter(y-> chemstr_check_bool(getfield(x,y)),names(x)),labmods)...)
+            idxs=findall(String(sym),String.(all_chems),StringDistances.Levenshtein();min_score=0.5)
+            max_return = 4 
+            outlen=min(length(idxs),max_return)
+            idxs=idxs[1:outlen]
+            ch=String.(all_chems[idxs])
+            stmt="~no suggestions available~"
+            if outlen > 1 
+                stmt = string("Did you mean: ",join(ch[1:(end-1)],", ",),", or ",ch[end],"?")
+            elseif outlen == 1
+                stmt = string("Did you mean: $(ch[1])?")
+            end 
+            throw(ArgumentError("""Symbol $sym could not be found in lab modules $labmods
+            
+            $stmt
+            """))
         end
     end
 

@@ -49,9 +49,9 @@ macro organism_symbols(labsymb,genus,species,strain)
     docstr= """
             $labsymb
 
-       The strain $genus $species $strain  
+       The organism $genus $species $strain  
 
-        See also: [`Strain`](@ref)
+        See also: [`Organism`](@ref)
         """
     oprops = :($genus,$species,$strain)  
     esc(quote
@@ -113,8 +113,22 @@ function lookup_organisms(labmods, sym::Symbol)
                    but was not in the provided list of lab modules $(join(labmods, ", ")).
 
                    (Consider `using $hintmod` in your module if you are using `@chem_str`?)"""))
-        else
-            throw(ArgumentError("Symbol $sym could not be found in lab modules $labmods"))
+        else            all_orgs = vcat(map(x->filter(y-> orgstr_check_bool(getfield(x,y)),names(x)),labmods)...)
+            idxs=findall(String(sym),String.(all_orgs),StringDistances.Levenshtein();min_score=0.5)
+            max_return = 4 
+            outlen=min(length(idxs),max_return)
+            idxs=idxs[1:outlen]
+            ch=String.(all_orgs[idxs])
+            stmt="~no suggestions available~"
+            if outlen > 1 
+                stmt = string("Did you mean: ",join(ch[1:(end-1)],", ",),", or ",ch[end],"?")
+            elseif outlen == 1
+                stmt = string("Did you mean: $(ch[1])?")
+            end 
+            throw(ArgumentError("""Symbol $sym could not be found in lab modules $labmods
+            
+            $stmt
+            """))
         end
     end
 
