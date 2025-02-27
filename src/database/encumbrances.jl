@@ -151,12 +151,12 @@ end
 
 
 function encumber_lock(encumberid::Integer,loc::Location)
-    execute_db("INSERT INTO EncumberedLocks(EncumbranceID,LocationID,IsLocked) Values($encumberid,$(location_id(loc)),$(Int(is_locked(loc))))")
+    execute_db("INSERT INTO EncumberedLocks(EncumbranceID,LocationID,Lock) Values($encumberid,$(location_id(loc)),$(Int(is_locked(loc))))")
     return nothing
 end 
 
 function encumber_activity(encumberid::Integer,loc::Location)
-    execute_db("INSERT INTO EncumberedActivity(EncumbranceID,LocationID,IsActive) Values($encumberid,$(location_id(loc)),$(Int(is_active(loc))))")
+    execute_db("INSERT INTO EncumberedActivity(EncumbranceID,LocationID,Activate) Values($encumberid,$(location_id(loc)),$(Int(is_active(loc))))")
     return nothing 
 end 
 

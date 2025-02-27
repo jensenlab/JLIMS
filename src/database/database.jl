@@ -505,7 +505,7 @@ function create_db(path)
         ID INTEGER PRIMARY KEY NOT NULL,
         EncumbranceID INTEGER,
         LocationID INTEGER,
-        IsActive INTEGER,
+        Activate INTEGER,
         FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
@@ -516,7 +516,7 @@ function create_db(path)
         ID INTEGER PRIMARY KEY NOT NULL,
         EncumbranceID INTEGER,
         LocationID INTEGER,
-        IsLocked INTEGER,
+        Lock INTEGER,
         FOREIGN KEY(EncumbranceID) REFERENCES Encumbrances(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
     );
