@@ -82,6 +82,7 @@ include("./database/caching.jl")
 include("./database/uploads.jl")
 include("./database/generate_location.jl")
 include("./database/encumbrances.jl")
+include("./database/barcode_queries.jl")
 # reconstruction
 include("./database/reconstruction/reconstruction_utils.jl")
 include("./database/reconstruction/reconstruct_contents.jl")
@@ -159,6 +160,8 @@ export reconstruct_lock,reconstruct_lock!
 #reconstruct_activity.jl
 export reconstruct_activity,reconstruct_activity!
 #barcodes
-export Barcode, assign_barcode!,assign_barcode
+export Barcode, assign_barcode!,assign_barcode,barcode
+#barcode queries
+export get_barcode
 export upload_protocol,upload_experiment, encumber, upload_encumbrance,encumber_cache
 end # module JLIMS
