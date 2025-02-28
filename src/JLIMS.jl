@@ -135,7 +135,7 @@ export append_ledger,insert_ledger,update_ledger
 #db_utils 
 export @connect_SQLite, execute_db, query_db,sql_transaction,sql_commit,sql_rollback,julia_time,db_time, get_all_attributes
 #uploads 
-export @upload ,@update, upload_tag, upload_barcode, update_barcode , process_update
+export  update,upload, upload_tag, upload_barcode, update_barcode , process_update
 #queries
 export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_protocol_id,get_sequence_id
 #generate_location
@@ -160,5 +160,5 @@ export reconstruct_lock,reconstruct_lock!
 export reconstruct_activity,reconstruct_activity!
 #barcodes
 export Barcode, assign_barcode!,assign_barcode
-export upload_protocol,upload_experiment, @encumber, upload_encumbrance,encumber_cache
+export upload_protocol,upload_experiment, encumber, upload_encumbrance,encumber_cache
 end # module JLIMS

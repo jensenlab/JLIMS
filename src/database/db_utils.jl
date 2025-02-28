@@ -1,6 +1,6 @@
 macro connect_SQLite(DB_PATH)
     return esc(quote
-        import JLIMS: execute_db,query_db,get_location_info,get_attribute
+        import JLIMS: execute_db,query_db,get_location_info,get_attribute,sql_transaction
         const db=SQLite.DB($DB_PATH)
         function execute_db(query::String)
             
