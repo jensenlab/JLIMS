@@ -12,7 +12,17 @@ macro update(expr,ledger_id=append_ledger(),time=Dates.now())
     end )
 end 
 
+function update(fun::Function,args...;ledger_id::Integer=append_ledger(),time::DateTime=Dates.now())
+    up_fun=upload_operation(fun) 
+    function update_transaction()
+        fun(args...)
+        up_fun(args...;ledger_id=ledger_id, time=time) 
+        process_update(ledger_id)
+    end 
+    sql_transaction(update_transaction)
 
+
+end 
 
 function process_update(ledger_id::Integer)
         ids=get_all_ledger_ids(get_sequence_id(ledger_id))

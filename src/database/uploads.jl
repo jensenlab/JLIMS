@@ -22,21 +22,33 @@ function upload_operation(fun::Function)
 end 
 
 
+"""
+    upload(fun::Funciton,args...;time=DateTime=Dates.now())
 
-macro upload(expr,time=Dates.now()) 
-    fun=eval(expr.args[1])
-    upload_op=upload_operation(fun)
-    return esc(quote
-        function upload_transaction()
+Execute and upload a JLIMS operation to a CHESS Database. If an error occurs in either execution or uploading, [`upload`](@ref) will return an error and rollback any changes to the database
 
-        $expr
-        $upload_op(eval.($(expr.args[2:end]))...;time=$time)
-        end
-        sql_transaction(upload_transaction)
-    end )
+See [`upload_operation`](@ref) for the list of supported JLIMS operations. 
+
+#Examples 
+
+```julia
+julia> @connect_SQLite "test_db.db" 
+
+julia> upload(transfer!,locA,locB,5u"g")
+julia> upload(set_attribute!,locA,Temperature(10u"°C"))
+```
+"""
+function upload(fun::Function,args...;time::DateTime=Dates.now())
+    up_fun=upload_operation(fun) 
+    function upload_transaction()
+        fun(args...)
+        up_fun(args...;time=time) 
+    end 
+    sql_transaction(upload_transaction)
 end 
 
 
+    
 
 
 
@@ -162,5 +174,4 @@ function update_barcode(bc::Barcode,loc::Location;kwargs...)
     execute_db("UPDATE Barcodes SET LocationID = $loc_id WHERE Barcode = '$(string(barcode(bc)))'")
     return nothing 
 end 
-
 

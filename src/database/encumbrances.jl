@@ -15,15 +15,18 @@ end
 
 
 
-macro encumber(protocol_id,expr) 
-    fun=eval(expr.args[1])
-    encumber_op=encumber_operation(fun)
-    return esc(quote 
-        $expr
-        e_id=upload_encumbrance(Int($protocol_id))
-        $encumber_op(e_id,eval.($(expr.args[2:end]))...)
-    end )
+
+
+function encumber(protocol_id::Integer,fun::Function,args...)
+    encumber_op=encumber_operation(fun) 
+    function encumber_transaction()
+    fun(args...)
+    e_id=upload_encumbrance(protocol_id)
+    encumber_op(e_id,args...)
+    end 
+    sql_transaction(encumber_transaction)
 end 
+
 #=
 macro protocol(experiment_id,name, expr)
     #=
