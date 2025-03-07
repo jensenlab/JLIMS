@@ -13,8 +13,13 @@ name(x::Barcode)=x.name
 
 
 function assign_barcode!(barcode::Barcode,location::Location)
-        barcode.location_id=location_id(location)
-    return nothing 
+        loc_id=location_id(barcode)
+        if !ismissing(loc_id) && loc_id !== location_id(location) 
+            error("barcode already assigned to another location")
+        else
+            barcode.location_id=location_id(location)
+            return nothing 
+        end 
 end 
 
 
@@ -23,4 +28,3 @@ function assign_barcode(barcode::Barcode,location::Location)
     assign_barcode!(bc,location)
     return bc
 end 
-

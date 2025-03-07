@@ -20,8 +20,7 @@ function update(fun::Function,args...;ledger_id::Integer=append_ledger(),time::D
         process_update(ledger_id)
     end 
     sql_transaction(update_transaction)
-
-
+    return ledger_id 
 end 
 
 function process_update(ledger_id::Integer)
