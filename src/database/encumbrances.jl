@@ -25,6 +25,7 @@ function encumber(protocol_id::Integer,fun::Function,args...)
     encumber_op(e_id,args...)
     end 
     sql_transaction(encumber_transaction)
+    return get_last_encumbrance_id(protocol_id)
 end 
 
 #=

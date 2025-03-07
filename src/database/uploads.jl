@@ -38,13 +38,14 @@ julia> upload(transfer!,locA,locB,5u"g")
 julia> upload(set_attribute!,locA,Temperature(10u"°C"))
 ```
 """
-function upload(fun::Function,args...;time::DateTime=Dates.now())
+function upload(fun::Function,args...;ledger_id=append_ledger(),time::DateTime=Dates.now())
     up_fun=upload_operation(fun) 
     function upload_transaction()
         fun(args...)
-        up_fun(args...;time=time) 
+        up_fun(args...;ledger_id=ledger_id,time=time) 
     end 
     sql_transaction(upload_transaction)
+    return ledger_id
 end 
 
 
