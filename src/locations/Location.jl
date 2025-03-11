@@ -346,7 +346,9 @@ function environment(x::Location)
     for ancestor in ancestry
         attrs=attributes(ancestor)
         for attr in values(attrs) 
-        set_attribute!(out,attr)
+            if !ismissing(quantity(attr)) # skip over attributes that have a missing quantity value.
+                set_attribute!(out,attr) 
+            end
         end 
     end 
     return out 

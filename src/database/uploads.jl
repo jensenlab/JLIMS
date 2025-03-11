@@ -144,9 +144,13 @@ end
 
 function upload_environment_attribute(loc::Location,attr::Attribute;ledger_id::Integer=append_ledger(),time::Dates.DateTime=now()) 
     upload_time=db_time(time)
-    val=quantity(attr)
+    val=value(attr)
+    if ismissing(val) 
+        val = "NULL"
+    end 
+    un = attribute_unit(attr)
     upload_attribute(attr)
-    execute_db("""INSERT OR IGNORE INTO EnvironmentAttributes(LedgerID,LocationID,Attribute,Value,Unit,Time) Values($ledger_id,$(location_id(loc)),'$(string(typeof(attr)))',$(ustrip(val)),'$(string(unit(val)))',$upload_time)""")
+    execute_db("""INSERT OR IGNORE INTO EnvironmentAttributes(LedgerID,LocationID,Attribute,Value,Unit,Time) Values($ledger_id,$(location_id(loc)),'$(string(typeof(attr)))',$(val),'$(string(un))',$upload_time)""")
     return nothing
 end 
 
