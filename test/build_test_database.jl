@@ -121,7 +121,7 @@ upload(set_attribute!,biospa1,Temperature(37u"°C"))
 upload(set_attribute!,incubator1,Temperature(37u"°C"))
 
 cache(jensen_lab)
-
+upload(set_attribute!,jensen_lab,Temperature(missing))
 
 upload(lock!,main_room)
 upload(unlock!,main_room)
@@ -159,7 +159,7 @@ upload(move_into!,main_room,b2)
 upload(move_into!,main_room,plate1)
 
 
-
+upload(set_attribute!,jensen_lab,Temperature(25u"°C"))
 
 
 w1=children(b1)[1,1]

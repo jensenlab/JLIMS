@@ -53,9 +53,9 @@ macro attribute(name, unit)
     export $n
     un_type=typeof($unit)
     mutable struct $n <: (JLIMS.Attribute)
-        value::Real 
+        value::Union{Real,Missing}  
         const unit::un_type
-        function ($n)(value::Unitful.Quantity)
+        function ($n)(value::Union{Unitful.Quantity,Missing})
             val=Unitful.ustrip(Unitful.uconvert($unit,value))
             new(val,$unit)
         end 
