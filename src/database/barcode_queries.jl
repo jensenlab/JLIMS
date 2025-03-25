@@ -3,8 +3,11 @@
 function get_barcode(barcode::String)
 
     x="""SELECT Name, LocationID FROM Barcodes WHERE Barcode = '$barcode' LIMIT 1"""
-
-    out=query_db(x)[1,:]
+    out_db=query_db(x)
+    if nrow(out_db) == 0 
+        error("Invalid Barcode: $barcode not found in database")
+    end 
+    out=out_db[1,:]
 
     bc= Barcode(UUIDs.UUID(barcode),out.Name,out.LocationID)
 
