@@ -108,7 +108,7 @@ function upload_component(chem::Chemical)
     mw = ismissing(mw) ? "NULL" : mw
     d=ustrip(uconvert(u"g/mL",density(chem)))
     d = ismissing(d) ? "NULL" : d 
-    pc = ismissing(pubchemid(chem)) ? NULL : pubchemid(chem) 
+    pc = ismissing(pubchemid(chem)) ? "NULL" : pubchemid(chem) 
     execute_db("INSERT OR IGNORE INTO Chemicals(Name,ComponentID,Type,MolecularWeight,Density,CID) Values('$(name(chem))',$(id),'$(string(typeof(chem)))',$(mw),$(d),$(pc))")
     return id
 end 

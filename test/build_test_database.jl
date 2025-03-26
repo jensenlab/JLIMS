@@ -167,7 +167,7 @@ w1=children(b1)[1,1]
 w2=children(b2)[1,1]
 
 deposit!(w2,50u"g"*Paba, 20)
-deposit!(w1,500u"mL"*Water,3)
+deposit!(w1,500u"mL"*Water + 2u"g" *IronNitrate,3)
 deposit!(w1,Empty()+SMU_UA159,0)
 cache(w1)
 cache(w2)
