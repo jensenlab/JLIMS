@@ -105,8 +105,11 @@ function upload_component(chem::Chemical)
     execute_db("INSERT OR IGNORE INTO Components(ComponentHash, Type) Values($(hash(chem)),'Chemical')")
     id=get_component_id(chem)
     mw=ustrip(uconvert(u"g/mol",molecular_weight(chem)))
+    mw = ismissing(mw) ? "NULL" : mw
     d=ustrip(uconvert(u"g/mL",density(chem)))
-    execute_db("INSERT OR IGNORE INTO Chemicals(Name,ComponentID,Type,MolecularWeight,Density,CID) Values('$(name(chem))',$(id),'$(string(typeof(chem)))',$(mw),$(d),$(pubchemid(chem)))")
+    d = ismissing(d) ? "NULL" : d 
+    pc = ismissing(pubchemid(chem)) ? NULL : pubchemid(chem) 
+    execute_db("INSERT OR IGNORE INTO Chemicals(Name,ComponentID,Type,MolecularWeight,Density,CID) Values('$(name(chem))',$(id),'$(string(typeof(chem)))',$(mw),$(d),$(pc))")
     return id
 end 
 
