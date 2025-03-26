@@ -127,13 +127,13 @@ function cache(s::Stock)
         for solid in chemicals(sols)
             sol_id=get_component_id(solid)
             quant=sols[solid]
-            execute_db("INSERT OR IGNORE INTO CachedComponents(StockID,ComponentID,Quantity,Unit) Values($id,$sol_id,$(ustrip(quant)),'$(string(unit(quant)))')")
+            execute_db("INSERT OR IGNORE INTO CachedComponents(StockID,ComponentID,Quantity,Unit) Values($id,$sol_id,$(Float64(ustrip(quant))),'$(string(unit(quant)))')")
         end 
         liqs=liquids(s)
         for liquid in chemicals(liqs)
             liq_id=get_component_id(liquid)
             quant=liqs[liquid]
-            execute_db("INSERT OR IGNORE INTO CachedComponents(StockID,ComponentID,Quantity,Unit) Values($id,$liq_id,$(ustrip(quant)),'$(string(unit(quant)))')")
+            execute_db("INSERT OR IGNORE INTO CachedComponents(StockID,ComponentID,Quantity,Unit) Values($id,$liq_id,$(Float64(ustrip(quant))),'$(string(unit(quant)))')")
         end
         for org in organisms(s)
             org_id=get_component_id(org)  # uploads a new organism if necessary 
