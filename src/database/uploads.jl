@@ -169,7 +169,12 @@ function upload_barcode(bc::Barcode)
     if ismissing(loc_id)
         loc_id="NULL"
     end 
-    execute_db("INSERT OR IGNORE INTO Barcodes(Barcode,LocationID,Name) Values('$(string(barcode(bc)))',$loc_id,'$(name(bc))')")
+    n="'$(name(bc))'"
+    if ismissing(name(bc))
+        n="NULL"
+    end 
+
+    execute_db("INSERT OR IGNORE INTO Barcodes(Barcode,LocationID,Name) Values('$(barcode(bc))',$loc_id,$n)")
 end 
 
 function update_barcode(bc::Barcode,loc::Location;kwargs...)
@@ -179,7 +184,7 @@ function update_barcode(bc::Barcode,loc::Location;kwargs...)
     elseif loc_id != location_id(loc) 
         error("barcode location id does not match the supplied location")
     end 
-    execute_db("UPDATE Barcodes SET LocationID = $loc_id WHERE Barcode = '$(string(barcode(bc)))'")
+    execute_db("UPDATE Barcodes SET LocationID = $loc_id WHERE Barcode = '$(barcode(bc))'")
     return nothing 
 end 
 

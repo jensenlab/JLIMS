@@ -1,8 +1,8 @@
 mutable struct Barcode 
-   const id::UUID
+   const id::String
     const name::Union{String,Missing}
     location_id::Union{Integer,Missing}
-    Barcode(id::UUID,name::String=missing,location_id::Union{Integer,Missing}=missing)=new(id,name,location_id)
+    Barcode(id,name=missing,location_id=missing)=new(id,name,location_id)
 end 
 
 

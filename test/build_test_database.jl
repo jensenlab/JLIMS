@@ -178,10 +178,10 @@ upload(transfer!,w1,children(plate1)[1,1],100u"µL")
 
 upload_tag("test_comment")
 
-bc=Barcode(UUIDs.uuid4(),"lazy_blue_poodle")
+bc=Barcode(string(UUIDs.uuid4()),"lazy_blue_poodle")
 upload_barcode(bc)
 
-bc2=Barcode(UUIDs.uuid4(),"nasty_green_baboon")
+bc2=Barcode(string(UUIDs.uuid4()),"nasty_green_baboon")
 upload_barcode(bc2)
 
 upload(assign_barcode!,bc2,plate1)

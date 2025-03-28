@@ -9,7 +9,7 @@ function get_barcode(barcode::String)
     end 
     out=out_db[1,:]
 
-    bc= Barcode(UUIDs.UUID(barcode),out.Name,out.LocationID)
+    bc= Barcode(barcode,out.Name,out.LocationID)
 
     return bc 
 end 
@@ -21,7 +21,7 @@ function get_all_barcodes(location_id::Integer;return_limit::Integer=3)
     out=query_db(x)
     bcs = Barcode[] 
     for row in eachrow(out) 
-        bc = Barcode(UUIDs.UUID(row.Barcode),row.Name,location_id)
+        bc = Barcode(row.Barcode,row.Name,location_id)
         push!(bcs,bc)
     end 
     return bcs 
