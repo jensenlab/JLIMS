@@ -5,7 +5,7 @@ function reconstruct_parent(location_ids::Vector{<:Integer},sequence_id::Integer
         n,t=get_location_info(loc_id) 
         loc=t(loc_id,n) 
         prt,cache_foot = fetch_parent_cache(loc_id,0,max_cache,time;encumbrances=encumbrances)
-        if loc isa JLIMS.Well
+        if loc isa JLIMS.Well || prt isa JLIMS.Labware
             loc.parent=prt
         elseif prt isa JLIMS.Location 
             move_into!(prt,loc)
