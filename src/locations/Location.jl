@@ -223,11 +223,13 @@ occupancy_cost(parent::Location,child::Location) = max(parent_cost(parent),child
 macro occupancy_cost(parent, child, occupancy)
     p=Symbol(parent)
     c=Symbol(child)
+    occ = occupancy 
+    #=
     occ =eval(occupancy)
     if !(occ isa Rational)
         throw(ArgumentError("Occupancy must be a Rational datatype"))
     end 
-
+    =#
     if !isdefined(__module__,p) && !isdefined(JLIMS,p)
         throw(ArgumentError("Parent Location type $p is undefined"))
     end 
