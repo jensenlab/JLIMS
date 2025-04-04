@@ -276,8 +276,8 @@ The `constrained_as_child` flag indicates that `name` will be unable to be a chi
 """
 macro location(name,constrained_as_parent=false,constrained_as_child=false)
     n=Symbol(name)
-    p_constraint::Bool=eval(constrained_as_parent)
-    c_constraint::Bool=eval(constrained_as_child)
+    p_constraint=constrained_as_parent 
+    c_constraint=constrained_as_child
 
     if isdefined(__module__,n) || isdefined(JLIMS,n)
         throw(ArgumentError("Location type $n already exists"))
