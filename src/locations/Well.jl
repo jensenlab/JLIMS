@@ -47,8 +47,8 @@ See also: [`Well`](@ref),[`capacity`](@ref)
 occupancy(::Well) = 1//1
 macro well(name,capacity)
     n=Symbol(name)
-    cap::Unitful.Volume=eval(capacity)
-
+    #cap::Unitful.Volume=eval(capacity)
+    cap = capacity 
     if isdefined(__module__,n) || isdefined(JLIMS,n)
         throw(ArgumentError("Well type $n already exists"))
     end 
