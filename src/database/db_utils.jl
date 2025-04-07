@@ -47,11 +47,11 @@ macro connect_SQLite(DB_PATH)
                 error("location id not found")
             end 
             out=loc_info[1,:]
-            return string(out["Name"]), eval(Symbol(out["Type"]))
+            return string(out["Name"]), eval(Meta.parse(out["Type"]))
         end 
 
         function get_attribute(attr::String)
-            return eval(Symbol(attr))
+            return eval(Meta.parse(attr))
         end
     end )
 

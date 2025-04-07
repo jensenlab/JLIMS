@@ -71,22 +71,22 @@ end
 end 
 
 
-w1=Well1L(1,"testwell1",nothing,a)
-w2=Well10mL(2,"testwell2",nothing,b)
-w3=Well1L(2,"testwell3",nothing,(a/10)+e)
+w1=Well{1000000}(1,"testwell1",nothing,a)
+w2=Well{10000}(2,"testwell2",nothing,b)
+w3=Well{1000000}(2,"testwell3",nothing,(a/10)+e)
 
 w4,w5=transfer(w2,w3,5u"g")
 
 @testset "Wells" begin
    @test stock(w1)==a 
-   @test capacity(w1)==1u"L"
+   @test JLIMS.wellcapacity(w1)==1u"L"
    @test stock(sterilize(w3)) == a/10 # removes the organisms only 
    @test stock(drain(w3)) == e
    @test stock(empty(w3))==Empty()
    @test stock(empty(w3)) == stock(sterilize(drain(w3))) # empty == dump |> sterilize 
    @test stock(w5) == stock(w3)+stock(w2)/2
    @test_throws MixingError transfer(w2,w1,20u"g") # try to transfer 20 g from a 10 g stock of paba
-   @test_throws WellCapacityError Well10mL(4,"testwell4",nothing,a) # try to put a 100mL stock in a 10 mL well
+   @test_throws WellCapacityError Well{10000}(4,"testwell4",nothing,a) # try to put a 100mL stock in a 10 mL well
 end 
 
 

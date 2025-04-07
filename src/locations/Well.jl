@@ -6,17 +6,46 @@ Wells are special [`Location`](@ref) subtypes that contain a single [`Stock`](@r
 
 Wells are only allowed to be located in [`Labware`] objects and cannot be moved from the labware. They are physically tied to a Labware. 
 """
-abstract type Well <: Location  end 
+mutable struct Well{N} <: Location 
+    const location_id::Base.Integer
+    const name::Base.String
+    parent::Union{JLIMS.Labware,Nothing}
+    stock::JLIMS.Stock
+    attributes::AttributeDict
+    cost::Real
+    is_active::Bool
+    function Well{N}(id::Base.Integer,name::Base.String,parent=nothing,stock=Empty(),attributes=AttributeDict(),cost::Real=0,is_active::Bool=true) where N
+        cap=wellcapacity(Well{N})
+        (JLIMS.volume_estimate(stock) <= cap) || throw(WellCapacityError(JLIMS.volume_estimate(stock),cap))
+        new(id,name,parent,stock,attributes,cost,is_active) 
+    end 
+end 
+
+
+AbstractTrees.ParentLinks(::Type{<:Well})=StoredParents()
+parent_cost(::Well)=2//1 # occupancy cost is greater than 1. The value of 2//1 was chosen arbitrarily the new location is not allowed to be a parent unless otherwise specified
+child_cost(::Well)=2//1 # occupancy cost is greater than 1. The value of 2//1 was chosen arbitrarily.  The new location is not allowed to be a child unless otherwise specified
+
+
+"""
+    wellcapacity(::Type{<:Labware}) 
+
+Return the capacity of the each well in a labware as a Unitful.Volume quantity
+
+Well types defined by the [`@labware`](@ref) macro overload `wellcapacity` to provide a method for that specific type.
+""" 
+function wellcapacity(::Type{Well{N}}) where N 
+    return N * u"µL"
+end 
+
+function wellcapacity(w::Well) 
+    return wellcapacity(typeof(w))
+end 
+
 
 AbstractTrees.children(::Well) = ()
-"""
-    capacity(::Well) 
 
-Return the capacity of the well as a Unitful.Volume quantity
 
-Well types defined by the [`@well`](@ref) macro overload `capacity` to provide a method for that specific type.
-""" 
-capacity(::Well) = 0u"mL"
 
 """
     stock(::Well)
@@ -36,53 +65,14 @@ Access the cost property of a well
 
 """
 cost(x::Well) = x.cost
-"""
-    @well name capacity
 
-Define a new well type `name` with capacity `capacity` 
-
-See also: [`Well`](@ref),[`capacity`](@ref)
-"""
 
 occupancy(::Well) = 1//1
-macro well(name,capacity)
-    n=Symbol(name)
-    #cap::Unitful.Volume=eval(capacity)
-    cap = capacity 
-    if isdefined(__module__,n) || isdefined(JLIMS,n)
-        throw(ArgumentError("Well type $n already exists"))
-    end 
-
-    return esc(quote
-    import JLIMS: occupancy_cost,parent_cost,child_cost
-    import AbstractTrees: ParentLinks
-    export $n, occupancy_cost
-    mutable struct $n <: (JLIMS.Well)
-        const location_id::Base.Integer
-        const name::Base.String
-        parent::Union{JLIMS.Labware,Nothing,JLIMS.LocationRef}
-        stock::JLIMS.Stock
-        attributes::AttributeDict
-        cost::Real
-        is_active::Bool
-        function ($n)(id::Base.Integer,name::Base.String,parent=nothing,stock=Empty(),attributes=AttributeDict(),cost::Real=0,is_active::Bool=true) 
-            (JLIMS.volume_estimate(stock) <= $cap) || throw(WellCapacityError(JLIMS.volume_estimate(stock),$cap))
-            new(id,name,parent,stock,attributes,cost,is_active) 
-        end 
-    end 
-    AbstractTrees.ParentLinks(::Type{<:$(n)})=StoredParents()
-    JLIMS.capacity(::($n))=$cap
-    JLIMS.parent_cost(::($n))=2//1 # occupancy cost is greater than 1. The value of 2//1 was chosen arbitrarily the new location is not allowed to be a parent unless otherwise specified
-    JLIMS.child_cost(::($n))=2//1 # occupancy cost is greater than 1. The value of 2//1 was chosen arbitrarily.  The new location is not allowed to be a child unless otherwise specified
-
-
-    end)
-end
 
 
 function check_capacity(s::Stock,w::Well) 
     a=volume_estimate(s)
-    b=capacity(w)
+    b=wellcapacity(w)
     a <= b || throw(WellCapacityError(a,b))
     nothing
 end 

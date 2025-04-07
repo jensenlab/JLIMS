@@ -56,21 +56,15 @@ abstract type Reservior <:Labware end
 @occupancy_cost Incubator IncubatorShelf 1//3
 
 
-@well Well200µL 200u"µL"
-@well Well80µL 80u"µL"
-@well Well1L 1u"L"
-@well Well10mL  10u"mL"
-@well Well50mL 50u"mL"
-@well Well1mL 1u"mL"
 
-@labware WP96 Plate Well200µL (8,12) Thermo 123456
-@labware WP384 Plate Well80µL (16,24) Thermo 123457
-@labware Bottle1L ScrewBottle Well1L (1,1) Corning 1 
-@labware IronNitrateBottle ReagentBottle Well1L (1,1) Sigma 111
-@labware LBBottle ReagentBottle Well1L (1,1) Sigma 123 
-@labware PabaBottle ReagentBottle Well50mL (1,1) Sigma 234
+@labware WP96 Plate Well{200} (8,12) Thermo 123456
+@labware WP384 Plate Well{80} (16,24) Thermo 123457
+@labware Bottle1L ScrewBottle Well{1000000} (1,1) Corning 1 
+@labware IronNitrateBottle ReagentBottle Well{1000000} (1,1) Sigma 111
+@labware LBBottle ReagentBottle Well{1000000} (1,1) Sigma 123 
+@labware PabaBottle ReagentBottle Well{50000} (1,1) Sigma 234
 
-@labware AltemisTube Tube Well1mL (1,1) Altemis 1234 
+@labware AltemisTube Tube Well{1000} (1,1) Altemis 1234 
 
 @occupancy_cost AltemisSlot AltemisTube 1//1 
 
