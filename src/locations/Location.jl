@@ -288,11 +288,11 @@ Create a new Type `name` that is a [`Location`](@ref) subtype.
 The `constrained_as_parent` flag indicates that `name` will be unable to be a parent by defualt.
 The `constrained_as_child` flag indicates that `name` will be unable to be a child by defualt.  
 """
-macro location(name,constrained_as_parent=false,constrained_as_child=false)
+macro location(name,supertype=JLIMS.Location,constrained_as_parent=false,constrained_as_child=false)
     n=Symbol(name)
     p_constraint=constrained_as_parent 
     c_constraint=constrained_as_child
-
+    t =Symbol(supertype)
     if isdefined(__module__,n) || isdefined(JLIMS,n)
         throw(ArgumentError("Location type $n already exists"))
     end 
@@ -301,7 +301,7 @@ macro location(name,constrained_as_parent=false,constrained_as_child=false)
     import JLIMS: parent_cost,child_cost
     import AbstractTrees: ParentLinks
     export $n
-    mutable struct $n <: (JLIMS.Location)
+    mutable struct $n <: $t
         const location_id::Base.Integer
         const name::Base.String
         parent::Union{JLIMS.Location,Nothing,JLIMS.LocationRef}
