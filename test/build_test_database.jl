@@ -40,15 +40,15 @@ abstract type Dish <: Labware end
 abstract type Reservior <:Labware end 
 
 
-@location Lab false true 
-@location Room 
+@location Lab Location false true 
+@location Room Location
 @location Bench
-@location Incubator true false 
-@location IncubatorShelf false true 
-@location BioSpa true false 
-@location BioSpaDrawer true true 
-@location BioSpaSlot true true 
-@location AltemisSlot true true 
+@location Incubator Location true false 
+@location IncubatorShelf Location false true 
+@location BioSpa Location true false 
+@location BioSpaDrawer Location true true 
+@location BioSpaSlot Location true true 
+@location AltemisSlot Location true true 
 
 @occupancy_cost BioSpa BioSpaDrawer 1//4
 @occupancy_cost BioSpaDrawer BioSpaSlot 1//2
