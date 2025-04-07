@@ -63,11 +63,13 @@ include("./environments/Attributes.jl")
 
 include("./locations/Location.jl")
 include("./locations/LocationRef.jl")
-include("./locations/Labware.jl")
 include("./stocks/Chemicals.jl")
 include("./stocks/Organisms.jl")
 include("./stocks/Stocks.jl")
 include("./locations/Well.jl")
+include("./locations/Labware.jl")
+
+
 include("./stocks/chemical_parsing.jl")
 include("./barcodes/barcodes.jl")
 
@@ -113,7 +115,7 @@ export Organism # Organism type
 export Stock,Empty, Mixture, Solution, Culture # Stock types 
 export Location, Labware, Well #location types 
 export LocationRef
-export @labware, @location, @well, @occupancy_cost, @chemical, @organism , @attribute, @chem_str, @org_str # macros for constants 
+export @labware, @location, @occupancy_cost, @chemical, @organism , @attribute, @chem_str, @org_str # macros for constants 
 export get_mw_density
 # chemicals 
 export molecular_weight, density, pubchemid 

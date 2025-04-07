@@ -1,13 +1,4 @@
-"""
-    abstract type Labware <: Location end 
 
-Labware are Indexed [`Location`] subtypes that can only contain specific location types as children.
-
-Labware are immutable in the sense that they have a set number of children 
-
-See also [`@labware`](@ref)
-"""
-abstract type Labware <: Location end 
 
 
 """
@@ -15,14 +6,14 @@ abstract type Labware <: Location end
 
 Define a new labware Type `name` and overload methods to make `name` a JLIMS compatible labware. 
 """
-macro labware(name, supertype, loctype, shape,vendor,catalog)
+macro labware(name, supertype, childtype, shape,vendor,catalog)
     n=Symbol(name)
     t=Symbol(supertype)
-    wt=Symbol(loctype)
     #ps::Tuple{Integer,Integer}=eval(shape)
     ps=shape
     v::String=string(vendor)
     c::String=string(catalog)
+    wt=childtype
     if isdefined(__module__,n) || isdefined(JLIMS,n)
         throw(ArgumentError("Labware  $n already exists"))
     end 
@@ -33,6 +24,7 @@ macro labware(name, supertype, loctype, shape,vendor,catalog)
     import JLIMS: shape,vendor,catalog,occupancy_cost,parent_cost,childtype
     import AbstractTrees.ParentLinks
     export $n
+    $wt
     mutable struct $n <: ($t)
         const location_id::Base.Integer
         const name::Base.String
@@ -46,13 +38,12 @@ macro labware(name, supertype, loctype, shape,vendor,catalog)
     JLIMS.shape(x::$n)= Base.size(AbstractTrees.children(x)) 
     JLIMS.vendor(::$n)=$v
     JLIMS.catalog(::$n)=$c
-    JLIMS.childtype(::$n)=eval($wt)
+    JLIMS.childtype(::$n)=$wt
     AbstractTrees.ParentLinks(::Type{<:$(n)})=AbstractTrees.StoredParents()
     JLIMS.parent_cost(::($n))=2//1 # occupancy cost is greater than 1. The value of 2//1 was chosen arbitrarily the new location is not allowed to be a parent unless otherwise specified
     JLIMS.occupancy_cost(::($n),::($wt))= 1//Base.prod($ps) # !!!Exception!!! the plate can hold up to prod(ps...) wells of type wt. 
     end)
 end 
-
 
 
 

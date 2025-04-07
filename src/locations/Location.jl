@@ -8,6 +8,18 @@ See also: [`@location`](@ref)
 """
 abstract type Location end 
 
+
+"""
+    abstract type Labware <: Location end 
+
+Labware are Indexed [`Location`] subtypes that can only contain specific location types as children.
+
+Labware are immutable in the sense that they have a set number of children 
+
+See also [`@labware`](@ref)
+"""
+abstract type Labware <: Location end 
+
 AbstractTrees.children(x::Location) = x.children
 AbstractTrees.parent(x::Location) =x.parent
 AbstractTrees.nodevalue(x::Location)=location_id(x)
