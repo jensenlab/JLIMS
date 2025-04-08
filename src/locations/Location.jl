@@ -292,7 +292,7 @@ macro location(name,supertype=JLIMS.Location,constrained_as_parent=false,constra
     n=Symbol(name)
     p_constraint=constrained_as_parent 
     c_constraint=constrained_as_child
-    t =Symbol(supertype)
+    t =supertype 
     if isdefined(__module__,n) || isdefined(JLIMS,n)
         throw(ArgumentError("Location type $n already exists"))
     end 
