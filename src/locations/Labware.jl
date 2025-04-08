@@ -21,6 +21,7 @@ macro labware(name, supertype, childtype, shape,vendor,catalog)
     import JLIMS: shape,vendor,catalog,occupancy_cost,parent_cost,childtype
     import AbstractTrees.ParentLinks
     export $n
+    ($t) <: Labware || error("$t must be a subtype of Labware")
     mutable struct $n <: ($t)
         const location_id::Base.Integer
         const name::Base.String
