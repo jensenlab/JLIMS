@@ -1,8 +1,10 @@
 
 """
-    abstract type Well<: Location  end
+    Well{N} <: Location
 
 Wells are special [`Location`](@ref) subtypes that contain a single [`Stock`](@ref) object. 
+
+The Value parameter `N` defines the capacity of the well in µL. For example, Well{1000} has a 1 mL capacity. 
 
 Wells are only allowed to be located in [`Labware`] objects and cannot be moved from the labware. They are physically tied to a Labware. 
 """
@@ -28,11 +30,10 @@ child_cost(::Well)=2//1 # occupancy cost is greater than 1. The value of 2//1 wa
 
 
 """
-    wellcapacity(::Type{<:Labware}) 
+    wellcapacity(::Type{<:Well}) 
 
-Return the capacity of the each well in a labware as a Unitful.Volume quantity
+Return the capacity of a well as a Unitful.Volume quantity
 
-Well types defined by the [`@labware`](@ref) macro overload `wellcapacity` to provide a method for that specific type.
 """ 
 function wellcapacity(::Type{Well{N}}) where N 
     return N * u"µL"

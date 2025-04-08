@@ -288,7 +288,7 @@ Create a new Type `name` that is a [`Location`](@ref) subtype.
 The `constrained_as_parent` flag indicates that `name` will be unable to be a parent by defualt.
 The `constrained_as_child` flag indicates that `name` will be unable to be a child by defualt.  
 """
-macro location(name,supertype=JLIMS.Location,constrained_as_parent=false,constrained_as_child=false)
+macro location(name,supertype=Location,constrained_as_parent=false,constrained_as_child=false)
     n=Symbol(name)
     p_constraint=constrained_as_parent 
     c_constraint=constrained_as_child
