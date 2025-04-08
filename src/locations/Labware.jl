@@ -17,9 +17,6 @@ macro labware(name, supertype, childtype, shape,vendor,catalog)
     if isdefined(__module__,n) || isdefined(JLIMS,n)
         throw(ArgumentError("Labware  $n already exists"))
     end 
-    if !isdefined(__module__,t) && !isdefined(JLIMS,t)
-        throw(ArgumentError("abstract labware type $t does not exist."))
-    end 
     return esc(quote
     import JLIMS: shape,vendor,catalog,occupancy_cost,parent_cost,childtype
     import AbstractTrees.ParentLinks
