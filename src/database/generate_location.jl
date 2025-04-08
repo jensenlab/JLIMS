@@ -1,22 +1,16 @@
 
 
 
+
+
+
+
+"""
+    generate_location(type::Type{<:Labware},name::String=string(UUIDs.uuid4()))
+
+Generate a a `type` Location and fill it with empty well if applicable. 
+"""
 function generate_location(type::Type{<:Location},name::String=string(UUIDs.uuid4()))
-    upload_location_type(type)
-    loc_id = upload_new_location(name,type)
-    return type(loc_id,name)
-end 
-    
-
-
-
-
-"""
-    generate_(type::Type{<:Labware},name::String=string(UUIDs.uuid4()))
-
-Generate a a `type` Labware and fill it with empty wells. 
-"""
-function generate_location(type::Type{<:Labware},name::String=string(UUIDs.uuid4()))
     upload_location_type(type)
     loc_id=upload_new_location(name,type)
     lw=type(loc_id,name)
@@ -32,7 +26,9 @@ function generate_location(type::Type{<:Labware},name::String=string(UUIDs.uuid4
         end 
     end
     cache(lw)
-    cache.(wells)
+    if length(wells) > 0 
+        cache.(wells)
+    end 
     return lw
 end 
 
