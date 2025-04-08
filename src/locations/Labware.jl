@@ -8,7 +8,7 @@ Define a new labware Type `name` and overload methods to make `name` a JLIMS com
 """
 macro labware(name, supertype, childtype, shape,vendor,catalog)
     n=Symbol(name)
-    t=Symbol(supertype)
+    t=supertype
     #ps::Tuple{Integer,Integer}=eval(shape)
     ps=shape
     v::String=string(vendor)
@@ -24,7 +24,6 @@ macro labware(name, supertype, childtype, shape,vendor,catalog)
     import JLIMS: shape,vendor,catalog,occupancy_cost,parent_cost,childtype
     import AbstractTrees.ParentLinks
     export $n
-    $wt
     mutable struct $n <: ($t)
         const location_id::Base.Integer
         const name::Base.String
