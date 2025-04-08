@@ -38,7 +38,7 @@ location_id(x::Location)=x.location_id
     shape(x::Location)
 Access the `shape` property, if defined, of a location. 
 """
-shape(x::Location)=nothing 
+shape(x::Location)=(0,0) 
 """
     vendor(x::Location)
 Access the `vendor` property, if defined, of a location.
@@ -301,8 +301,6 @@ macro location(name,supertype=Location,constrained_as_parent=false,constrained_a
     import JLIMS: parent_cost,child_cost
     import AbstractTrees: ParentLinks
     export $n
-
-    (($t <: Location) && !($t <: Labware)) || error("supertype $t must be a location but not a labware")
     mutable struct $n <: $t
         const location_id::Base.Integer
         const name::Base.String
