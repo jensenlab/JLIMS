@@ -45,7 +45,7 @@ end
 
 
 
-function cache_children_helper(c::Matrix{Union{LocationRef,T}}) where T<:Location 
+function cache_children_helper(c::Matrix{<:Location})  
     loc_ids=location_id.(c)
 id=get_child_set_id(c)
 if isnothing(id)
@@ -61,7 +61,7 @@ end
 return id 
 end 
 
-function cache_children_helper(c::Vector{<:Union{LocationRef,Location}})
+function cache_children_helper(c::Vector{<:Location})
     loc_ids=location_id.(c)
     id=get_child_set_id(c)
     if isnothing(id)

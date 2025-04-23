@@ -62,7 +62,6 @@ include("./user.jl")
 include("./environments/Attributes.jl")
 
 include("./locations/Location.jl")
-include("./locations/LocationRef.jl")
 include("./stocks/Chemicals.jl")
 include("./stocks/Organisms.jl")
 include("./stocks/Stocks.jl")
