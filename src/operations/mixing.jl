@@ -94,3 +94,4 @@ end
  
 
 +(st::Stock,b::Organism)=st + Stock(Set{Organism}([b]),SolidDict(),LiquidDict())
++(b::Organism,st::Stock) = +(st,b) # associative property 
