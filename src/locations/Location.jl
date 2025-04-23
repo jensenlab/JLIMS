@@ -304,12 +304,12 @@ macro location(name,supertype=Location,constrained_as_parent=false,constrained_a
     mutable struct $n <: $t
         const location_id::Base.Integer
         const name::Base.String
-        parent::Union{JLIMS.Location,Nothing,JLIMS.LocationRef}
-        children::Vector{T} where T<:Union{JLIMS.Location,JLIMS.LocationRef}
+        parent::Union{JLIMS.Location,Nothing}
+        children::Vector{T} where T<:JLIMS.Location
         attributes::AttributeDict
         is_locked::Bool
         is_active::Bool
-        ($n)(id::Base.Integer,name::Base.String,parent=nothing,children=Union{JLIMS.Location,JLIMS.LocationRef}[],attributes=AttributeDict(),is_locked::Bool=false,is_active::Bool=true) = new(id,name,parent,children,attributes,is_locked,is_active) 
+        ($n)(id::Base.Integer,name::Base.String,parent=nothing,children=JLIMS.Location[],attributes=AttributeDict(),is_locked::Bool=false,is_active::Bool=true) = new(id,name,parent,children,attributes,is_locked,is_active) 
     end 
     AbstractTrees.ParentLinks(::Type{<:($n)})=AbstractTrees.StoredParents()
     if $p_constraint

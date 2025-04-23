@@ -36,20 +36,12 @@ function remove!(parent::Location,child::Location)
     filter!(x->x !== child,parent.children)
     return nothing 
 end 
-function remove!(parent::Location,child::LocationRef)
-    filter!(x->x !== child,parent.children)
-    return nothing 
-end 
+
 
 function add_to!(parent::Location,child::Location)
     check=can_move_into(parent,child) 
     push!(parent.children,child)
     child.parent=parent
-    return nothing 
-end 
-
-function add_to!(parent::Location,child::LocationRef)
-    push!(parent.children,child)
     return nothing 
 end 
 
