@@ -206,6 +206,9 @@ encumber( p_id , transfer!,w1,children(plate1)[4,8],100u"µL")
 encumber( p_id , move_into!,culture_room,plate1)
 JLIMS.upload_encumbrance_completion(1,get_last_ledger_id())
 
+upload_read(w2, "Absorbance",0.9u"OD")
+
+
 #reconstruct_location(collect(25:30))
 #=
 @time reconstruct_location(collect(25:30))
