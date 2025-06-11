@@ -303,8 +303,7 @@ function create_db(path)
         Time INTEGER,
         Configuration TEXT,
         FOREIGN KEY(LocationID) REFERENCES Locations(ID) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY(Configuration) REFERENCES Configurations(ID) ON UPDATE CASCADE ON DELETE RESTRICT
+        FOREIGN KEY(LedgerID) REFERENCES Ledger(ID)ON UPDATE CASCADE ON DELETE RESTRICT
     );
     """
 

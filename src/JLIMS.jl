@@ -137,7 +137,7 @@ export append_ledger,insert_ledger,update_ledger
 #db_utils 
 export @connect_SQLite, execute_db, query_db,sql_transaction,sql_commit,sql_rollback,julia_time,db_time, get_all_attributes
 #uploads 
-export  update,upload, upload_tag, upload_barcode, update_barcode , process_update
+export  update,upload, upload_tag, upload_barcode, update_barcode , process_update,upload_read
 #queries
 export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_protocol_id,get_sequence_id
 #generate_location

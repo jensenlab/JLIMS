@@ -188,3 +188,13 @@ function update_barcode(bc::Barcode,loc::Location;kwargs...)
     return nothing 
 end 
 
+
+function upload_read(loc::Location,type::String,val::Unitful.Quantity,configuration::String="";ledger_id=append_ledger(),time::Dates.DateTime=now())
+    upload_time=db_time(time) 
+    quant = ustrip(val) 
+    un = unit(val) 
+    execute_db("INSERT OR IGNORE INTO Reads(LedgerID,LocationID,Type,Value,Unit,Time,Configuration) Values($ledger_id,$(location_id(loc)),'$type',$quant,'$un',$upload_time,'$configuration')")
+    return nothing 
+
+end 
+
