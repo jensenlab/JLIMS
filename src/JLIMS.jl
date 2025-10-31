@@ -113,7 +113,6 @@ export Chemical,Solid,Liquid,Gas # chemical types
 export Organism # Organism type
 export Stock,Empty, Mixture, Solution, Culture # Stock types 
 export Location, Labware, Well #location types 
-export LocationRef
 export @labware, @location, @occupancy_cost, @chemical, @organism , @attribute, @chem_str, @org_str # macros for constants 
 export get_mw_density
 # chemicals 
