@@ -61,6 +61,7 @@ include("./exceptions.jl")
 include("./user.jl")
 include("./environments/Attributes.jl")
 
+
 include("./locations/Location.jl")
 include("./stocks/Chemicals.jl")
 include("./stocks/Organisms.jl")
@@ -71,7 +72,7 @@ include("./locations/Labware.jl")
 
 include("./stocks/chemical_parsing.jl")
 include("./barcodes/barcodes.jl")
-
+include("./runs/run.jl")
 
 include("./operations/movement.jl")
 include("./operations/mixing.jl")
@@ -84,6 +85,7 @@ include("./database/uploads.jl")
 include("./database/generate_location.jl")
 include("./database/encumbrances.jl")
 include("./database/barcode_queries.jl")
+include("./database/experiment_run_queries.jl")
 # reconstruction
 include("./database/reconstruction/reconstruction_utils.jl")
 include("./database/reconstruction/reconstruct_contents.jl")
@@ -129,6 +131,8 @@ export can_move_into, move_into!,move_into
 export shape, vendor, catalog, wells
 #wells
 export capacity, stock, cost,  sterilize!,sterilize,transfer!,transfer, drain!,drain,deposit!,withdraw!
+# runs 
+export Run 
 #database
 export create_db
 #ledger.jl
@@ -163,5 +167,7 @@ export reconstruct_activity,reconstruct_activity!
 export Barcode, assign_barcode!,assign_barcode,barcode
 #barcode queries
 export get_barcode
-export upload_protocol,upload_experiment, encumber, upload_encumbrance,encumber_cache
+export upload_protocol,upload_experiment, encumber, upload_encumbrance,encumber_cache, upload_run 
+# run queries 
+export get_run, get_all_runs 
 end # module JLIMS

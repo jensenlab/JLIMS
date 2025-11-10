@@ -183,6 +183,9 @@ upload(assign_barcode!,bc2,plate1)
 
 exp_id =upload_experiment("test_experiment","Ben")
 
+testrun = Run(1,exp_id,[2,3,4],[5,6,7])
+run_id = upload_run(testrun)
+
 p_id=upload_protocol(exp_id,"test_protocol")
 encumber( p_id , move_into!,shelf1,plate1)
 
