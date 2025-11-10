@@ -198,3 +198,21 @@ function upload_read(loc::Location,type::String,val::Unitful.Quantity,configurat
 
 end 
 
+
+
+function upload_experiment(name::AbstractString,user::String,is_public=false;time=Dates.now())
+    upload_time=db_time(time)
+    execute_db("""INSERT INTO Experiments(Name,User,IsPublic,Time) Values('$name','$user',$(Int(is_public)),$upload_time)""")
+    return get_last_experiment_id()
+end 
+
+function upload_run(run::Run)
+    control_str = join(controls(run),",")
+    blank_str = join(blanks(run),",")
+    execute_db("INSERT OR IGNORE INTO Runs(ExperimentID,LocationID,Controls,Blanks) Values($(location_id(run)),$(experiment_id(run)),'$control_str','$blank_str')")
+    return get_last_run_id()
+end 
+
+
+
+

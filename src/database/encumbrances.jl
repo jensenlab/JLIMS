@@ -86,12 +86,7 @@ end
 
 
 
-function upload_experiment(name::AbstractString,user::String,is_public=false;time=Dates.now())
-    upload_time=db_time(time)
-    execute_db("""INSERT INTO Experiments(Name,User,IsPublic,Time) Values('$name','$user',$(Int(is_public)),$upload_time)""")
-    ex_id=query_db("""SELECT Max(ID) FROM Experiments""")
-    return ex_id[1,1]
-end 
+
 
 function upload_protocol(exp_id::Integer,name::AbstractString,ledger_id_entered_at::Integer=get_last_ledger_id(), estimate::Dates.Time=Dates.Time(0);enforce=true) 
     est_time=Dates.millisecond(estimate)
