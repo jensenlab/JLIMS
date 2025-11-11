@@ -222,7 +222,9 @@ st1 = generate_location(ExamplePlateStack,"test stack",plate_stack_namer, plate_
 
 st2 = generate_location(WP96, "test single namer" , plate_namer)
 
+well_check = get_all_within(st1, Well)
 
+println("n_wells = $(length(well_check))")
 #reconstruct_location(collect(25:30))
 #=
 @time reconstruct_location(collect(25:30))
