@@ -10,7 +10,7 @@
 
 Generate a a `type` Location and fill it with empty well if applicable. 
 """
-function generate_location(type::Type{<:Location},name::String=string(UUIDs.uuid4()))
+function generate_location(type::Type{<:Location},name::String=string(UUIDs.uuid4()),child_namer::Vararg{Function}=plate_namer)
     upload_location_type(type)
     loc_id=upload_new_location(name,type)
     lw=type(loc_id,name)
@@ -19,7 +19,7 @@ function generate_location(type::Type{<:Location},name::String=string(UUIDs.uuid
     wells=Location[]
     for col in 1:sh[2]
         for row in 1:sh[1]
-            well=generate_location(welltype,alphabet_code(row)*string(col))
+            well=generate_location(welltype,child_namer[1](row,col),child_namer[2:end]...)
             well.parent=lw
             lw.children[row,col]=well
             push!(wells,well)
@@ -32,6 +32,11 @@ function generate_location(type::Type{<:Location},name::String=string(UUIDs.uuid
     return lw
 end 
 
+
+
+function plate_namer(row,col)
+    return alphabet_code(row) * string(col) 
+end 
 
 
 function alphabet_code(n) 

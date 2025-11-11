@@ -71,7 +71,9 @@ abstract type Reservior <:Labware end
 @labware AltemisBox Plate AltemisSlot (8,12) Altemis 4321 
 
 
+@labware ExamplePlateStack Labware WP96 (10,1) Testing "testing" 
 
+ plate_stack_namer(row,col) = "plate $row"
 
 
 
@@ -99,6 +101,10 @@ r1=generate_location(BioSpaSlot,"Right")
 r2=generate_location(BioSpaSlot,"Right")
 r3=generate_location(BioSpaSlot,"Right")
 r4=generate_location(BioSpaSlot,"Right")
+
+
+
+
 
 
 
@@ -210,6 +216,11 @@ encumber( p_id , move_into!,culture_room,plate1)
 JLIMS.upload_encumbrance_completion(1,get_last_ledger_id())
 
 upload_read(w2, "Absorbance",0.9u"OD")
+
+
+st1 = generate_location(ExamplePlateStack,"test stack",plate_stack_namer, plate_namer)
+
+st2 = generate_location(WP96, "test single namer" , plate_namer)
 
 
 #reconstruct_location(collect(25:30))
