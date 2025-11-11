@@ -6,9 +6,13 @@
 
 
 """
-    generate_location(type::Type{<:Labware},name::String=string(UUIDs.uuid4()))
+    generate_location(type::Type{<:Labware},name::String=string(UUIDs.uuid4()),child_namer::Vararg{Function}=plate_namer)
 
 Generate a a `type` Location and fill it with empty well if applicable. 
+
+Optionally add a variable number of functions to recursively name children of generated labware. naming functions should take two arguments `row` and `col` and return a string. The default is `plate_namer` 
+
+See also: [`plate_namer`](@ref). 
 """
 function generate_location(type::Type{<:Location},name::String=string(UUIDs.uuid4()),child_namer::Vararg{Function}=plate_namer)
     upload_location_type(type)
@@ -33,7 +37,13 @@ function generate_location(type::Type{<:Location},name::String=string(UUIDs.uuid
 end 
 
 
+"""
+    plate_namer(row,col)
 
+Return the microplate standard name for a row and col coordinate 
+
+Ex. plate_namer(1,1)  = "A1" , plate_namer(8,12) = "H12" 
+"""
 function plate_namer(row,col)
     return alphabet_code(row) * string(col) 
 end 
