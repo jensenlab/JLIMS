@@ -365,6 +365,7 @@ function get_all_within(loc::Location,typ::Type{<:Location})
         end 
         out=vcat(out,get_all_within(child,typ))
     end 
+    return out 
 end 
 
 
