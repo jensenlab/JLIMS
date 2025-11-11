@@ -345,6 +345,11 @@ function ancestors(x::Location;rev=false)
         return out
     end 
 end 
+
+
+function Base.in(x::Location,y::Location)
+    return y in ancestors(x) 
+end 
        
 
 """
