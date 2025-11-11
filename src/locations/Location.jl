@@ -353,6 +353,24 @@ end
        
 
 """
+    get_all_within(loc::Location,typ::Type{<:Location})
+
+Find and return all locations of type `typ` within loc or loc's children 
+"""
+function get_all_within(loc::Location,typ::Type{<:Location}) 
+    out=typ[] 
+    for child in children(loc) 
+        if child isa typ 
+            push!(out,child) 
+        end 
+        out=vcat(out,get_all_within(child,typ))
+    end 
+end 
+
+
+
+
+"""
     environment(x::Location)
 Compute the environmental attributes of location `x`. 
 
