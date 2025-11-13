@@ -99,6 +99,32 @@ function orgparse(str; org_context=JLIMS)
     ex = Meta.parse(str)
     eval(lookup_organisms(org_context, ex))
 end
+function lookup_organsims(labmods, ex::Expr)
+    if ex.head == :call
+        ex.args[1] in allowed_funcs ||
+            throw(ArgumentError(
+                  """$(ex.args[1]) is not a valid function call when parsing a chemical.
+                   Only the following functions are allowed: $allowed_funcs"""))
+        for i=2:length(ex.args)
+            if typeof(ex.args[i])==Symbol || typeof(ex.args[i])==Expr
+                ex.args[i]=lookup_organisms(labmods, ex.args[i])
+            end
+        end
+        return ex
+    elseif ex.head == :tuple
+        for i=1:length(ex.args)
+            if typeof(ex.args[i])==Symbol
+                ex.args[i]=lookup_organisms(labmods, ex.args[i])
+            else
+                throw(ArgumentError("Only use symbols inside the tuple."))
+            end
+        end
+        return ex
+    else
+        throw(ArgumentError("Expr head $(ex.head) must equal :call or :tuple"))
+    end
+end
+
 function lookup_organisms(labmods, sym::Symbol)
     has_organism = m->(isdefined(m,sym) && orgstr_check_bool(getfield(m, sym)))
     inds = findall(has_organism, labmods)
@@ -140,6 +166,10 @@ function lookup_organisms(labmods, sym::Symbol)
                  We will use the one from $m."""
     return u
 end
+
+lookup_organisms(unitmod::Module, ex::Symbol) = lookup_organisms([unitmod], ex)
+
+lookup_organisms(unitmods, literal::Number) = literal
 
 orgstr_check_bool(::Organism) =true 
 orgstr_check_bool(::Any) =false

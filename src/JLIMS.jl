@@ -118,9 +118,9 @@ export Location, Labware, Well #location types
 export @labware, @location, @occupancy_cost, @chemical, @organism , @attribute, @chem_str, @org_str # macros for constants 
 export get_mw_density
 # chemicals 
-export molecular_weight, density, pubchemid 
+export molecular_weight, density, pubchemid , chemparse
 # Organisms 
-export genus, species, strain 
+export genus, species, strain , orgparse 
 # Stocks 
 export solids, liquids, chemicals, organisms, volume_estimate, quantity, component_display
 # locations 
@@ -130,7 +130,7 @@ export can_move_into, move_into!,move_into
 #labware
 export shape, vendor, catalog, wells
 #wells
-export capacity, stock, cost,  sterilize!,sterilize,transfer!,transfer, drain!,drain,deposit!,withdraw!
+export wellcapacity, stock, cost,  sterilize!,sterilize,transfer!,transfer, drain!,drain,deposit!,withdraw!
 # runs 
 export Run 
 #database
