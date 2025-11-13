@@ -17,29 +17,33 @@ println("cache repair complete")
     @test uparse("X",unit_context=[Unitful,JensenLabUnits])==u"X"
 end 
 
+x="water"
+y="SMU_UA159"
 @testset "ChemicalTypes" begin 
-    @test Paba isa Solid
-    @test Water isa Liquid
+    @test chem"paba" isa Solid
+    @test chem"water" isa Liquid
+    @test chemparse(x,chem_context=[JLIMS,TestChemOrg]) == chem"water"
+    @test org"SMU_UA159" isa Organism 
+    @test orgparse(y,org_context=[JLIMS,TestChemOrg]) == org"SMU_UA159"
 end 
 
 
 
 
 
-a=100u"mL"*Water #solution
-b=10u"g"*Paba # mixture
-c=5u"g"*IronNitrate #mixture
-d=10u"mL"*Glycerol #solution
-e=Empty()+SMU_UA159
-
+a=100u"mL"*chem"water" #solution
+b=10u"g"*chem"paba" # mixture
+c=5u"g"*chem"iron_nitrate" #mixture
+d=10u"mL"*chem"glycerol" #solution
+e=Empty()+org"SMU_UA159"
 
 @testset "Stocks" begin
     @test a isa Solution 
     @test b isa Mixture 
     @test e isa Culture
-    @test volume_estimate(b) == quantity(b)/density(Paba) # volume estimate method
-    @test 1u"mol"*Paba == convert(u"g",1u"mol",Paba)*Paba # equivalence of the mass vs mol constructors 
-    @test 0.01u"kg"*Paba == b # equivalence of unit changes 
+    @test volume_estimate(b) == quantity(b)/density(chem"paba") # volume estimate method
+    @test 1u"mol"*chem"paba" == convert(u"g",1u"mol",chem"paba")*chem"paba" # equivalence of the mass vs mol constructors 
+    @test 0.01u"kg"*chem"paba" == b # equivalence of unit changes 
 end 
 
 

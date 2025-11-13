@@ -220,12 +220,39 @@ end
 
 
 
-
+# see Unitful.jl 
 
 function chemparse(str; chem_context=JLIMS)
     ex = Meta.parse(str)
     eval(lookup_chemicals(chem_context, ex))
 end
+const allowed_funcs = [:*, :/, :^, :sqrt, :√, :+, :-, ://]
+function lookup_chemicals(labmods, ex::Expr)
+    if ex.head == :call
+        ex.args[1] in allowed_funcs ||
+            throw(ArgumentError(
+                  """$(ex.args[1]) is not a valid function call when parsing a chemical.
+                   Only the following functions are allowed: $allowed_funcs"""))
+        for i=2:length(ex.args)
+            if typeof(ex.args[i])==Symbol || typeof(ex.args[i])==Expr
+                ex.args[i]=lookup_chemicals(labmods, ex.args[i])
+            end
+        end
+        return ex
+    elseif ex.head == :tuple
+        for i=1:length(ex.args)
+            if typeof(ex.args[i])==Symbol
+                ex.args[i]=lookup_chemicals(labmods, ex.args[i])
+            else
+                throw(ArgumentError("Only use symbols inside the tuple."))
+            end
+        end
+        return ex
+    else
+        throw(ArgumentError("Expr head $(ex.head) must equal :call or :tuple"))
+    end
+end
+
 function lookup_chemicals(labmods, sym::Symbol)
     has_chemical = m->(isdefined(m,sym) && chemstr_check_bool(getfield(m, sym)))
     inds = findall(has_chemical, labmods)
@@ -268,6 +295,10 @@ function lookup_chemicals(labmods, sym::Symbol)
                  We will use the one from $m."""
     return u
 end
+
+lookup_chemicals(unitmod::Module, ex::Symbol) = lookup_chemicals([unitmod], ex)
+
+lookup_chemicals(unitmods, literal::Number) = literal
 
 chemstr_check_bool(::Chemical) =true 
 chemstr_check_bool(::Any) =false

@@ -9,15 +9,19 @@ create_db(file)
 
 
 #### set up a test lab
-
-@chemical Water "water" Liquid 18.015u"g/mol" 1.00u"g/mL" 962
-@chemical Glycerol "glycerol" Liquid missing missing missing 
-@chemical Paba "4-aminobenzoic acid" Solid 137.14u"g/mol" 1.35u"g/mL" 978 
-@chemical IronNitrate "Iron Nitrate" Solid 179.86u"g/mol" missing  9815404
-@chemical LB "LB Broth" Solid missing missing missing 
+module TestChemOrg 
+using JLIMS, Unitful 
+@chemical water "water" Liquid 18.015u"g/mol" 1.00u"g/mL" 962
+@chemical glycerol "glycerol" Liquid missing missing missing 
+@chemical paba "4-aminobenzoic acid" Solid 137.14u"g/mol" 1.35u"g/mL" 978 
+@chemical iron_nitrate "Iron Nitrate" Solid 179.86u"g/mol" missing  9815404
+@chemical lb "LB Broth" Solid missing missing missing 
 
 @organism SMU_UA159 "Streptococcus" "mutans" "UA159" 
 @organism SSA_SK36 "Streptococcus" "sanguinis" "SK36" 
+end 
+
+JLIMS.register_lab(TestChemOrg)
 
 @attribute Temperature u"°C"
 @attribute Pressure u"atm"
@@ -166,9 +170,9 @@ w1=children(b1)[1,1]
 
 w2=children(b2)[1,1]
 
-deposit!(w2,50u"g"*Paba, 20)
-deposit!(w1,500u"mL"*Water + 2u"g" *IronNitrate,3)
-deposit!(w1,Empty()+SMU_UA159,0)
+deposit!(w2,50u"g"*chem"paba", 20)
+deposit!(w1,500u"mL"*chem"water" + 2u"g" *chem"iron_nitrate",3)
+deposit!(w1,Empty()+org"SMU_UA159",0)
 cache(w1)
 cache(w2)
 
@@ -225,6 +229,9 @@ st2 = generate_location(WP96, "test single namer" , plate_namer)
 well_check = get_all_within(st1, Well)
 
 println("n_wells = $(length(well_check))")
+
+
+
 #reconstruct_location(collect(25:30))
 #=
 @time reconstruct_location(collect(25:30))
