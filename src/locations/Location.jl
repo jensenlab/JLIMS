@@ -324,6 +324,22 @@ end
 
 
 
+function softequal(x::Location,y::Location)
+    if typeof(x) != typeof(y) 
+        return false 
+    end 
+    props = setdiff(fieldnames(typeof(x)),[:parent,:children])
+    return all(map(prop -> getproperty(x,prop)==getproperty(y,prop),props)) && all(map((a,b)->location_id(a)==location_id(b),ancestors(x),ancestors(y))) && all(map((x,y)->softequal(x,y),children(x),children(y)))
+
+
+end
+
+function softequal(x::Nothing,y::Nothing)
+
+    return x == y 
+end 
+
+
 """
     ancestors(x::Location;rev=false)
 
