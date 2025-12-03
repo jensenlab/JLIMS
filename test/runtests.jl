@@ -72,6 +72,8 @@ end
     @test_throws JLIMS.OccupancyError can_move_into(biospa1,jensen_lab)
     @test_throws JLIMS.LockedLocationError can_move_into(main_room,dr1)
     @test_throws JLIMS.AlreadyLocatedInError can_move_into(jensen_lab,main_room)
+    @test in(main_room, jensen_lab) == true 
+    @test in(plate1, jensen_lab) == true
 end 
 
 

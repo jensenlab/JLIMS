@@ -333,7 +333,7 @@ Use the keyword arg `rev=true` to reverse the order from least proximal to most 
 """
 function ancestors(x::Location;rev=false)
     out=Location[]
-    node=deepcopy(x)
+    node=x 
     while !AbstractTrees.isroot(node)
         push!(out,node);
         node=AbstractTrees.parent(node);
