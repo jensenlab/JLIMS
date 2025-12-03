@@ -65,6 +65,7 @@ end
     @test e-e != Empty() # ' ' 
 end 
 
+
 @testset "Locations" begin
     @test jensen_lab isa Lab
     @test occupancy(jensen_lab) == 0//1 
@@ -74,6 +75,8 @@ end
     @test_throws JLIMS.AlreadyLocatedInError can_move_into(jensen_lab,main_room)
     @test in(main_room, jensen_lab) == true 
     @test in(plate1, jensen_lab) == true
+    @test JLIMS.softequal(jensen_lab,deepcopy(jensen_lab)) ==true 
+    @test JLIMS.softequal(l1,deepcopy(l1)) == true 
 end 
 
 
