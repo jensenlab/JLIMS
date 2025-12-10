@@ -139,7 +139,7 @@ function lookup_organisms(labmods, sym::Symbol)
                    but was not in the provided list of lab modules $(join(labmods, ", ")).
 
                    (Consider `using $hintmod` in your module if you are using `@chem_str`?)"""))
-        else            all_orgs = vcat(map(x->filter(y-> orgstr_check_bool(getfield(x,y)),names(x)),labmods)...)
+        else            all_orgs = vcat(map(x->filter(y-> orgstr_check_bool(getfield(x,y)),names(x;all=true)),labmods)...)
             idxs=findall(String(sym),String.(all_orgs),StringDistances.Levenshtein();min_score=0.5)
             max_return = 4 
             outlen=min(length(idxs),max_return)
