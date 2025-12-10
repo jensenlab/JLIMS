@@ -268,7 +268,7 @@ function lookup_chemicals(labmods, sym::Symbol)
 
                    (Consider `using $hintmod` in your module if you are using `@chem_str`?)"""))
         else
-            all_chems = vcat(map(x->filter(y-> chemstr_check_bool(getfield(x,y)),names(x)),labmods)...)
+            all_chems = vcat(map(x->filter(y-> chemstr_check_bool(getfield(x,y)),names(x;all=true)),labmods)...)
             idxs=findall(String(sym),String.(all_chems),StringDistances.Levenshtein();min_score=0.5)
             max_return = 4 
             outlen=min(length(idxs),max_return)
