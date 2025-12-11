@@ -77,6 +77,8 @@ end
     @test in(plate1, jensen_lab) == true
     @test JLIMS.softequal(jensen_lab,deepcopy(jensen_lab)) ==true 
     @test JLIMS.softequal(l1,deepcopy(l1)) == true 
+    @test generate_unregistered_location(WP96) isa WP96 
+    @test JLIMS.children(generate_unregistered_location(WP96)) isa Matrix{Well{200}}
 end 
 
 
