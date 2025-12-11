@@ -144,7 +144,7 @@ export  update,upload, upload_tag, upload_barcode, update_barcode , process_upda
 #queries
 export get_last_ledger_id,get_last_sequence_id,get_last_encumbrance_id,get_last_protocol_id,get_sequence_id
 #generate_location
-export generate_location , plate_namer , generate_unregistered_location
+export generate_location , plate_namer 
 #caching and fetching 
 export cache , get_location_info
 #reconstruct_location.jl
