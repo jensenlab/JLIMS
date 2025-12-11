@@ -45,7 +45,7 @@ function generate_unregistered_location(type::Type{<:Location},name::String=stri
     welltype=childtype(lw)
     for col in 1:sh[2]
         for row in 1:sh[1]
-            well=generate_location(welltype,child_namer[1](row,col),child_namer[2:end]...)
+            well=generate_unregistered_location(welltype,child_namer[1](row,col),child_namer[2:end]...)
             well.parent=lw
             lw.children[row,col]=well
         end 
