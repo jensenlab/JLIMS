@@ -209,7 +209,7 @@ end
 function upload_run(run::Run)
     control_str = join(controls(run),",")
     blank_str = join(blanks(run),",")
-    execute_db("INSERT OR IGNORE INTO Runs(ExperimentID,LocationID,Controls,Blanks) Values($(location_id(run)),$(experiment_id(run)),'$control_str','$blank_str')")
+    execute_db("INSERT OR IGNORE INTO Runs(ExperimentID,LocationID,Controls,Blanks) Values($(experiment_id(run)),$(location_id(run)),'$control_str','$blank_str')")
     return get_last_run_id()
 end 
 
