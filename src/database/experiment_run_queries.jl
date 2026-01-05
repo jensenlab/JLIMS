@@ -67,8 +67,8 @@ function get_all_runs(exp_id::Integer)
         loc_id=out["LocationID"]
         control_str= out["Controls"]
         blank_str=out["Blanks"]
-        control_vec = parse.(Int,split(control_str,','))
-        blank_vec = parse.(Int,split(blank_str,','))
+        control_vec = parse_int_string(control_str)
+        blank_vec = parse_int_string(blank_str)
         push!(all_runs,Run(loc_id,exp_id,control_vec,blank_vec))
     end 
     return all_runs 
