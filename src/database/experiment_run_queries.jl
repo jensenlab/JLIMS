@@ -27,12 +27,26 @@ function get_run(run_id::Integer)
     control_str= out["Controls"]
     blank_str=out["Blanks"]
 
-    control_vec = parse.(Int,split(control_str,','))
-    blank_vec = parse.(Int,split(blank_str,','))
+    control_vec = parse_int_string(control_str)
+    blank_vec = parse_int_string(blank_str)
 
     return Run(loc_id,exp_id,control_vec,blank_vec)
 
     
+end 
+
+
+function parse_int_string(str::AbstractString)
+    # check to see whether string is empty 
+    if length(str) == 0 
+        return Int64[]
+    else # parse the string 
+        split_str= split(str,",") # split the string by comma separators
+        split_str= filter(x->length(x)> 0,split_str)
+
+
+        return parse.(Int,split_str)
+    end 
 end 
 
 
