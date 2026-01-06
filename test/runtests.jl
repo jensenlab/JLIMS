@@ -64,6 +64,7 @@ end
     @test e+a-e !=a # identity property does not hold for cultures 
     @test e-e != Empty() # ' ' 
     @test quantity(10u"mL"*a) == 10u"mL" # quantity multiplcation 
+    @test quantity(10u"mL"*((10/3)*a)) == 10u"mL" # floating point quantity multiplication 
     @test 10u"mL" *a == a * 10u"mL" # commutative property 
 end 
 
