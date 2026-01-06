@@ -252,6 +252,21 @@ Overload the `/` operator to divide a Stock by a scalar. Returns a new Stock wit
 
 
 
+
+"""
+    *(q::Unitful.Quantity,stock::Stock) 
+
+Overload the `*` operator to divide a stock by a quantity. Returns a new stock scaled to have a total quantity q 
+"""
+function *(q::Unitful.Quantity,stock::Stock)
+    num = convert(Float64,q/quantity(stock)) # ensures that num is a scalar, and throws a dimensional compatibility error if not
+    return num * stock # scalar multiplation defined above
+end 
+
+*(stock::Stock,q::Unitful.Quantity) = *(q,stock) # enable commutative property 
+
+
+
 function Base.show(io::IO,::MIME"text/plain",s::Empty;digits::Integer=2)
     printstyled(io, "Empty Stock";bold=true)
 end 

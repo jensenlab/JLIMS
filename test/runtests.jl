@@ -63,6 +63,9 @@ end
     @test 3*(a+e) == a+a+a+e+e+e # there is no quantity to track for e in this case, but it does contribute to the organismal contents
     @test e+a-e !=a # identity property does not hold for cultures 
     @test e-e != Empty() # ' ' 
+    @test quantity(10u"mL"*a) == 10u"mL" # quantity multiplcation 
+    @test quantity(10u"mL"*((10/3)*a)) == 10u"mL" # floating point quantity multiplication 
+    @test 10u"mL" *a == a * 10u"mL" # commutative property 
 end 
 
 
