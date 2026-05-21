@@ -329,6 +329,3 @@ function convert(y::Unitful.Molarity,x::Unitful.Density,ingredient::Chemical)
     ismissing(molecular_weight(ingredient)) ? error("$(ingredient)'s molecular weight is unknown") : return uconvert(y,x /molecular_weight(ingredient))
 end
 
-
-
-
